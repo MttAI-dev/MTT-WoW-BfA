@@ -1,4 +1,4 @@
-# World of Warriors Cores
+# MTT - WoW Project
 
 --------------
 
@@ -8,13 +8,12 @@
 * [Reporting issues](#reporting-issues)
 * [Submitting fixes](#submitting-fixes)
 * [Copyright](#copyright)
-* [Authors &amp; Contributors](#authors--contributors)
 * [Links](#links)
 
 
 ## Introduction
 
-WoWarriors Core is a *MMORPG* Framework based mostly in C++. Its fully based on AshamaneCore
+MTT-WoW Core is a *MMORPG* Framework based mostly in C++. Its fully based on AshamaneCore
 
 which is fully based on *TrinityCore*, with upgrades like :
 
@@ -54,17 +53,17 @@ with Ashamane Database (ADB) :
 - All Mist of Pandaria zones spawns
 - All Draenor zones spawns
 - All Legion zones spawns
-- All BFA spawns (up to 8.0.1)
+- All BFA spawns (up to 8.2.5)
 
 It is completely open source; community involvement is highly encouraged.
 
 If you wish to contribute ideas or code please visit our site linked below or
-make pull requests to our [Github repository](https://github.com/DuelistRag3/WoWarriors/pulls).
+make pull requests to our [Github repository](https://github.com/MttAI-dev/MTT-WoW-BfA).
 
 ## Requirements
 
 Software requirements are available in the [wiki](https://www.trinitycore.info/display/tc/Requirements) for
-Windows, Linux and macOS.
+Windows.
 
 ## Install
 
@@ -99,6 +98,7 @@ Read file [AUTHORS](AUTHORS).
 
 ## Links
 
-* [Website](https://www.world-of-warriors.de/news)
+* [Website](http://mttwow.sytes.net)
 * [Wiki](https://www.trinitycore.info)
-* [Forums](https://community.trinitycore.org)
+* [Forums](http://mttwow.sytes.net/forum)
+* [Discord](https://discord.gg/QXahfUP)
