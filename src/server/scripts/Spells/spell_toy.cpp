@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+* Copyright (C) 2019-2020 MTT - WoW Project <https://github.com//MttAI-dev>
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
