@@ -715,7 +715,7 @@ public:
         handler->SendGlobalGMSysMessage("DB table `trainer` reloaded.");
         handler->SendGlobalGMSysMessage("DB table `trainer_locale` reloaded.");
         handler->SendGlobalGMSysMessage("DB table `trainer_spell` reloaded.");
-        handler->SendGlobalGMSysMessage("DB table `creature_default_trainer` reloaded.");
+        handler->SendGlobalGMSysMessage("DB table `creature_trainer` reloaded.");
         return true;
     }
 
