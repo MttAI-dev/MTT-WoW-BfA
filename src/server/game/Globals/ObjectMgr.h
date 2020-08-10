@@ -1339,8 +1339,6 @@ class TC_GAME_API ObjectMgr
         void LoadTrainers();
         void LoadCreatureTrainers();
 
-        void LoadCreatureSummonerEntry();
-
         void LoadPhases();
         void UnloadPhaseConditions();
 
@@ -1583,15 +1581,6 @@ class TC_GAME_API ObjectMgr
         GameTeleContainer const& GetGameTeleMap() const { return _gameTeleStore; }
         bool AddGameTele(GameTele& data);
         bool DeleteGameTele(std::string const& name);
-
-        TrainerSpellData const* GetNpcTrainerSpells(uint32 entry) const
-        {
-            CacheTrainerSpellContainer::const_iterator  iter = _cacheTrainerSpellStore.find(entry);
-            if (iter == _cacheTrainerSpellStore.end())
-                return nullptr;
-
-            return &iter->second;
-        }
 
         Trainer::Trainer const* GetTrainer(uint32 trainerId) const;
         uint32 GetCreatureDefaultTrainer(uint32 creatureId) const
