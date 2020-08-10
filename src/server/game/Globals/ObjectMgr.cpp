@@ -9072,14 +9072,14 @@ void ObjectMgr::LoadCreatureTrainers()
 
             if (!GetCreatureTemplate(creatureId))
             {
-               TC_LOG_ERROR("sql.sql", "Table `creature_trainer` references non-existing creature template (CreatureId: %u), ignoring", creatureId);
+                TC_LOG_ERROR("sql.sql", "Table `creature_trainer` references non-existing creature template (CreatureId: %u), ignoring", creatureId);
                 continue;
             }
 
             if (!GetTrainer(trainerId))
             {
                 TC_LOG_ERROR("sql.sql", "Table `creature_trainer` references non-existing trainer (TrainerId: %u) for CreatureId %u MenuId %u OptionIndex %u, ignoring",
-                    trainerId, creatureId, gossipMenuId, gossipOptionIndex);				
+                    trainerId, creatureId, gossipMenuId, gossipOptionIndex);
 				continue;
             }
 
