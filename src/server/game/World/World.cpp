@@ -1985,9 +1985,6 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading Trainers...");
     sObjectMgr->LoadTrainers();                                 // must be after load CreatureTemplate
 
-    TC_LOG_INFO("server.loading", "Loading Creature summoner specific entry...");
-    sObjectMgr->LoadCreatureSummonerEntry();
-
     TC_LOG_INFO("server.loading", "Loading Gossip menu...");
     sObjectMgr->LoadGossipMenu();
 
