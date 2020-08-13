@@ -133,16 +133,17 @@ void GossipMenu::AddMenuItem(uint32 menuId, uint32 optionIndex, uint32 sender, u
 
         /// Add menu item with existing method. Menu item id -1 is also used in ADD_GOSSIP_ITEM macro.
         uint32 newOptionIndex = AddMenuItem(-1, itr->second.OptionIcon, strOptionText, sender, action, strBoxText, itr->second.BoxMoney, itr->second.BoxCoded);
-        AddGossipMenuItemData(newOptionIndex, itr->second.ActionMenuId, itr->second.ActionPoiId);
+        AddGossipMenuItemData(newOptionIndex, itr->second.ActionMenuId, itr->second.ActionPoiId, itr->second.TrainerId);
     }
 }
 
-void GossipMenu::AddGossipMenuItemData(uint32 optionIndex, uint32 gossipActionMenuId, uint32 gossipActionPoi)
+void GossipMenu::AddGossipMenuItemData(uint32 optionIndex, uint32 gossipActionMenuId, uint32 gossipActionPoi, uint32 trainerId)
 {
     GossipMenuItemData& itemData = _menuItemData[optionIndex];
 
     itemData.GossipActionMenuId  = gossipActionMenuId;
     itemData.GossipActionPoi     = gossipActionPoi;
+    itemData.TrainerId           = trainerId;
 }
 
 uint32 GossipMenu::GetMenuItemSender(uint32 menuItemId) const
