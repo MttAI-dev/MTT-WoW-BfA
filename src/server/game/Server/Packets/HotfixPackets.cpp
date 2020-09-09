@@ -20,25 +20,25 @@
 
 namespace WorldPackets
 {
-    namespace Hotfix
-    {
-        ByteBuffer& operator>>(ByteBuffer& data, DB2Manager::HotfixRecord& hotfixRecord)
-        {
-            data >> hotfixRecord.TableHash;
-            data >> hotfixRecord.RecordID;
-            data >> hotfixRecord.HotfixID;
-            return data;
-        }
+namespace Hotfix
+{
+ByteBuffer& operator>>(ByteBuffer& data, DB2Manager::HotfixRecord& hotfixRecord)
+{
+    data >> hotfixRecord.TableHash;
+    data >> hotfixRecord.RecordID;
+    data >> hotfixRecord.HotfixID;
+    return data;
+}
 
-        ByteBuffer& operator<<(ByteBuffer& data, DB2Manager::HotfixRecord const& hotfixRecord)
-        {
-            data << uint32(hotfixRecord.TableHash);
-            data << int32(hotfixRecord.RecordID);
-            data << int32(hotfixRecord.HotfixID);
-            return data;
-        }
+ByteBuffer& operator<<(ByteBuffer& data, DB2Manager::HotfixRecord const& hotfixRecord)
+{
+    data << uint32(hotfixRecord.TableHash);
+    data << int32(hotfixRecord.RecordID);
+    data << int32(hotfixRecord.HotfixID);
+    return data;
+}
 
-        void DBQueryBulk::Read()
+void DBQueryBulk::Read()
 {
     _worldPacket >> TableHash;
 
@@ -63,7 +63,7 @@ WorldPacket const* DBReply::Write()
 
 WorldPacket const* AvailableHotfixes::Write()
 {
-    _worldPacket << int32(HotfixCacheVersion);
+    _worldPacket << int32(VirtualRealmAddress);
     _worldPacket << uint32(HotfixCount);
     for (DB2Manager::HotfixRecord const& hotfixRecord : Hotfixes)
         _worldPacket << hotfixRecord;
@@ -114,5 +114,5 @@ WorldPacket const* HotfixResponse::Write()
 
     return &_worldPacket;
 }
-    }
+}
 }

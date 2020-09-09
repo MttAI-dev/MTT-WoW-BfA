@@ -160,7 +160,7 @@ class boss_master_snowdrift : public CreatureScript
                 me->GetMotionMaster()->Clear();
                 me->GetMotionMaster()->MovePoint(POINT_BEGIN_EVENT, pos);
 
-                me->setFaction(35);
+                me->SetFaction(35);
                 me->SetReactState(REACT_PASSIVE);
                 SetCanSeeEvenInPassiveMode(true);
             }
@@ -251,7 +251,7 @@ class boss_master_snowdrift : public CreatureScript
                 switch (id)
                 {
                     case POINT_PHASE_FIGHT:
-                        me->setFaction(14);
+                        me->SetFaction(14);
                         me->SetReactState(REACT_AGGRESSIVE);
                         // No Break
                     case POINT_BEGIN_EVENT:
@@ -352,7 +352,7 @@ class boss_master_snowdrift : public CreatureScript
                         events.ScheduleEvent(EVENT_TORNADO_KICK, urand(7500, 12500));
                         break;
                     case EVENT_FIST_OF_FURY:
-                        if (Unit* target = SelectTarget(SELECT_TARGET_TOPAGGRO))
+                        if (Unit* target = SelectTarget(SELECT_TARGET_MAXTHREAT))
                             me->CastSpell(target, SPELL_FIST_OF_FURY, false);
 
                         events.ScheduleEvent(EVENT_FIST_OF_FURY, urand(5000, 10000));
@@ -492,7 +492,7 @@ class npc_snowdrift_novice : public CreatureScript
                     damage = 0;
                     me->SetReactState(REACT_PASSIVE);
                     me->AddUnitFlag(UnitFlags(UNIT_FLAG_NON_ATTACKABLE|UNIT_FLAG_NOT_SELECTABLE));
-                    me->setFaction(35);
+                    me->SetFaction(35);
                     me->AttackStop();
                     me->CombatStop();
                     stillInFight = false;
@@ -590,7 +590,7 @@ class npc_snowdrift_miniboss : public CreatureScript
                 if (damage >= me->GetHealth())
                 {
                     damage = 0;
-                    me->setFaction(35);
+                    me->SetFaction(35);
                     me->SetReactState(REACT_PASSIVE);
                     me->AddUnitFlag(UnitFlags(UNIT_FLAG_NON_ATTACKABLE|UNIT_FLAG_NOT_SELECTABLE));
                     me->CombatStop();
@@ -690,7 +690,7 @@ class npc_snowdrift_clone : public CreatureScript
             void Reset() override
             {
                 me->SetReactState(REACT_PASSIVE);
-                me->setFaction(14);
+                me->SetFaction(14);
                 DoZoneInCombat();
 
                 fireBallTimer = 500;
@@ -733,7 +733,7 @@ class npc_snowdrift_fireball : public CreatureScript
                 me->GetMotionMaster()->MovePoint(0, x, y, me->GetPositionZ());
 
                 me->SetReactState(REACT_PASSIVE);
-                me->setFaction(14);
+                me->SetFaction(14);
 
                 damageTimer = 500;
             }

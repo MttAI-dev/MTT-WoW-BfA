@@ -300,8 +300,8 @@ struct npc_stalvan : public ScriptedAI
                         tobias->SetReactState(REACT_AGGRESSIVE);
 
                         me->RemoveUnitFlag(UnitFlags(UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_IMMUNE_TO_PC));
-                        me->AddThreat(tobias, 10.f);
-                        tobias->AddThreat(me, 10.f);
+                        AddThreat(tobias, 10.f);
+                        AddThreat(me, 10.f);
                         tobias->SetInCombatWith(me);
 
                         if (me->Attack(tobias, true))
@@ -507,7 +507,7 @@ struct npc_ebenlocke : public ScriptedAI
 
     npc_ebenlocke(Creature* creature) : ScriptedAI(creature) { }
 
-    void sQuestAccept(Player* /*player*/, Quest const* quest) override
+    void QuestAccept(Player* /*player*/, Quest const* quest) override
     {
         if (quest->GetQuestId() == QUEST_EMBALMERS_REVENGE)
         {

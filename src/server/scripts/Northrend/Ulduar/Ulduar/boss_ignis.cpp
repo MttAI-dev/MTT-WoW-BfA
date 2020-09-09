@@ -180,7 +180,7 @@ class boss_ignis : public CreatureScript
             {
                 if (summon->GetEntry() == NPC_IRON_CONSTRUCT)
                 {
-                    summon->setFaction(16);
+                    summon->SetFaction(16);
                     summon->SetReactState(REACT_AGGRESSIVE);
                     summon->RemoveUnitFlag(UnitFlags(UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_PACIFIED | UNIT_FLAG_STUNNED | UNIT_FLAG_IMMUNE_TO_PC));
                     summon->SetControlled(false, UNIT_STATE_ROOT);
@@ -255,7 +255,7 @@ class boss_ignis : public CreatureScript
                             if (Unit* slagPotTarget = ObjectAccessor::GetUnit(*me, _slagPotGUID))
                             {
                                 slagPotTarget->ExitVehicle();
-                                slagPotTarget = NULL;
+                                slagPotTarget = nullptr;
                                 _slagPotGUID.Clear();
                                 events.CancelEvent(EVENT_END_POT);
                             }

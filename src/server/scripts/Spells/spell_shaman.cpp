@@ -820,7 +820,7 @@ class spell_sha_fulmination : public SpellScriptLoader
                         uint32 stacks = aura->GetCharges();
                         if (stacks > 1)
                         {
-                            SpellInfo const* triggerSpell = sSpellMgr->AssertSpellInfo(aura->GetSpellEffectInfo(EFFECT_0)->TriggerSpell);
+                            SpellInfo const* triggerSpell = sSpellMgr->AssertSpellInfo(aura->GetSpellInfo()->GetEffect(EFFECT_0)->TriggerSpell, DIFFICULTY_NONE);
                             SpellEffectInfo const* triggerEffect = triggerSpell->GetEffect(EFFECT_0);
 
                             uint32 damage;
@@ -1109,7 +1109,7 @@ class spell_sha_item_lightning_shield : public SpellScriptLoader
             void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
             {
                 PreventDefaultAction();
-                GetTarget()->CastSpell(eventInfo.GetProcTarget(), SPELL_SHAMAN_ITEM_LIGHTNING_SHIELD, true, NULL, aurEff);
+                GetTarget()->CastSpell(eventInfo.GetProcTarget(), SPELL_SHAMAN_ITEM_LIGHTNING_SHIELD, true, nullptr, aurEff);
             }
 
             void Register() override
@@ -1144,7 +1144,7 @@ class spell_sha_item_lightning_shield_trigger : public SpellScriptLoader
             void OnProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
             {
                 PreventDefaultAction();
-                GetTarget()->CastSpell(GetTarget(), SPELL_SHAMAN_ITEM_LIGHTNING_SHIELD_DAMAGE, true, NULL, aurEff);
+                GetTarget()->CastSpell(GetTarget(), SPELL_SHAMAN_ITEM_LIGHTNING_SHIELD_DAMAGE, true, nullptr, aurEff);
             }
 
             void Register() override
@@ -1185,7 +1185,7 @@ class spell_sha_item_mana_surge : public SpellScriptLoader
                 {
                     int32 mana = CalculatePct(m->Amount, 35);
                     if (mana > 0)
-                        GetTarget()->CastCustomSpell(SPELL_SHAMAN_ITEM_MANA_SURGE, SPELLVALUE_BASE_POINT0, mana, GetTarget(), true, NULL, aurEff);
+                        GetTarget()->CastCustomSpell(SPELL_SHAMAN_ITEM_MANA_SURGE, SPELLVALUE_BASE_POINT0, mana, GetTarget(), true, nullptr, aurEff);
                 }
             }
 
@@ -1387,7 +1387,7 @@ class spell_sha_lava_surge_proc : public SpellScript
 
     void ResetCooldown()
     {
-        GetCaster()->GetSpellHistory()->RestoreCharge(sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_LAVA_BURST)->ChargeCategoryId);
+        GetCaster()->GetSpellHistory()->RestoreCharge(sSpellMgr->AssertSpellInfo(SPELL_SHAMAN_LAVA_BURST, DIFFICULTY_NONE)->ChargeCategoryId);
     }
 
     void Register() override
@@ -1459,7 +1459,7 @@ class spell_sha_nature_guardian : public SpellScriptLoader
                 GetTarget()->CastCustomSpell(GetTarget(), SPELL_SHAMAN_NATURE_GUARDIAN, &basePoints0, NULL, NULL, true);
 
                 if (eventInfo.GetProcTarget() && eventInfo.GetProcTarget()->IsAlive())
-                    eventInfo.GetProcTarget()->getThreatManager().modifyThreatPercent(GetTarget(), -10);
+                    eventInfo.GetProcTarget()->GetThreatManager().ModifyThreatByPercent(GetTarget(), -10);
 
                 GetTarget()->GetSpellHistory()->AddCooldown(GetSpellInfo()->Id, 0, std::chrono::seconds(aurEff->GetSpellInfo()->GetEffect(EFFECT_1)->CalcValue()));
             }
@@ -3177,7 +3177,7 @@ public:
 
             if (TempSummon* tempSumm = caster->SummonCreature(WORLD_TRIGGER, at->GetPosition(), TEMPSUMMON_TIMED_DESPAWN, 200))
             {
-                tempSumm->setFaction(caster->getFaction());
+                tempSumm->SetFaction(caster->GetFaction());
                 tempSumm->SetSummonerGUID(caster->GetGUID());
                 PhasingHandler::InheritPhaseShift(tempSumm, caster);
                 tempSumm->CastCustomSpell(SPELL_SHAMAN_EARTHQUAKE_DAMAGE, SPELLVALUE_BASE_POINT0, caster->GetTotalSpellPowerValue(SPELL_SCHOOL_MASK_NORMAL, false) * 0.3, caster, TRIGGERED_FULL_MASK);
@@ -3612,8 +3612,8 @@ class spell_sha_enhancement_lightning_bolt : public SpellScript
 
         if (Aura* overcharge = GetCaster()->GetAura(SPELL_SHAMAN_OVERCHARGE))
         {
-            _maxTakenPower      = overcharge->GetSpellEffectInfo(EFFECT_0)->BasePoints;
-            _maxDamagePercent   = overcharge->GetSpellEffectInfo(EFFECT_1)->BasePoints;
+            _maxTakenPower      = overcharge->GetSpellInfo()->GetEffect(EFFECT_0)->BasePoints;
+            _maxDamagePercent   = overcharge->GetSpellInfo()->GetEffect(EFFECT_1)->BasePoints;
         }
 
         _takenPower = powerCost.Amount = std::min(GetCaster()->GetPower(POWER_MAELSTROM), _maxTakenPower);

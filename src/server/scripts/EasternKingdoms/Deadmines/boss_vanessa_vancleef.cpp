@@ -415,9 +415,9 @@ public:
                 bunny->AddUnitFlag(UNIT_FLAG_STUNNED);
                 bunny->AddUnitFlag(UNIT_FLAG_IMMUNE_TO_PC);
                 bunny->SetReactState(REACT_AGGRESSIVE);
-                bunny->setFaction(18);
+                bunny->SetFaction(18);
                 bunny->Attack(me, true);
-                me->AddThreat(bunny, 200000.0f);
+                AddThreat(bunny, 200000.0f);
                 me->SetInCombatWith(bunny);
             }
             me->SetInCombatWithZone();
@@ -1832,7 +1832,7 @@ public:
             if (Unit* Calissa = me->GetVehicleKit()->GetPassenger(0))
             {
                 Calissa->CombatStart(me, true);
-                Calissa->AddThreat(me, 100000.0f);
+                AddThreat(me, 100000.0f);
                 DoZoneInCombat();
             }
         }

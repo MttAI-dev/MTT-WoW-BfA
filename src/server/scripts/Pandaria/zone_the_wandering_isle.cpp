@@ -567,7 +567,7 @@ public:
                 damage = me->GetHealth() - 1;
                 _events.Reset();
                 me->RemoveAllAuras();
-                me->setFaction(35);
+                me->SetFaction(35);
                 me->AddUnitFlag(UnitFlags(UNIT_FLAG_UNK_15 | UNIT_FLAG_IMMUNE_TO_PC));
                 me->AttackStop();
                 attacker->AttackStop();
@@ -649,7 +649,7 @@ public:
 
         void ClearThreadList()
         {
-            std::list<HostileReference*> threatList = me->getThreatManager().getThreatList();;
+            std::list<HostileReference*> threatList = me->GetThreatManager().getThreatList();;
             for (std::list<HostileReference*>::const_iterator itr = threatList.begin(); itr != threatList.end(); ++itr)
                 if (Unit* target = (*itr)->getTarget()->ToUnit())
                     target->ClearInCombat();
@@ -1172,7 +1172,7 @@ public:
         {
             Unit* caster = GetCaster();
             float x, y, z;
-            caster->GetClosePoint(x, y, z, caster->GetObjectSize() / 2, frand(0, 3), frand(0, 2 * float(M_PI)));
+            caster->GetClosePoint(x, y, z, caster->GetCombatReach() / 2, frand(0, 3), frand(0, 2 * float(M_PI)));
             caster->CastSpell(x, y, z, SPELL_OOKSPLOSIONS_TRIGGERED, true);
         }
 
@@ -1480,7 +1480,7 @@ public:
         void KilledUnit(Unit* who) override
         {
             if (who->IsPlayer())
-                if (me->getThreatManager().getThreatList().empty())
+                if (me->GetThreatManager().getThreatList().empty())
                     me->DespawnOrUnsummon(0, Seconds(10));
         }
 
@@ -1531,7 +1531,7 @@ public:
                 {
                     case EVENT_LIGHTNING:
                     {
-                        std::list<HostileReference*> threatList = me->getThreatManager().getThreatList();
+                        std::list<HostileReference*> threatList = me->GetThreatManager().getThreatList();
                         if (!threatList.empty())
                         {
                             for (HostileReference* ref : threatList)
@@ -1932,7 +1932,7 @@ public:
             _events.ScheduleEvent(EVENT_UPDATE_PHASES, 5000);
         }
 
-        void sQuestAccept(Player* player, Quest const* quest) override
+        void QuestAccept(Player* player, Quest const* quest) override
         {
             if (quest->GetQuestId() == QUEST_RISKING_IT_ALL)
                 DoCast(player, SPELL_FORCECAST_SUMMON_AYSA, true);
@@ -2088,7 +2088,7 @@ public:
             if (damage >= me->GetHealth())
             {
                 std::list<HostileReference*> threatList;
-                threatList = me->getThreatManager().getThreatList();
+                threatList = me->GetThreatManager().getThreatList();
                 for (std::list<HostileReference*>::const_iterator itr = threatList.begin(); itr != threatList.end(); ++itr)
                     if (Player* target = (*itr)->getTarget()->ToPlayer())
                         if (target->GetQuestStatus(QUEST_AN_ANCIENT_EVIL) == QUEST_STATUS_INCOMPLETE)

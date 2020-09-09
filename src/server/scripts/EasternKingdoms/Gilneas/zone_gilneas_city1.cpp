@@ -558,7 +558,7 @@ public:
                     case EVENT_MOVE_TO_DOOR:
                     {
                         if (GameObject* go = ObjectAccessor::GetGameObject(*me, m_doorGUID))
-                            me->GetMotionMaster()->MovePoint(MOVE_TO_DOOR, go->GetPosition());
+                            me->GetMotionMaster()->MovePoint(MOVE_TO_DOOR, me->GetPosition());
                         break;
                     }
                     case EVENT_FOLLOW_CITIZEN1:
@@ -945,7 +945,7 @@ public:
                 case EVENT_MOVE_TO_DOOR:
                 {
                     if (GameObject* go = ObjectAccessor::GetGameObject(*me, m_doorGUID))
-                        me->GetMotionMaster()->MovePoint(MOVE_TO_DOOR, go->GetPosition());
+                        me->GetMotionMaster()->MovePoint(MOVE_TO_DOOR, me->GetPosition());
                     break;
                 }
                 case EVENT_MOVE_TO_PLAYER:
@@ -1079,7 +1079,7 @@ public:
                     case EVENT_MOVE_TO_DOOR:
                     {
                         if (GameObject* go = ObjectAccessor::GetGameObject(*me, m_doorGUID))
-                            me->GetMotionMaster()->MovePoint(MOVE_TO_DOOR, go->GetPosition());
+                            me->GetMotionMaster()->MovePoint(MOVE_TO_DOOR, me->GetPosition());
                         break;
                     }
                     case EVENT_MOVE_TO_PLAYER:
@@ -1530,15 +1530,15 @@ public:
         {
             if (who->GetTypeId() == TYPEID_PLAYER)
             {
-                me->getThreatManager().resetAllAggro();
-                who->AddThreat(me, 1.0f);
-                me->AddThreat(who, 1.0f);
+                me->GetThreatManager().resetAllAggro();
+                AddThreat(me, 1.0f);
+                AddThreat(who, 1.0f);
                 me->AI()->AttackStart(who);
             }
             else if (who->IsPet())
             {
-                me->getThreatManager().resetAllAggro();
-                me->AddThreat(who, 1.0f);
+                me->GetThreatManager().resetAllAggro();
+                AddThreat(who, 1.0f);
                 me->AI()->AttackStart(who);
             }
             else if (me->HealthBelowPct(AI_MIN_HP) && who->GetEntry() == NPC_BLOODFANG_WORGEN_35118)
@@ -2647,7 +2647,7 @@ public:
                             badAvery->SetOrientation(badAvery->GetAngle(player)); // Face Player
                             badAvery->CastSpell(player, SPELL_COSMETIC_COMBAT_ATTACK, true); // Do Cosmetic Attack
                             //player->GetMotionMaster()->MoveKnockTo(-1791.94f, 1427.29f, 12.4584f, 22.0f, 8.0f, m_playerGUID.GetCounter());
-                            badAvery->getThreatManager().resetAllAggro();
+                            badAvery->GetThreatManager().resetAllAggro();
                         }
                     m_events.ScheduleEvent(EVENTS_ANIM_2, 1200);
                     break;
@@ -2709,7 +2709,7 @@ public:
         if (quest->GetQuestId() == QUEST_FROM_THE_SHADOWS)
         {
             if (Pet* pet = player->GetPet())
-                player->RemovePet(pet, PET_SAVE_CURRENT_STATE, true);
+                player->RemovePet(pet, PET_SAVE_AS_CURRENT, true);
             player->CastSpell(player, SPELL_SUMMON_GILNEAN_MASTIFF);
             creature->AI()->Talk(0);
         }

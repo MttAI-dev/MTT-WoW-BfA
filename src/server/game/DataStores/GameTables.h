@@ -24,17 +24,6 @@
 
 enum InventoryType : uint8;
 
-struct GtAzeriteLevelToItemLevelEntry
-{
-    float ItemLevel = 0.f;
-};
-
-struct GtAzeriteBaseExperiencePerLevelEntry
-{
-    float BaseExperienceToNextLevel = 0.f;
-    float MinimumExperienceToNextLevel = 0.f;
-};
-
 struct GtArtifactKnowledgeMultiplierEntry
 {
     float Multiplier = 0.0f;
@@ -201,8 +190,6 @@ private:
 
 TC_GAME_API extern GameTable<GtArtifactKnowledgeMultiplierEntry>    sArtifactKnowledgeMultiplierGameTable;
 TC_GAME_API extern GameTable<GtArtifactLevelXPEntry>                sArtifactLevelXPGameTable;
-TC_GAME_API extern GameTable<GtAzeriteBaseExperiencePerLevelEntry>  sAzeriteBaseExperiencePerLevelTable;
-TC_GAME_API extern GameTable<GtAzeriteLevelToItemLevelEntry>        sAzeriteLevelToItemLevelGameTable;
 TC_GAME_API extern GameTable<GtBarberShopCostBaseEntry>             sBarberShopCostBaseGameTable;
 TC_GAME_API extern GameTable<GtBaseMPEntry>                         sBaseMPGameTable;
 TC_GAME_API extern GameTable<GtChallengeModeDamage>                 sChallengeModeDamage;

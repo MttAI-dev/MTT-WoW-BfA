@@ -16,14 +16,8 @@
  */
 
 // This is where scripts' loading functions should be declared:
-void AddSC_custom_player_script();
 void AddSC_custom_npcs();
-void AddSC_FireWorksOnLevelUp();
-void AddSC_XpWeekend();
-void AddSC_skip_pandaren();
-void AddSC_skip_worgen();
-void AddSC_skip_goblin();
-void AddSC_LFG_SoloMode();
+void AddSC_custom_player_script();
 
 // ADM declaration begin
 // ADM declaration end
@@ -32,15 +26,9 @@ void AddSC_LFG_SoloMode();
 // void Add${NameOfDirectory}Scripts()
 void AddCustomScripts()
 {
-   AddSC_custom_player_script();
-   AddSC_custom_npcs();
-   AddSC_FireWorksOnLevelUp();
-   AddSC_XpWeekend();
-   AddSC_skip_pandaren();
-   AddSC_skip_worgen();
-   AddSC_skip_goblin();
-   AddSC_LFG_SoloMode();
-   
-   // ADM call begin
-   // ADM call end
+    AddSC_custom_npcs();
+    AddSC_custom_player_script();
+
+    // ADM call begin
+    // ADM call end
 }

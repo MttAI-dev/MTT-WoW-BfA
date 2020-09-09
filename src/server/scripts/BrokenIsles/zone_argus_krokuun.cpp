@@ -361,7 +361,7 @@ struct npc_lady_liadrin_122065 : public ScriptedAI
         _scheduler.Update(diff);
      }
 
-    void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId)
+    bool GossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId)
     {
         CloseGossipMenuFor(player);
 
@@ -370,6 +370,7 @@ struct npc_lady_liadrin_122065 : public ScriptedAI
             player->KilledMonsterCredit(KILLED_MONSTER_CREDIT_TWO_IF_BY_SEA);
             player->TeleportTo(1750, -4295.41f, -11368.2f, 10.64f, 5.764124f);///SMSG_CUSTOM_LOAD_SCREEN TeleportSpellID: 247215 LoadingScreenID: 1377
         }
+        return false;
     }
     void Initialize()
     {
@@ -1053,7 +1054,7 @@ struct npc_imp_mother_laglath : public ScriptedAI
         })
         .Schedule(1s, [this](TaskContext context)
         {
-            if (Unit* target = SelectTarget(SELECT_TARGET_NEAREST, 0))
+            if (Unit* target = SelectTarget(SELECT_TARGET_MINDISTANCE, 0))
                 if (me->IsWithinCombatRange(target, 5.f))
                     GetContextUnit()->CastSpell(target, SPELL_ELDER_WRATH, false);
 

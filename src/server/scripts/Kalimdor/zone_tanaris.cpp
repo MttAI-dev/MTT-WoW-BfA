@@ -90,7 +90,7 @@ public:
         void Reset() override
         {
             Initialize();
-            me->setFaction(35);
+            me->SetFaction(35);
         }
 
         void SendItem(Unit* receiver)
@@ -103,7 +103,7 @@ public:
                 !player->HasItemCount(ITEM_SILVER_TOTEM, 1, true))
             {
                 ItemPosCountVec dest;
-                uint8 msg = player->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, 11522, 1, NULL);
+                uint8 msg = player->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, 11522, 1, nullptr);
                 if (msg == EQUIP_ERR_OK)
                     player->StoreNewItem(dest, ITEM_SILVER_TOTEM, true);
             }
@@ -120,7 +120,7 @@ public:
             {
                 if (SwitchFactionTimer <= diff)
                 {
-                    me->setFaction(91);
+                    me->SetFaction(91);
                     isFriendly = false;
                 } else SwitchFactionTimer -= diff;
             }
@@ -318,7 +318,7 @@ public:
     {
         if (quest->GetQuestId() == Q_OOX17)
         {
-            creature->setFaction(113);
+            creature->SetFaction(113);
             creature->SetFullHealth();
             creature->SetStandState(UNIT_STAND_STATE_STAND);
             creature->RemoveUnitFlag(UNIT_FLAG_IMMUNE_TO_PC);

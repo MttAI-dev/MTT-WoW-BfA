@@ -17,7 +17,7 @@
 
 #include "RealmList.h"
 #include "BattlenetRpcErrorCodes.h"
-#include "BigNumber.h"
+#include "CryptoRandom.h"
 #include "DatabaseEnv.h"
 #include "DeadlineTimer.h"
 #include "Errors.h"
@@ -35,7 +35,7 @@
 
 RealmList::RealmList() : _updateInterval(0)
 {
-    _realmsMutex = Trinity::make_unique<boost::shared_mutex>();
+    _realmsMutex = std::make_unique<boost::shared_mutex>();
 }
 
 RealmList::~RealmList()
@@ -52,8 +52,8 @@ RealmList* RealmList::Instance()
 void RealmList::Initialize(Trinity::Asio::IoContext& ioContext, uint32 updateInterval)
 {
     _updateInterval = updateInterval;
-    _updateTimer = Trinity::make_unique<Trinity::Asio::DeadlineTimer>(ioContext);
-    _resolver = Trinity::make_unique<boost::asio::ip::tcp::resolver>(ioContext);
+    _updateTimer = std::make_unique<Trinity::Asio::DeadlineTimer>(ioContext);
+    _resolver = std::make_unique<boost::asio::ip::tcp::resolver>(ioContext);
 
     LoadBuildInfo();
     // Get the content of the realmlist table in the database
@@ -112,11 +112,11 @@ void RealmList::UpdateRealm(Realm& realm, Battlenet::RealmHandle const& id, uint
     realm.AllowedSecurityLevel = allowedSecurityLevel;
     realm.PopulationLevel = population;
     if (!realm.ExternalAddress || *realm.ExternalAddress != address)
-        realm.ExternalAddress = Trinity::make_unique<boost::asio::ip::address>(std::move(address));
+        realm.ExternalAddress = std::make_unique<boost::asio::ip::address>(std::move(address));
     if (!realm.LocalAddress || *realm.LocalAddress != localAddr)
-        realm.LocalAddress = Trinity::make_unique<boost::asio::ip::address>(std::move(localAddr));
+        realm.LocalAddress = std::make_unique<boost::asio::ip::address>(std::move(localAddr));
     if (!realm.LocalSubnetMask || *realm.LocalSubnetMask != localSubmask)
-        realm.LocalSubnetMask = Trinity::make_unique<boost::asio::ip::address>(std::move(localSubmask));
+        realm.LocalSubnetMask = std::make_unique<boost::asio::ip::address>(std::move(localSubmask));
     realm.Port = port;
 }
 
@@ -233,7 +233,7 @@ Realm const* RealmList::GetRealm(Battlenet::RealmHandle const& id) const
     if (itr != _realms.end())
         return &itr->second;
 
-    return NULL;
+    return nullptr;
 }
 
 RealmBuildInfo const* RealmList::GetBuildInfo(uint32 build) const
@@ -404,15 +404,14 @@ uint32 RealmList::JoinRealm(uint32 realmAddress, uint32 build, boost::asio::ip::
         if (compress(compressed.data() + 4, &compressedLength, reinterpret_cast<uint8 const*>(json.c_str()), uLong(json.length() + 1)) != Z_OK)
             return ERROR_UTIL_SERVER_FAILED_TO_SERIALIZE_RESPONSE;
 
-        BigNumber serverSecret;
-        serverSecret.SetRand(8 * 32);
+        std::array<uint8, 32> serverSecret = Trinity::Crypto::GetRandomBytes<32>();
 
         std::array<uint8, 64> keyData;
         memcpy(&keyData[0], clientSecret.data(), 32);
-        memcpy(&keyData[32], serverSecret.AsByteArray(32).get(), 32);
+        memcpy(&keyData[32], serverSecret.data(), 32);
 
         LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_UPD_BNET_GAME_ACCOUNT_LOGIN_INFO);
-        stmt->setString(0, ByteArrayToHexStr(keyData.data(), keyData.size()));
+        stmt->setBinary(0, keyData);
         stmt->setString(1, clientAddress.to_string());
         stmt->setUInt8(2, locale);
         stmt->setString(3, os);
@@ -429,7 +428,7 @@ uint32 RealmList::JoinRealm(uint32 realmAddress, uint32 build, boost::asio::ip::
 
         attribute = response->add_attribute();
         attribute->set_name("Param_JoinSecret");
-        attribute->mutable_value()->set_blob_value(serverSecret.AsByteArray(32).get(), 32);
+        attribute->mutable_value()->set_blob_value(serverSecret.data(), 32);
         return ERROR_OK;
     }
 

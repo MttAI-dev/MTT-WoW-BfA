@@ -120,7 +120,7 @@ namespace VMAP
     }
 
     StaticMapTree::StaticMapTree(uint32 mapID, const std::string &basePath)
-        : iMapID(mapID), iTreeValues(NULL), iNTreeValues(0), iBasePath(basePath)
+        : iMapID(mapID), iTreeValues(nullptr), iNTreeValues(0), iBasePath(basePath)
     {
         if (iBasePath.length() > 0 && iBasePath[iBasePath.length()-1] != '/' && iBasePath[iBasePath.length()-1] != '\\')
         {
@@ -243,10 +243,14 @@ namespace VMAP
         if (!result.File)
         {
             int32 parentMapId = vm->getParentMapId(mapID);
-            if (parentMapId != -1)
+            while (parentMapId != -1)
             {
                 result.Name = basePath + getTileFileName(parentMapId, tileX, tileY);
                 result.File = fopen(result.Name.c_str(), "rb");
+                if (result.File)
+                    break;
+
+                parentMapId = vm->getParentMapId(uint32(parentMapId));
             }
         }
 

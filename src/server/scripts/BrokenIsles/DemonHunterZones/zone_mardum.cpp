@@ -325,7 +325,7 @@ public:
             if (TempSummon* personalCreature = player->SummonCreature(_insideNpc, creature->GetPosition(), TEMPSUMMON_TIMED_DESPAWN, 4000, 0, true))
             {
                 float x, y, z;
-                personalCreature->GetClosePoint(x, y, z, personalCreature->GetObjectSize() / 3, 50.0f);
+                personalCreature->GetClosePoint(x, y, z, personalCreature->GetCombatReach() / 3, 50.0f);
                 personalCreature->GetMotionMaster()->MovePoint(0, x, y, z);
 
                 // TODO : personalCreature->Talk(0);
@@ -1001,7 +1001,7 @@ struct npc_allari : public ScriptedAI
 {
    npc_allari(Creature* creature) : ScriptedAI(creature) {  }
 
-    void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
+    bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
     {
         if (player->HasQuest(QUEST_CRY_HAVOC))
         {
@@ -1012,6 +1012,8 @@ struct npc_allari : public ScriptedAI
                 CloseGossipMenuFor(player);
             }
         }
+
+        return false;
     }
 };
 
@@ -1020,7 +1022,7 @@ struct npc_cyana : public ScriptedAI
 {
    npc_cyana(Creature* creature) : ScriptedAI(creature) {  }
 
-    void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
+    bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
     {
         if (player->HasQuest(QUEST_CRY_HAVOC))
         {
@@ -1031,6 +1033,8 @@ struct npc_cyana : public ScriptedAI
                 CloseGossipMenuFor(player);
             }
         }
+
+        return false;
     }
 };
 
@@ -1039,7 +1043,7 @@ struct npc_korvas : public ScriptedAI
 {
    npc_korvas(Creature* creature) : ScriptedAI(creature) {  }
 
-    void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
+    bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
     {
         if (player->HasQuest(QUEST_CRY_HAVOC))
         {
@@ -1050,6 +1054,8 @@ struct npc_korvas : public ScriptedAI
                 CloseGossipMenuFor(player);
             }
         }
+
+        return false;
     }
 };
 
@@ -1484,7 +1490,7 @@ public:
                 _events.ScheduleEvent(EVENT_TYRANNA_DIED, 0);
 
                 std::list<HostileReference*> threatList;
-                threatList = me->getThreatManager().getThreatList();
+                threatList = me->GetThreatManager().getThreatList();
                 for (std::list<HostileReference*>::const_iterator itr = threatList.begin(); itr != threatList.end(); ++itr)
                     if (Player* target = (*itr)->getTarget()->ToPlayer())
                         if (target->GetQuestStatus(38728) == QUEST_STATUS_INCOMPLETE)

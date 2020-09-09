@@ -816,7 +816,7 @@ class boss_generic_guardian : public CreatureScript
                         if (me->GetPower(POWER_ENERGY) >= me->GetMaxPower(POWER_ENERGY))
                         {
                             std::ostringstream text;
-                            text << "|cffba2200|Hspell:" << spellOverloadId << "|h[" << sSpellMgr->GetSpellInfo(spellOverloadId)->SpellName << "]|h|r";
+                            text << "|cffba2200|Hspell:" << spellOverloadId << "|h[" << sSpellMgr->GetSpellInfo(spellOverloadId, GetDifficulty())->SpellName << "]|h|r";
                             me->TextEmote(text.str().c_str(), 0, true);
                             me->CastSpell(me, spellOverloadId, false);
                             // Removing petrification
@@ -843,7 +843,7 @@ class boss_generic_guardian : public CreatureScript
                     }
                     case EVENT_REND_FLESH:
                     {
-                        if (Unit* victim = SelectTarget(SELECT_TARGET_TOPAGGRO))
+                        if (Unit* victim = SelectTarget(SELECT_TARGET_MAXTHREAT))
                             me->CastSpell(victim, SPELL_REND_FLESH, false);
 
                         events.ScheduleEvent(EVENT_REND_FLESH, urand(20000, 25000));
