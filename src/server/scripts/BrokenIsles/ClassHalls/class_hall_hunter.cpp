@@ -67,7 +67,7 @@ struct npc_snowfeather_100786 : public ScriptedAI
         }
     }
 
-    void QuestAccept(Player* player, Quest const* quest) override
+    void sQuestAccept(Player* player, Quest const* quest) override
     {
         if (quest->GetQuestId() == QUEST_NEEDS_OF_THE_HUNTERS)
         {
@@ -83,7 +83,7 @@ struct npc_grif_wildheart_100810 : public ScriptedAI
 {
     npc_grif_wildheart_100810(Creature* creature) : ScriptedAI(creature) {  }
 
-    bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
+    void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
     {
         TC_LOG_ERROR("server.worldserver", "sGossipSelect %u, %u", menuId, gossipListId);
         if (player->HasQuest(QUEST_The_Hunters_Call))
@@ -94,7 +94,6 @@ struct npc_grif_wildheart_100810 : public ScriptedAI
                 CloseGossipMenuFor(player);
             }
         }
-        return false;
     }
 };
 
@@ -102,7 +101,7 @@ struct npc_apata_highmountain_99986 : public ScriptedAI
 {
     npc_apata_highmountain_99986(Creature* creature) : ScriptedAI(creature) {  }
 
-    bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
+    void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
     {
         TC_LOG_ERROR("server.worldserver", "sGossipSelect %u, %u", menuId, gossipListId);
         if (player->HasQuest(QUEST_The_Hunters_Call))
@@ -113,7 +112,6 @@ struct npc_apata_highmountain_99986 : public ScriptedAI
                 CloseGossipMenuFor(player);
             }
         }
-        return false;
     }
 };
 
@@ -121,7 +119,7 @@ struct npc_courier_larkspur_100171 : public ScriptedAI
 {
     npc_courier_larkspur_100171(Creature* creature) : ScriptedAI(creature) {  }
 
-    bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
+    void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
     {
         TC_LOG_ERROR("server.worldserver", "sGossipSelect %u, %u", menuId, gossipListId);
         if (player->HasQuest(QUEST_The_Hunters_Call))
@@ -132,7 +130,6 @@ struct npc_courier_larkspur_100171 : public ScriptedAI
                 CloseGossipMenuFor(player);
             }
         }
-        return false;
     }
 };
 

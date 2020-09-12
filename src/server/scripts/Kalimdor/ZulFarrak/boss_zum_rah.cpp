@@ -74,7 +74,7 @@ public:
 
         void Reset() override
         {
-            me->SetFaction(ZUMRAH_FRIENDLY_FACTION); // areatrigger sets faction to enemy
+            me->setFaction(ZUMRAH_FRIENDLY_FACTION); // areatrigger sets faction to enemy
             Initialize();
         }
 

@@ -44,7 +44,7 @@ public:
 
         static std::vector<ChatCommand> commandTable =
         {
-            { "send", rbac::RBAC_PERM_COMMAND_SEND, false, nullptr, "", sendCommandTable },
+            { "send", rbac::RBAC_PERM_COMMAND_SEND, false, NULL, "", sendCommandTable },
         };
         return commandTable;
     }
@@ -59,7 +59,7 @@ public:
         if (!handler->extractPlayerTarget((char*)args, &target, &targetGuid, &targetName))
             return false;
 
-        char* tail1 = strtok(nullptr, "");
+        char* tail1 = strtok(NULL, "");
         if (!tail1)
             return false;
 
@@ -67,7 +67,7 @@ public:
         if (!msgSubject)
             return false;
 
-        char* tail2 = strtok(nullptr, "");
+        char* tail2 = strtok(NULL, "");
         if (!tail2)
             return false;
 
@@ -104,7 +104,7 @@ public:
         if (!handler->extractPlayerTarget((char*)args, &receiver, &receiverGuid, &receiverName))
             return false;
 
-        char* tail1 = strtok(nullptr, "");
+        char* tail1 = strtok(NULL, "");
         if (!tail1)
             return false;
 
@@ -112,7 +112,7 @@ public:
         if (!msgSubject)
             return false;
 
-        char* tail2 = strtok(nullptr, "");
+        char* tail2 = strtok(NULL, "");
         if (!tail2)
             return false;
 
@@ -130,17 +130,17 @@ public:
         ItemPairs items;
 
         // get all tail string
-        char* tail = strtok(nullptr, "");
+        char* tail = strtok(NULL, "");
 
         // get from tail next item str
         while (char* itemStr = strtok(tail, " "))
         {
             // and get new tail
-            tail = strtok(nullptr, "");
+            tail = strtok(NULL, "");
 
             // parse item str
             char const* itemIdStr = strtok(itemStr, ":");
-            char const* itemCountStr = strtok(nullptr, " ");
+            char const* itemCountStr = strtok(NULL, " ");
 
             uint32 itemId = atoul(itemIdStr);
             if (!itemId)
@@ -188,7 +188,7 @@ public:
 
         for (ItemPairs::const_iterator itr = items.begin(); itr != items.end(); ++itr)
         {
-            if (Item* item = Item::CreateItem(itr->first, itr->second, ItemContext::NONE, handler->GetSession() ? handler->GetSession()->GetPlayer() : nullptr))
+            if (Item* item = Item::CreateItem(itr->first, itr->second, ItemContext::NONE, handler->GetSession() ? handler->GetSession()->GetPlayer() : 0))
             {
                 item->SaveToDB(trans);              // Save to prevent being lost at next mail load. If send fails, the item will be deleted.
                 draft.AddItem(item);
@@ -213,7 +213,7 @@ public:
         if (!handler->extractPlayerTarget((char*)args, &receiver, &receiverGuid, &receiverName))
             return false;
 
-        char* tail1 = strtok(nullptr, "");
+        char* tail1 = strtok(NULL, "");
         if (!tail1)
             return false;
 
@@ -221,7 +221,7 @@ public:
         if (!msgSubject)
             return false;
 
-        char* tail2 = strtok(nullptr, "");
+        char* tail2 = strtok(NULL, "");
         if (!tail2)
             return false;
 
@@ -229,7 +229,7 @@ public:
         if (!msgText)
             return false;
 
-        char* moneyStr = strtok(nullptr, "");
+        char* moneyStr = strtok(NULL, "");
         int64 money = moneyStr ? atoll(moneyStr) : 0;
         if (money <= 0)
             return false;
@@ -261,7 +261,7 @@ public:
         if (!handler->extractPlayerTarget((char*)args, &player))
             return false;
 
-        char* msgStr = strtok(nullptr, "");
+        char* msgStr = strtok(NULL, "");
         if (!msgStr)
             return false;
 

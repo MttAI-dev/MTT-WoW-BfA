@@ -19,6 +19,7 @@
 #define TRINITY_POINTMOVEMENTGENERATOR_H
 
 #include "MovementGenerator.h"
+#include "FollowerReference.h"
 
 class Creature;
 namespace Movement
@@ -30,55 +31,56 @@ template<class T>
 class PointMovementGenerator : public MovementGeneratorMedium< T, PointMovementGenerator<T> >
 {
     public:
-explicit PointMovementGenerator(uint32 id, float x, float y, float z, bool generatePath, float speed = 0.0f, Unit const* faceTarget = nullptr, Movement::SpellEffectExtraData const* spellEffectExtraData = nullptr) : _movementId(id), _destination(x, y, z), _speed(speed), i_faceTarget(faceTarget), i_spellEffectExtra(spellEffectExtraData), _generatePath(generatePath), _recalculateSpeed(false), _interrupt(false) { }
-
-        MovementGeneratorType GetMovementGeneratorType() const override { return POINT_MOTION_TYPE; }
+        PointMovementGenerator(uint32 _id, float _x, float _y, float _z, bool _generatePath, float _speed = 0.0f, Unit const* faceTarget = nullptr,
+            Movement::SpellEffectExtraData const* spellEffectExtraData = nullptr) : id(_id),
+            i_x(_x), i_y(_y), i_z(_z), speed(_speed), i_faceTarget(faceTarget), i_spellEffectExtra(spellEffectExtraData),
+            m_generatePath(_generatePath), i_recalculateSpeed(false) { }
 
         void DoInitialize(T*);
         void DoFinalize(T*);
         void DoReset(T*);
         bool DoUpdate(T*, uint32);
 
-        void UnitSpeedChanged() override { _recalculateSpeed = true; }
-
-    private:
         void MovementInform(T*);
 
-        uint32 _movementId;
-        Position _destination;
-        float _speed;
+        void unitSpeedChanged() override { i_recalculateSpeed = true; }
+
+        MovementGeneratorType GetMovementGeneratorType() const override { return POINT_MOTION_TYPE; }
+
+        void GetDestination(float& x, float& y, float& z) const { x = i_x; y = i_y; z = i_z; }
+    private:
+        uint32 id;
+        float i_x, i_y, i_z;
+        float speed;
         Unit const* i_faceTarget;
         Movement::SpellEffectExtraData const* i_spellEffectExtra;
-        bool _generatePath;
-        bool _recalculateSpeed;
-        bool _interrupt;
+        bool m_generatePath;
+        bool i_recalculateSpeed;
 };
 
 class AssistanceMovementGenerator : public PointMovementGenerator<Creature>
 {
     public:
-        explicit AssistanceMovementGenerator(float _x, float _y, float _z) : PointMovementGenerator<Creature>(0, _x, _y, _z, true) { }
+        AssistanceMovementGenerator(float _x, float _y, float _z) :
+            PointMovementGenerator<Creature>(0, _x, _y, _z, true) { }
 
         MovementGeneratorType GetMovementGeneratorType() const override { return ASSISTANCE_MOTION_TYPE; }
         void Finalize(Unit*) override;
 };
 
+// Does almost nothing - just doesn't allows previous movegen interrupt current effect.
 class EffectMovementGenerator : public MovementGenerator
 {
     public:
-        explicit EffectMovementGenerator(uint32 id, uint32 arrivalSpellId = 0, ObjectGuid const& arrivalSpellCasterGuid = ObjectGuid::Empty, ObjectGuid const& arrivalSpellTargetGuid = ObjectGuid::Empty) :
-            _pointId(id), _arrivalSpellId(arrivalSpellId), _arrivalSpellCasterGuid(arrivalSpellCasterGuid), _arrivalSpellTargetGuid(arrivalSpellTargetGuid) { }
-
+        EffectMovementGenerator(uint32 id, uint32 arrivalSpellId = 0, ObjectGuid const& arrivalSpellCasterGuid = ObjectGuid::Empty, ObjectGuid const& arrivalSpellTargetGuid = ObjectGuid::Empty)
+            : _id(id), _arrivalSpellId(arrivalSpellId), _arrivalSpellCasterGuid(arrivalSpellCasterGuid), _arrivalSpellTargetGuid(arrivalSpellTargetGuid) { }
         void Initialize(Unit*) override { }
         void Finalize(Unit*) override;
         void Reset(Unit*) override { }
         bool Update(Unit*, uint32) override;
         MovementGeneratorType GetMovementGeneratorType() const override { return EFFECT_MOTION_TYPE; }
-
     private:
-        void MovementInform(Unit*);
-
-        uint32 _pointId;
+        uint32 _id;
         uint32 _arrivalSpellId;
         ObjectGuid _arrivalSpellCasterGuid;
         ObjectGuid _arrivalSpellTargetGuid;

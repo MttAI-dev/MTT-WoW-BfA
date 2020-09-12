@@ -143,8 +143,8 @@ class boss_liu_flameheart : public CreatureScript
                 switch (action)
                 {
                 case 0:
-                    me->SetFaction(35);
-                    me->GetThreatManager().resetAllAggro();
+                    me->setFaction(35);
+                    me->getThreatManager().resetAllAggro();
                     me->SetReactState(REACT_PASSIVE);
                     break;
                 }

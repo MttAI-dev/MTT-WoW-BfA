@@ -399,10 +399,10 @@ public:
 
         void ChargeCheck()
         {
-            Unit* target = SelectTarget(SELECT_TARGET_MAXDISTANCE, 0, 200, false);
+            Unit* target = SelectTarget(SELECT_TARGET_FARTHEST, 0, 200, false);
             if (target && (!me->IsWithinCombatRange(target, FLAME_CHARGE_DISTANCE)))
             {
-                AddThreat(target, 5000000.0f);
+                me->AddThreat(target, 5000000.0f);
                 AttackStart(target);
                 DoCast(target, SPELL_CHARGE);
                 Talk(EMOTE_AZZINOTH_GAZE);
@@ -417,10 +417,10 @@ public:
                 {
                     glaive->InterruptNonMeleeSpells(true);
                     DoCast(me, SPELL_FLAME_ENRAGE, true);
-                    ResetThreatList();
+                    DoResetThreat();
                     if (SelectTarget(SELECT_TARGET_RANDOM, 0))
                     {
-                        AddThreat(me->GetVictim(), 5000000.0f);
+                        me->AddThreat(me->GetVictim(), 5000000.0f);
                         AttackStart(me->GetVictim());
                     }
                 }
@@ -581,7 +581,7 @@ public:
             if (damage >= me->GetHealth() && done_by != me)
                 damage = 0;
             if (done_by->GetGUID() == MaievGUID)
-                AddThreat(me, -(3*(float)damage)/4); // do not let maiev tank him
+                done_by->AddThreat(me, -(3*(float)damage)/4); // do not let maiev tank him
         }
 
         void SpellHit(Unit* /*caster*/, const SpellInfo* spell) override
@@ -598,7 +598,7 @@ public:
 
         void DeleteFromThreatList(ObjectGuid TargetGUID)
         {
-            ThreatContainer::StorageType threatlist = me->GetThreatManager().getThreatList();
+            ThreatContainer::StorageType threatlist = me->getThreatManager().getThreatList();
             for (ThreatContainer::StorageType::const_iterator itr = threatlist.begin(); itr != threatlist.end(); ++itr)
             {
                 if ((*itr)->getUnitGuid() == TargetGUID)
@@ -765,7 +765,7 @@ public:
                 {
                     if (Creature* flame = me->SummonCreature(FLAME_OF_AZZINOTH, GlaivePosition[i+2], TEMPSUMMON_CORPSE_TIMED_DESPAWN, 5000))
                     {
-                        flame->SetFaction(me->GetFaction()); // Just in case the database has it as a different faction
+                        flame->setFaction(me->getFaction()); // Just in case the database has it as a different faction
                         flame->SetMeleeDamageSchool(SPELL_SCHOOL_FIRE);
                         FlameGUID[i] = flame->GetGUID(); // Record GUID in order to check if they're dead later on to move to the next phase
                         ENSURE_AI(npc_flame_of_azzinoth::flame_of_azzinothAI, flame->AI())->SetGlaiveGUID(GlaiveGUID[i]);
@@ -812,7 +812,7 @@ public:
                             GlaiveGUID[i] = Glaive->GetGUID();
                             Glaive->AddUnitFlag(UNIT_FLAG_NOT_SELECTABLE);
                             Glaive->SetDisplayId(MODEL_INVISIBLE);
-                            Glaive->SetFaction(me->GetFaction());
+                            Glaive->setFaction(me->getFaction());
                             DoCast(Glaive, SPELL_THROW_GLAIVE2);
                         }
                     }
@@ -828,7 +828,7 @@ public:
                             GlaiveGUID[i] = Glaive->GetGUID();
                             Glaive->AddUnitFlag(UNIT_FLAG_NOT_SELECTABLE);
                             Glaive->SetDisplayId(MODEL_INVISIBLE);
-                            Glaive->SetFaction(me->GetFaction());
+                            Glaive->setFaction(me->getFaction());
                             DoCast(Glaive, SPELL_THROW_GLAIVE, true);
                         }
                     }
@@ -878,7 +878,7 @@ public:
                     Timer[EVENT_FLIGHT_SEQUENCE] = 2000;
                     break;
                 case 10: // attack
-                    ResetThreatList();
+                    DoResetThreat();
                     me->RemoveUnitFlag(UnitFlags(UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE));
                     me->SetSheath(SHEATH_STATE_MELEE);
                     EnterPhase(PHASE_NORMAL_2);
@@ -915,13 +915,13 @@ public:
             switch (TransformCount)
             {
                 case 2:
-                    ResetThreatList();
+                    DoResetThreat();
                     break;
                 case 4:
                     EnterPhase(PHASE_DEMON);
                     break;
                 case 7:
-                    ResetThreatList();
+                    DoResetThreat();
                     break;
                 case 9:
                     if (!MaievGUID.IsEmpty())
@@ -1434,7 +1434,7 @@ public:
         void EnterEvadeMode(EvadeReason /*why*/) override
         {
             me->RemoveAllAuras();
-            ResetThreatList();
+            me->DeleteThreatList();
             me->CombatStop(true);
         }
 
@@ -1456,7 +1456,7 @@ public:
 
         void KillAllElites()
         {
-            ThreatContainer::StorageType const &threatList = me->GetThreatManager().getThreatList();
+            ThreatContainer::StorageType const &threatList = me->getThreatManager().getThreatList();
             std::vector<Unit*> eliteList;
             for (ThreatContainer::StorageType::const_iterator itr = threatList.begin(); itr != threatList.end(); ++itr)
             {
@@ -1556,7 +1556,7 @@ public:
             case PHASE_FIGHT_ILLIDAN:
                 if (Creature* illidan = ObjectAccessor::GetCreature(*me, IllidanGUID))
                 {
-                    AddThreat(illidan, 10000000.0f);
+                    me->AddThreat(illidan, 10000000.0f);
                     me->GetMotionMaster()->MoveChase(illidan);
                 }
                 Timer = 30000; // chain lightning
@@ -1740,9 +1740,9 @@ public:
                         if (Elite)
                         {
                             Elite->AI()->AttackStart(me);
-                            AddThreat(me, 1000000.0f);
+                            Elite->AddThreat(me, 1000000.0f);
                             AttackStart(Elite);
-                            AddThreat(Elite, 1000000.0f);
+                            me->AddThreat(Elite, 1000000.0f);
                         }
                         Timer = urand(10000, 16000);
                         if (Creature* illidan = ObjectAccessor::GetCreature(*me, IllidanGUID))
@@ -1764,11 +1764,10 @@ public:
             DoMeleeAttackIfReady();
         }
 
-        bool GossipSelect(Player* player, uint32 /*menuId*/, uint32 /*gossipListId*/) override
+        void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 /*gossipListId*/) override
         {
             CloseGossipMenuFor(player);
             EnterPhase(PHASE_CHANNEL);
-            return false;
         }
 
     private:
@@ -1828,7 +1827,7 @@ void boss_illidan_stormrage::boss_illidan_stormrageAI::JustSummoned(Creature* su
                 summon->setDeathState(JUST_DIED);
                 return;
             }
-            Unit* target = SelectTarget(SELECT_TARGET_MAXTHREAT, 0, 999, true);
+            Unit* target = SelectTarget(SELECT_TARGET_TOPAGGRO, 0, 999, true);
             if (!target || target->HasAura(SPELL_PARASITIC_SHADOWFIEND)
                 || target->HasAura(SPELL_PARASITIC_SHADOWFIEND2))
                 target = SelectTarget(SELECT_TARGET_RANDOM, 0, 999, true);
@@ -1839,7 +1838,7 @@ void boss_illidan_stormrage::boss_illidan_stormrageAI::JustSummoned(Creature* su
     case SHADOW_DEMON:
         if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 999, true)) // only on players.
         {
-            AddThreat(target, 5000000.0f);
+            summon->AddThreat(target, 5000000.0f);
             summon->AI()->AttackStart(target);
         }
         break;
@@ -1879,7 +1878,7 @@ void boss_illidan_stormrage::boss_illidan_stormrageAI::HandleTalkSequence()
         if (Creature* akama = ObjectAccessor::GetCreature(*me, AkamaGUID))
         {
             me->RemoveUnitFlag(UnitFlags(UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE));
-            AddThreat(akama, 100.0f);
+            me->AddThreat(akama, 100.0f);
             ENSURE_AI(npc_akama_illidan::npc_akama_illidanAI, akama->AI())->EnterPhase(PHASE_FIGHT_ILLIDAN);
             EnterPhase(PHASE_NORMAL);
         }
@@ -1903,7 +1902,7 @@ void boss_illidan_stormrage::boss_illidan_stormrageAI::HandleTalkSequence()
         {
             me->RemoveUnitFlag(UnitFlags(UNIT_FLAG_NON_ATTACKABLE + UNIT_FLAG_NOT_SELECTABLE));
             maiev->RemoveUnitFlag(UnitFlags(UNIT_FLAG_NON_ATTACKABLE + UNIT_FLAG_NOT_SELECTABLE));
-            AddThreat(me, 10000000.0f); // Have Maiev add a lot of threat on us so that players don't pull her off if they damage her via AOE
+            maiev->AddThreat(me, 10000000.0f); // Have Maiev add a lot of threat on us so that players don't pull her off if they damage her via AOE
             maiev->AI()->AttackStart(me); // Force Maiev to attack us.
             EnterPhase(PHASE_NORMAL_MAIEV);
         }
@@ -1922,7 +1921,7 @@ void boss_illidan_stormrage::boss_illidan_stormrageAI::HandleTalkSequence()
                 x += 10; y += 10;
                 akama->GetMotionMaster()->Clear(false);
                 // Akama->GetMotionMaster()->MoveIdle();
-                akama->UpdatePosition(x, y, z, 0.0f);
+                akama->SetPosition(x, y, z, 0.0f);
                 akama->MonsterMoveWithSpeed(x, y, z, 0); // Illidan must not die until Akama arrives.
                 akama->GetMotionMaster()->MoveChase(me);
             }
@@ -2087,7 +2086,7 @@ public:
             if (!me->EnsureVictim()->HasAura(SPELL_PARALYZE))
             {
                 TargetGUID = me->EnsureVictim()->GetGUID();
-                AddThreat(me->GetVictim(), 10000000.0f);
+                me->AddThreat(me->GetVictim(), 10000000.0f);
                 DoCastVictim(SPELL_PURPLE_BEAM, true);
                 DoCastVictim(SPELL_PARALYZE, true);
             }

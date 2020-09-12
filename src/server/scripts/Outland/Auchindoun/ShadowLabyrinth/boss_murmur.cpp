@@ -155,7 +155,16 @@ class boss_murmur : public CreatureScript
                     return;
 
                 if (!me->IsWithinMeleeRange(me->GetVictim()))
-                    me->GetThreatManager().ResetThreat(me->GetVictim());
+                {
+                    ThreatContainer::StorageType threatlist = me->getThreatManager().getThreatList();
+                    for (ThreatContainer::StorageType::const_iterator i = threatlist.begin(); i != threatlist.end(); ++i)
+                        if (Unit* target = ObjectAccessor::GetUnit(*me, (*i)->getUnitGuid()))
+                            if (me->IsWithinMeleeRange(target))
+                            {
+                                me->TauntApply(target);
+                                break;
+                            }
+                }
 
                 DoMeleeAttackIfReady();
             }
@@ -184,7 +193,7 @@ class spell_murmur_sonic_boom : public SpellScriptLoader
 
             void HandleEffect(SpellEffIndex /*effIndex*/)
             {
-                GetCaster()->CastSpell(nullptr, SPELL_SONIC_BOOM_EFFECT, true);
+                GetCaster()->CastSpell((Unit*)NULL, SPELL_SONIC_BOOM_EFFECT, true);
             }
 
             void Register() override

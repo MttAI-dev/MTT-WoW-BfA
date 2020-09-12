@@ -528,7 +528,7 @@ public:
             me->AddUnitFlag2(UNIT_FLAG2_DISABLE_TURN);
             me->AddUnitFlag(UnitFlags(UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_IMMUNE_TO_PC | UNIT_FLAG_IMMUNE_TO_NPC));
 
-            me->SetFaction(FriendlyFaction);
+            me->setFaction(FriendlyFaction);
             me->SetDisplayId(InvisibleDisplay);
 
             m_Timer = 2 * TimeConstants::IN_MILLISECONDS;
@@ -680,7 +680,7 @@ public:
             {
                 if (caster->IsAIEnabled)
                 {
-                    if (Unit* target = caster->GetAI()->SelectTarget(SelectAggroTarget::SELECT_TARGET_MAXTHREAT))
+                    if (Unit* target = caster->GetAI()->SelectTarget(SelectAggroTarget::SELECT_TARGET_TOPAGGRO))
                     {
                         caster->CastSpell(target, eBoneMawSpells::SpellCorpseBreathDamage);
                     }

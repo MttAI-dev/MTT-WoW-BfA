@@ -18,7 +18,6 @@
 #include "PlayerAI.h"
 #include "Creature.h"
 #include "Item.h"
-#include "Map.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
@@ -499,7 +498,7 @@ PlayerAI::TargetedSpell PlayerAI::VerifySpellCast(uint32 spellId, Unit* target)
     if (!knownRank)
         return {};
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(knownRank, me->GetMap()->GetDifficultyID());
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(knownRank);
     if (!spellInfo)
         return {};
 
@@ -1216,7 +1215,7 @@ void SimpleCharmedPlayerAI::UpdateAI(const uint32 diff)
         }
     }
 
-    if (charmer->IsEngaged())
+    if (charmer->IsInCombat())
     {
         Unit* target = me->GetVictim();
         if (!target || !charmer->IsValidAttackTarget(target) || target->HasBreakableByDamageCrowdControlAura())

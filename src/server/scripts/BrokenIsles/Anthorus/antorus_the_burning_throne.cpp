@@ -269,12 +269,11 @@ struct npc_lightforged_beacon_128303 : public ScriptedAI
 {
     npc_lightforged_beacon_128303(Creature* creature) : ScriptedAI(creature) { }
 
-    bool GossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId)
+    void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId)
     {
         CloseGossipMenuFor(player);
         //player->AddDelayedConversation(5000, 5743);
         player->NearTeleportTo(Position(-12634.0f, -3359.89f, 2513.82f, 1.573414f));
-        return false;
     }
 };
 
@@ -282,11 +281,10 @@ struct npc_lightforged_beacon_128304 : public ScriptedAI
 {
     npc_lightforged_beacon_128304(Creature* creature) : ScriptedAI(creature) { }
 
-    bool GossipHello(Player* player) override
+    void sGossipHello(Player* player)
     {
         CloseGossipMenuFor(player);
         player->NearTeleportTo({ -10574.6f, 8783.08f, 1871.48f, 4.71183f });
-        return false;
     }
 };
 
@@ -322,14 +320,13 @@ struct npc_lightforged_beacon_125720 : public ScriptedAI
 {
     npc_lightforged_beacon_125720(Creature* creature) : ScriptedAI(creature) { }
 
-    bool GossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId)
+    void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId)
     {
         CloseGossipMenuFor(player);
         player->RemoveAurasDueToSpell(253936);
         player->SetSpeed(UnitMoveType::MOVE_RUN, 10.0f);
         //???
         player->NearTeleportTo(Position(-10574.71f, 8754.888f, 1871.554f, 4.720208f));
-        return false;
     }
 };
 
@@ -346,7 +343,7 @@ struct npc_lightforged_warframe_127963 : public ScriptedAI
     };
     using Path01Size = std::extent<decltype(Path01)>;
 
-    bool GossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId)
+    void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId)
     {
         CloseGossipMenuFor(player);
         player->CastSpell(player, 253936, true);
@@ -361,7 +358,6 @@ struct npc_lightforged_warframe_127963 : public ScriptedAI
             player->RemoveAurasDueToSpell(253936);
             player->SetSpeed(UnitMoveType::MOVE_RUN, speed);
         });
-        return false;
     }
 };
 

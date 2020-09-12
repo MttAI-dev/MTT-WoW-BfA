@@ -19,7 +19,7 @@
 #include "Player.h"
 #include "WorldStatePackets.h"
 
-BattlegroundTVA::BattlegroundTVA(BattlegroundTemplate const* battlegroundTemplate) : Arena(battlegroundTemplate)
+BattlegroundTVA::BattlegroundTVA()
 {
     BgObjects.resize(BG_TV_OBJECT_MAX);
 }

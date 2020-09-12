@@ -232,7 +232,10 @@ class spell_saviana_conflagration_init : public SpellScriptLoader
 
             bool Validate(SpellInfo const* /*spell*/) override
             {
-                return ValidateSpellInfo({ SPELL_FLAME_BEACON, SPELL_CONFLAGRATION_2 });
+                if (!sSpellMgr->GetSpellInfo(SPELL_FLAME_BEACON)
+                    || !sSpellMgr->GetSpellInfo(SPELL_CONFLAGRATION_2))
+                    return false;
+                return true;
             }
 
             void FilterTargets(std::list<WorldObject*>& targets)

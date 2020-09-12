@@ -113,7 +113,7 @@ public:
     struct netherspite_infernalAI : public ScriptedAI
     {
         netherspite_infernalAI(Creature* creature) : ScriptedAI(creature),
-            HellfireTimer(0), CleanupTimer(0), point(nullptr) { }
+            HellfireTimer(0), CleanupTimer(0), point(NULL) { }
 
         uint32 HellfireTimer;
         uint32 CleanupTimer;
@@ -311,22 +311,23 @@ public:
 
         void EnfeebleHealthEffect()
         {
-            SpellInfo const* info = sSpellMgr->GetSpellInfo(SPELL_ENFEEBLE_EFFECT, me->GetMap()->GetDifficultyID());
+            SpellInfo const* info = sSpellMgr->GetSpellInfo(SPELL_ENFEEBLE_EFFECT);
             if (!info)
                 return;
 
-            Unit* tank = me->GetThreatManager().GetCurrentVictim();
+            ThreatContainer::StorageType const& t_list = me->getThreatManager().getThreatList();
             std::vector<Unit*> targets;
 
-            for (ThreatReference* ref : me->GetThreatManager().GetUnsortedThreatList())
-            {
-                Unit* target = ref->GetVictim();
-                if (target != tank && target->IsAlive() && target->GetTypeId() == TYPEID_PLAYER)
-                    targets.push_back(target);
-            }
+            if (t_list.empty())
+                return;
 
-            if (targets.empty())
-              return;
+            //begin + 1, so we don't target the one with the highest threat
+            ThreatContainer::StorageType::const_iterator itr = t_list.begin();
+            std::advance(itr, 1);
+            for (; itr != t_list.end(); ++itr) //store the threat list in a different container
+                if (Unit* target = ObjectAccessor::GetUnit(*me, (*itr)->getUnitGuid()))
+                    if (target->IsAlive() && target->GetTypeId() == TYPEID_PLAYER)
+                        targets.push_back(target);
 
             //cut down to size if we have more than 5 targets
             while (targets.size() > 5)
@@ -339,7 +340,7 @@ public:
                     enfeeble_targets[i] = target->GetGUID();
                     enfeeble_health[i] = target->GetHealth();
 
-                    target->CastSpell(target, SPELL_ENFEEBLE, true, nullptr, nullptr, me->GetGUID());
+                    target->CastSpell(target, SPELL_ENFEEBLE, true, 0, 0, me->GetGUID());
                     target->SetHealth(1);
                 }
         }
@@ -358,7 +359,7 @@ public:
 
         void SummonInfernal(const uint32 /*diff*/)
         {
-            InfernalPoint *point = nullptr;
+            InfernalPoint *point = NULL;
             Position pos;
             if ((me->GetMapId() != 532) || positions.empty())
                 pos = me->GetRandomNearPosition(60);
@@ -373,7 +374,7 @@ public:
             if (infernal)
             {
                 infernal->SetDisplayId(INFERNAL_MODEL_INVISIBLE);
-                infernal->SetFaction(me->GetFaction());
+                infernal->setFaction(me->getFaction());
                 if (point)
                     ENSURE_AI(netherspite_infernal::netherspite_infernalAI, infernal->AI())->point = point;
                 ENSURE_AI(netherspite_infernal::netherspite_infernalAI, infernal->AI())->malchezaar = me->GetGUID();
@@ -448,12 +449,14 @@ public:
                         if (axe)
                         {
                             axe->AddUnitFlag(UNIT_FLAG_NOT_SELECTABLE);
-                            axe->SetFaction(me->GetFaction());
+                            axe->setFaction(me->getFaction());
                             axes[i] = axe->GetGUID();
                             if (target)
                             {
                                 axe->AI()->AttackStart(target);
-                                AddThreat(target, 10000000.0f, axe);
+                                //axe->getThreatManager().tauntApply(target); //Taunt Apply and fade out does not work properly
+                                                                // So we'll use a hack to add a lot of threat to our target
+                                axe->AddThreat(target, 10000000.0f);
                             }
                         }
                     }
@@ -489,9 +492,11 @@ public:
                             if (Unit* axe = ObjectAccessor::GetUnit(*me, axes[i]))
                             {
                                 if (axe->GetVictim())
-                                    ResetThreat(axe->GetVictim(), axe);
+                                    DoModifyThreatPercent(axe->GetVictim(), -100);
                                 if (target)
-                                    AddThreat(target, 1000000.0f, axe);
+                                    axe->AddThreat(target, 1000000.0f);
+                                //axe->getThreatManager().tauntFadeOut(axe->GetVictim());
+                                //axe->getThreatManager().tauntApply(target);
                             }
                         }
                     }
@@ -522,7 +527,7 @@ public:
             {
                 if (SWPainTimer <= diff)
                 {
-                    Unit* target = nullptr;
+                    Unit* target = NULL;
                     if (phase == 1)
                         target = me->GetVictim();        // the tank
                     else                                          // anyone but the tank

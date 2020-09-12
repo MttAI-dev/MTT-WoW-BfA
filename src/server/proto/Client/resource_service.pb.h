@@ -157,10 +157,14 @@ class TC_PROTO_API ResourcesService : public ServiceBase
 
   static google::protobuf::ServiceDescriptor const* descriptor();
 
-  void CallServerMethod(uint32 token, uint32 methodId, MessageBuffer buffer) final;
+  // client methods --------------------------------------------------
+
+  void GetContentHandle(::bgs::protocol::resources::v1::ContentHandleRequest const* request, std::function<void(::bgs::protocol::ContentHandle const*)> responseCallback);
+  // server methods --------------------------------------------------
+
+  void CallServerMethod(uint32 token, uint32 methodId, MessageBuffer buffer) override final;
 
  protected:
-  // server methods --------------------------------------------------
   virtual uint32 HandleGetContentHandle(::bgs::protocol::resources::v1::ContentHandleRequest const* request, ::bgs::protocol::ContentHandle* response, std::function<void(ServiceBase*, uint32, ::google::protobuf::Message const*)>& continuation);
 
  private:

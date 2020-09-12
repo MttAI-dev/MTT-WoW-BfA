@@ -59,7 +59,7 @@ T* HashMapHolder<T>::Find(ObjectGuid guid)
     boost::shared_lock<boost::shared_mutex> lock(*GetLock());
 
     typename MapType::iterator itr = GetContainer().find(guid);
-    return (itr != GetContainer().end()) ? itr->second : nullptr;
+    return (itr != GetContainer().end()) ? itr->second : NULL;
 }
 
 template<class T>
@@ -258,7 +258,7 @@ Creature* ObjectAccessor::GetCreatureOrPetOrVehicle(WorldObject const& u, Object
     if (guid.IsCreatureOrVehicle())
         return GetCreature(u, guid);
 
-    return nullptr;
+    return NULL;
 }
 
 Player* ObjectAccessor::FindPlayer(ObjectGuid const& guid)

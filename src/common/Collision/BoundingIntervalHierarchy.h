@@ -355,7 +355,7 @@ class TC_COMMON_API BIH
             float tfar;
         };
 
-        class TC_COMMON_API BuildStats
+        class BuildStats
         {
             private:
                 int numNodes;

@@ -174,13 +174,13 @@ void CreatureGroup::AddMember(Creature* member)
 void CreatureGroup::RemoveMember(Creature* member)
 {
     if (m_leader == member)
-        m_leader = nullptr;
+        m_leader = NULL;
 
     m_members.erase(member);
-    member->SetFormation(nullptr);
+    member->SetFormation(NULL);
 }
 
-void CreatureGroup::MemberEngagingTarget(Creature* member, Unit* target)
+void CreatureGroup::MemberAttackStart(Creature* member, Unit* target)
 {
     FormationInfo* formationInfo = sFormationMgr->CreatureGroupMap[member->GetSpawnId()];
     if (!formationInfo)
@@ -200,7 +200,11 @@ void CreatureGroup::MemberEngagingTarget(Creature* member, Unit* target)
 
     for (CreatureGroupMemberType::iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
     {
+        if (m_leader) // avoid crash if leader was killed and reset.
+            TC_LOG_DEBUG("entities.unit", "GROUP ATTACK: group instance id %u calls member instid %u", m_leader->GetInstanceId(), member->GetInstanceId());
+
         Creature* other = itr->first;
+
         // Skip self
         if (other == member)
             continue;
@@ -208,8 +212,11 @@ void CreatureGroup::MemberEngagingTarget(Creature* member, Unit* target)
         if (!other->IsAlive())
             continue;
 
+        if (other->GetVictim())
+            continue;
+
         if (((other != m_leader && (groupAI & FLAG_MEMBERS_ASSIST_LEADER)) || (other == m_leader && (groupAI & FLAG_LEADER_ASSISTS_MEMBER))) && other->IsValidAttackTarget(target))
-            other->EngageWithTarget(target);
+            other->AI()->AttackStart(target);
     }
 }
 
@@ -229,7 +236,7 @@ void CreatureGroup::FormationReset(bool dismiss)
     m_Formed = !dismiss;
 }
 
-void CreatureGroup::MoveGroupTo(Position destination, bool fightMove /*= false*/)
+void CreatureGroup::MoveGroupTo(float x, float y, float z, bool fightMove /*= false*/)
 {
     if (!m_leader)
         return;
@@ -246,9 +253,9 @@ void CreatureGroup::MoveGroupTo(Position destination, bool fightMove /*= false*/
 
     for (auto itr : m_members)
     {
-        float destX = itr.first->GetPositionX() + (destination.GetPositionX() - centerX);
-        float destY = itr.first->GetPositionY() + (destination.GetPositionY() - centerY);
-        float destZ = m_leader->GetMap()->GetHeight(m_leader->GetPhaseShift(), destX, destY, destination.GetPositionZ() + 1.f, true);
+        float destX = itr.first->GetPositionX() + (x - centerX);
+        float destY = itr.first->GetPositionY() + (y - centerY);
+        float destZ = m_leader->GetMap()->GetHeight(m_leader->GetPhaseShift(), destX, destY, z + 1.f, true);
 
         if (fightMove)
             static_cast<CombatAI*>(itr.first->AI())->MoveCombat(Position(destX, destY, destZ));
@@ -257,14 +264,12 @@ void CreatureGroup::MoveGroupTo(Position destination, bool fightMove /*= false*/
     }
 }
 
-void CreatureGroup::LeaderMoveTo(Position destination, uint32 id /*= 0*/, uint32 moveType /*= 0*/, bool orientation /*= false*/)
+void CreatureGroup::LeaderMoveTo(float x, float y, float z)
 {
     //! To do: This should probably get its own movement generator or use WaypointMovementGenerator.
     //! If the leader's path is known, member's path can be plotted as well using formation offsets.
     if (!m_leader)
         return;
-
-    float x = destination.GetPositionX(), y = destination.GetPositionY(), z = destination.GetPositionZ();
 
     float pathangle = std::atan2(m_leader->GetPositionY() - y, m_leader->GetPositionX() - x);
 
@@ -292,9 +297,12 @@ void CreatureGroup::LeaderMoveTo(Position destination, uint32 id /*= 0*/, uint32
         if (!member->IsFlying())
             member->UpdateGroundPositionZ(dx, dy, dz);
 
-        Position point(dx, dy, dz, destination.GetOrientation());
+        if (member->IsWithinDist(m_leader, dist + MAX_DESYNC))
+            member->SetUnitMovementFlags(m_leader->GetUnitMovementFlags());
+        else
+            member->SetWalk(false);
 
-        member->GetMotionMaster()->MoveFormation(id, point, moveType, !member->IsWithinDist(m_leader, dist + MAX_DESYNC), orientation);
+        member->GetMotionMaster()->MovePoint(0, dx, dy, dz);
         member->SetHomePosition(dx, dy, dz, pathangle);
     }
 }

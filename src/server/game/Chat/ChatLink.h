@@ -113,7 +113,7 @@ protected:
 class TC_GAME_API AchievementChatLink : public ChatLink
 {
 public:
-    AchievementChatLink() : ChatLink(), _guid(0), _achievement(nullptr)
+    AchievementChatLink() : ChatLink(), _guid(0), _achievement(NULL)
     {
         memset(_data, 0, sizeof(_data));
     }
@@ -163,7 +163,7 @@ public:
 class TC_GAME_API GlyphChatLink : public SpellChatLink
 {
 public:
-    GlyphChatLink() : SpellChatLink(), _slotId(0), _glyph(nullptr) { }
+    GlyphChatLink() : SpellChatLink(), _slotId(0), _glyph(NULL) { }
     virtual bool Initialize(std::istringstream& iss) override;
 private:
     uint32 _slotId;

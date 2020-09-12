@@ -95,7 +95,7 @@ public:
             Initialize();
         }
 
-        bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
+        void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
         {
             if (menuId == MENU_ID_SYLVANAS && gossipListId == GOSSIP_OPTION_ID)
             {
@@ -105,8 +105,6 @@ public:
                 events.Reset();
                 events.ScheduleEvent(EVENT_INTRO_1, 1000);
             }
-
-            return false;
         }
 
         void UpdateAI(uint32 diff) override
@@ -191,7 +189,7 @@ public:
             Initialize();
         }
 
-        bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
+        void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
         {
             if (menuId == MENU_ID_JAINA && gossipListId == GOSSIP_OPTION_ID)
             {
@@ -201,8 +199,6 @@ public:
                 events.Reset();
                 events.ScheduleEvent(EVENT_INTRO_1, 1000);
             }
-
-            return false;
         }
 
         void UpdateAI(uint32 diff) override

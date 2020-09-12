@@ -547,7 +547,7 @@ public:
             if (damage >= me->GetHealth())
             {
                 std::list<HostileReference*> threatList;
-                threatList = me->GetThreatManager().getThreatList();
+                threatList = me->getThreatManager().getThreatList();
                 for (std::list<HostileReference*>::const_iterator itr = threatList.begin(); itr != threatList.end(); ++itr)
                     if (Player* target = (*itr)->getTarget()->ToPlayer())
                         if (target->GetQuestStatus(QUEST_STOP_GULDAN_H) == QUEST_STATUS_INCOMPLETE ||
@@ -875,7 +875,7 @@ public:
             if (damage >= me->GetHealth())
             {
                 std::list<HostileReference*> threatList;
-                threatList = me->GetThreatManager().getThreatList();
+                threatList = me->getThreatManager().getThreatList();
                 for (std::list<HostileReference*>::const_iterator itr = threatList.begin(); itr != threatList.end(); ++itr)
                     if (Player* target = (*itr)->getTarget()->ToPlayer())
                         if (target->GetQuestStatus(QUEST_STOP_GULDAN_H) == QUEST_STATUS_INCOMPLETE ||
@@ -1037,7 +1037,7 @@ public:
         void UpdateAI(uint32 diff)
         {
             std::list<Player*> playerList;
-            me->GetPlayerListInGrid(playerList, 10.0f);
+            go->GetPlayerListInGrid(playerList, 10.0f);
             for (Player* player : playerList)
             {
                 if (player->GetQuestStatus(39686) == QUEST_STATUS_INCOMPLETE)
@@ -1321,7 +1321,7 @@ public:
             if (damage >= me->GetHealth())
             {
                 std::list<HostileReference*> threatList;
-                threatList = me->GetThreatManager().getThreatList();
+                threatList = me->getThreatManager().getThreatList();
                 for (std::list<HostileReference*>::const_iterator itr = threatList.begin(); itr != threatList.end(); ++itr)
                     if (Player* target = (*itr)->getTarget()->ToPlayer())
                         if (target->GetQuestStatus(QUEST_FORGED_IN_FIRE_H) == QUEST_STATUS_INCOMPLETE ||

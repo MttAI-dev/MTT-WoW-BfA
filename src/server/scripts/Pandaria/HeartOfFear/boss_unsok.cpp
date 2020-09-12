@@ -1085,7 +1085,7 @@ class mob_amber_scalpel : public CreatureScript
                 targetGuid = 0;
                 me->SetReactState(REACT_PASSIVE);
                 me->SetDisplayId(43164);
-                me->SetFaction(2577);
+                me->setFaction(2577);
                 me->AddUnitFlag(UnitFlags(UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE));
                 events.ScheduleEvent(EVENT_SCALPEL_DESPAWN, 11000);
 

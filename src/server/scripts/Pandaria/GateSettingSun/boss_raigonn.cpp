@@ -132,7 +132,7 @@ class boss_raigonn : public CreatureScript
 
                     if (Unit* passenger = meVehicle->GetPassenger(1)) // Check if weak_spot already spawned
                     {
-                        passenger->SetFaction(35);
+                        passenger->setFaction(35);
                         passenger->SetFullHealth();
                         passenger->AddUnitState(UNIT_STATE_UNATTACKABLE);
                         pInstance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, passenger);
@@ -185,7 +185,7 @@ class boss_raigonn : public CreatureScript
                 if (Creature* weakPoint = pInstance->instance->GetCreature(pInstance->GetGuidData(NPC_WEAK_SPOT)))
                 {
                     instance->SendEncounterUnit(ENCOUNTER_FRAME_ENGAGE, weakPoint);
-                    weakPoint->SetFaction(16);
+                    weakPoint->setFaction(16);
                     weakPoint->ClearUnitState(UNIT_STATE_UNATTACKABLE);
                     weakPoint->RemoveUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
                 }
@@ -392,7 +392,7 @@ class boss_raigonn : public CreatureScript
                         me->SetReactState(REACT_AGGRESSIVE);
                         me->GetMotionMaster()->Clear();
 
-                        if (Unit* target = SelectTarget(SELECT_TARGET_MAXTHREAT))
+                        if (Unit* target = SelectTarget(SELECT_TARGET_TOPAGGRO))
                             AttackStart(target);
 
                         events.ScheduleEvent(EVENT_FIXATE, 30000, PHASE_VULNERABILITY);

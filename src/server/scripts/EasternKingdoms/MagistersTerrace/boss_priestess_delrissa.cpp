@@ -170,9 +170,16 @@ public:
             Talk(SAY_AGGRO);
 
             for (uint8 i = 0; i < MAX_ACTIVE_LACKEY; ++i)
+            {
                 if (Unit* pAdd = ObjectAccessor::GetUnit(*me, m_auiLackeyGUID[i]))
-                    if (!pAdd->IsEngaged())
-                        AddThreat(who, 0.0f, pAdd);
+                {
+                    if (!pAdd->GetVictim())
+                    {
+                        who->SetInCombatWith(pAdd);
+                        pAdd->AddThreat(who, 0.0f);
+                    }
+                }
+            }
 
             instance->SetBossState(DATA_DELRISSA, IN_PROGRESS);
         }
@@ -312,7 +319,7 @@ public:
 
             if (DispelTimer <= diff)
             {
-                Unit* target = nullptr;
+                Unit* target = NULL;
 
                 if (urand(0, 1))
                     target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true);
@@ -396,13 +403,25 @@ struct boss_priestess_lackey_commonAI : public ScriptedAI
             return;
 
         for (uint8 i = 0; i < MAX_ACTIVE_LACKEY; ++i)
+        {
             if (Unit* pAdd = ObjectAccessor::GetUnit(*me, m_auiLackeyGUIDs[i]))
-                if (!pAdd->IsEngaged() && pAdd != me)
-                    AddThreat(who, 0.0f, pAdd);
+            {
+                if (!pAdd->GetVictim() && pAdd != me)
+                {
+                    who->SetInCombatWith(pAdd);
+                    pAdd->AddThreat(who, 0.0f);
+                }
+            }
+        }
 
         if (Creature* pDelrissa = ObjectAccessor::GetCreature(*me, instance->GetGuidData(DATA_DELRISSA)))
-            if (pDelrissa->IsAlive() && !pDelrissa->IsEngaged())
-                AddThreat(who, 0.0f, pDelrissa);
+        {
+            if (pDelrissa->IsAlive() && !pDelrissa->GetVictim())
+            {
+                who->SetInCombatWith(pDelrissa);
+                pDelrissa->AddThreat(who, 0.0f);
+            }
+        }
     }
 
     void JustDied(Unit* /*killer*/) override
@@ -459,7 +478,7 @@ struct boss_priestess_lackey_commonAI : public ScriptedAI
 
         if (ResetThreatTimer <= diff)
         {
-            ResetThreatList();
+            DoResetThreat();
             ResetThreatTimer = urand(5000, 20000);
         } else ResetThreatTimer -= diff;
     }
@@ -531,10 +550,10 @@ public:
 
                 Unit* unit = SelectTarget(SELECT_TARGET_RANDOM, 0);
 
-                ResetThreatList();
+                DoResetThreat();
 
                 if (unit)
-                    AddThreat(unit, 1000.0f);
+                    me->AddThreat(unit, 1000.0f);
 
                 InVanish = true;
                 Vanish_Timer = 30000;
@@ -856,7 +875,7 @@ public:
             if (Blink_Timer <= diff)
             {
                 bool InMeleeRange = false;
-                ThreatContainer::StorageType const& t_list = me->GetThreatManager().getThreatList();
+                ThreatContainer::StorageType const &t_list = me->getThreatManager().getThreatList();
                 for (ThreatContainer::StorageType::const_iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
                 {
                     if (Unit* target = ObjectAccessor::GetUnit(*me, (*itr)->getUnitGuid()))
@@ -950,7 +969,7 @@ public:
             if (Intercept_Stun_Timer <= diff)
             {
                 bool InMeleeRange = false;
-                ThreatContainer::StorageType const& t_list = me->GetThreatManager().getThreatList();
+                ThreatContainer::StorageType const &t_list = me->getThreatManager().getThreatList();
                 for (ThreatContainer::StorageType::const_iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
                 {
                     if (Unit* target = ObjectAccessor::GetUnit(*me, (*itr)->getUnitGuid()))

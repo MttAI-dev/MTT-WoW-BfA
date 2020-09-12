@@ -29,6 +29,8 @@ struct TC_GAME_API Position
     Position(float x = 0, float y = 0, float z = 0, float o = 0)
         : m_positionX(x), m_positionY(y), m_positionZ(z), m_orientation(NormalizeOrientation(o)) { }
 
+    Position(Position const& loc) { Relocate(loc); }
+
     // streamer tags
     struct XY;
     struct XYZ;
@@ -241,11 +243,6 @@ public:
     }
 
     bool IsWithinBox(const Position& center, float xradius, float yradius, float zradius) const;
-
-    /*
-    search using this relation: dist2d < radius && abs(dz) < height
-    */
-    bool IsWithinDoubleVerticalCylinder(Position const* center, float radius, float height) const;
     bool HasInArc(float arcangle, Position const* pos, float border = 2.0f) const;
     bool HasInLine(Position const* pos, float objSize, float width) const;
     std::string ToString() const;
@@ -269,6 +266,9 @@ public:
 
     WorldLocation(uint32 mapId, Position const& position)
         : Position(position), m_mapId(mapId) { }
+
+    WorldLocation(WorldLocation const& loc)
+        : Position(loc), m_mapId(loc.GetMapId()) { }
 
     void WorldRelocate(WorldLocation const& loc)
     {

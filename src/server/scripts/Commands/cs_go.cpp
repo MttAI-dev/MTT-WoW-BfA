@@ -67,7 +67,7 @@ public:
 
         static std::vector<ChatCommand> commandTable =
         {
-            { "go", rbac::RBAC_PERM_COMMAND_GO, false, nullptr, "", goCommandTable },
+            { "go", rbac::RBAC_PERM_COMMAND_GO, false, NULL, "", goCommandTable },
         };
         return commandTable;
     }
@@ -102,7 +102,7 @@ public:
         {
             // Get the "creature_template.entry"
             // number or [name] Shift-click form |color|Hcreature_entry:creature_id|h[name]|h|r
-            char* tail = strtok(nullptr, "");
+            char* tail = strtok(NULL, "");
             if (!tail)
                 return false;
             char* id = handler->extractKeyFromLink(tail, "Hcreature_entry");
@@ -223,8 +223,8 @@ public:
         Player* player = handler->GetSession()->GetPlayer();
 
         char* gridX = strtok((char*)args, " ");
-        char* gridY = strtok(nullptr, " ");
-        char* id = strtok(nullptr, " ");
+        char* gridY = strtok(NULL, " ");
+        char* id = strtok(NULL, " ");
 
         if (!gridX || !gridY)
             return false;
@@ -252,7 +252,7 @@ public:
         else
             player->SaveRecallPosition();
 
-        Map* map = sMapMgr->CreateBaseMap(mapId);
+        Map const* map = sMapMgr->CreateBaseMap(mapId);
         float z = std::max(map->GetStaticHeight(PhasingHandler::GetEmptyPhaseShift(), x, y, MAX_HEIGHT), map->GetWaterLevel(PhasingHandler::GetEmptyPhaseShift(), x, y));
 
         player->TeleportTo(mapId, x, y, z, player->GetOrientation());
@@ -374,7 +374,7 @@ public:
         else
             player->SaveRecallPosition();
 
-        Map* map = sMapMgr->CreateBaseMap(mapId);
+        Map const* map = sMapMgr->CreateBaseMap(mapId);
         z = std::max(map->GetStaticHeight(PhasingHandler::GetEmptyPhaseShift(), x, y, MAX_HEIGHT), map->GetWaterLevel(PhasingHandler::GetEmptyPhaseShift(), x, y));
 
         player->TeleportTo(mapId, x, y, z, 0.0f);
@@ -480,8 +480,8 @@ public:
         Player* player = handler->GetSession()->GetPlayer();
 
         char* zoneX = strtok((char*)args, " ");
-        char* zoneY = strtok(nullptr, " ");
-        char* tail = strtok(nullptr, "");
+        char* zoneY = strtok(NULL, " ");
+        char* tail = strtok(NULL, "");
 
         char* id = handler->extractKeyFromLink(tail, "Harea");       // string or [name] Shift-click form |color|Harea:area_id|h[name]|h|r
 
@@ -510,11 +510,11 @@ public:
         AreaTableEntry const* zoneEntry = areaEntry->ParentAreaID ? sAreaTableStore.LookupEntry(areaEntry->ParentAreaID) : areaEntry;
         ASSERT(zoneEntry);
 
-        Map* map = sMapMgr->CreateBaseMap(zoneEntry->ContinentID);
+        Map const* map = sMapMgr->CreateBaseMap(zoneEntry->ContinentID);
 
         if (map->Instanceable())
         {
-            handler->PSendSysMessage(LANG_INVALID_ZONE_MAP, areaId, areaEntry->AreaName[handler->GetSessionDbcLocale()], map->GetId(), map->GetMapName());
+            handler->PSendSysMessage(LANG_INVALID_ZONE_MAP, areaId, areaEntry->AreaName->Str[handler->GetSessionDbcLocale()], map->GetId(), map->GetMapName());
             handler->SetSentErrorMessage(true);
             return false;
         }
@@ -553,10 +553,10 @@ public:
         Player* player = handler->GetSession()->GetPlayer();
 
         char* goX = strtok((char*)args, " ");
-        char* goY = strtok(nullptr, " ");
-        char* goZ = strtok(nullptr, " ");
-        char* id = strtok(nullptr, " ");
-        char* port = strtok(nullptr, " ");
+        char* goY = strtok(NULL, " ");
+        char* goZ = strtok(NULL, " ");
+        char* id = strtok(NULL, " ");
+        char* port = strtok(NULL, " ");
 
         if (!goX || !goY)
             return false;
@@ -585,7 +585,7 @@ public:
                 handler->SetSentErrorMessage(true);
                 return false;
             }
-            Map* map = sMapMgr->CreateBaseMap(mapId);
+            Map const* map = sMapMgr->CreateBaseMap(mapId);
             z = std::max(map->GetStaticHeight(PhasingHandler::GetEmptyPhaseShift(), x, y, MAX_HEIGHT), map->GetWaterLevel(PhasingHandler::GetEmptyPhaseShift(), x, y));
         }
 
@@ -645,9 +645,9 @@ public:
         Player* player = handler->GetSession()->GetPlayer();
 
         char* goX = strtok((char*)args, " ");
-        char* goY = strtok(nullptr, " ");
-        char* goZ = strtok(nullptr, " ");
-        char* port = strtok(nullptr, " ");
+        char* goY = strtok(NULL, " ");
+        char* goZ = strtok(NULL, " ");
+        char* port = strtok(NULL, " ");
 
         float x, y, z, o;
         player->GetPosition(x, y, z, o);

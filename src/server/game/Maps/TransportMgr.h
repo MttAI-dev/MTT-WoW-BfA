@@ -44,7 +44,7 @@ struct KeyFrame
 {
     explicit KeyFrame(TaxiPathNodeEntry const* node) : Index(0), Node(node), InitialOrientation(0.0f),
         DistSinceStop(-1.0f), DistUntilStop(-1.0f), DistFromPrev(-1.0f), TimeFrom(0.0f), TimeTo(0.0f),
-        Teleport(false), ArriveTime(0), DepartureTime(0), Spline(nullptr), NextDistFromPrev(0.0f), NextArriveTime(0)
+        Teleport(false), ArriveTime(0), DepartureTime(0), Spline(NULL), NextDistFromPrev(0.0f), NextArriveTime(0)
     {
     }
 
@@ -102,6 +102,8 @@ typedef std::map<uint32, TransportAnimation> TransportAnimationContainer;
 
 class TC_GAME_API TransportMgr
 {
+        friend void DB2Manager::LoadStores(std::string const&, uint32);
+
     public:
         static TransportMgr* instance();
 
@@ -125,7 +127,7 @@ class TC_GAME_API TransportMgr
             TransportTemplates::const_iterator itr = _transportTemplates.find(entry);
             if (itr != _transportTemplates.end())
                 return &itr->second;
-            return nullptr;
+            return NULL;
         }
 
         TransportAnimation const* GetTransportAnimInfo(uint32 entry) const
@@ -134,7 +136,7 @@ class TC_GAME_API TransportMgr
             if (itr != _transportAnimations.end())
                 return &itr->second;
 
-            return nullptr;
+            return NULL;
         }
 
     private:

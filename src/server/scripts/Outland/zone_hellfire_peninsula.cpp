@@ -46,6 +46,8 @@ enum Aeranas
 {
     SAY_SUMMON                  = 0,
     SAY_FREE                    = 1,
+    FACTION_HOSTILE             = 16,
+    FACTION_FRIENDLY            = 35,
     SPELL_ENVELOPING_WINDS      = 15535,
     SPELL_SHOCK                 = 12553
 };
@@ -74,7 +76,7 @@ public:
             Initialize();
 
             me->RemoveNpcFlag(UNIT_NPC_FLAG_QUESTGIVER);
-            me->SetFaction(FACTION_ORC_DRAGONMAW);
+            me->setFaction(FACTION_FRIENDLY);
 
             Talk(SAY_SUMMON);
         }
@@ -85,7 +87,7 @@ public:
             {
                 if (faction_Timer <= diff)
                 {
-                    me->SetFaction(FACTION_MONSTER);
+                    me->setFaction(FACTION_HOSTILE);
                     faction_Timer = 0;
                 } else faction_Timer -= diff;
             }
@@ -95,10 +97,10 @@ public:
 
             if (HealthBelowPct(30))
             {
-                me->SetFaction(FACTION_FRIENDLY);
+                me->setFaction(FACTION_FRIENDLY);
                 me->AddNpcFlag(UNIT_NPC_FLAG_QUESTGIVER);
                 me->RemoveAllAuras();
-                me->GetThreatManager().ClearAllThreat();
+                me->DeleteThreatList();
                 me->CombatStop(true);
                 Talk(SAY_FREE);
                 return;
@@ -275,11 +277,11 @@ public:
             summoned->AI()->AttackStart(me);
         }
 
-        void QuestAccept(Player* player, Quest const* quest) override
+        void sQuestAccept(Player* player, Quest const* quest) override
         {
             if (quest->GetQuestId() == QUEST_ROAD_TO_FALCON_WATCH)
             {
-                me->SetFaction(FACTION_FALCON_WATCH_QUEST);
+                me->setFaction(FACTION_FALCON_WATCH_QUEST);
                 npc_escortAI::Start(true, false, player->GetGUID());
             }
         }
@@ -684,7 +686,7 @@ public:
             me->RemoveUnitFlag(UNIT_FLAG_PACIFIED);
         }
 
-        bool GossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId) override
+        void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId) override
         {
             ClearGossipMenuFor(player);
             switch (gossipListId)
@@ -697,8 +699,6 @@ public:
                 default:
                     break;
             }
-
-            return false;
         }
 
         void DoAction(int32 action) override
@@ -980,7 +980,7 @@ public:
                 _events.Reset();
                 me->RestoreFaction();
                 me->RemoveAllAuras();
-                me->GetThreatManager().ClearAllThreat();
+                me->DeleteThreatList();
                 me->CombatStop(true);
                 me->AddNpcFlag(UNIT_NPC_FLAG_QUESTGIVER);
                 me->AddUnitFlag(UNIT_FLAG_IMMUNE_TO_PC);
@@ -1004,9 +1004,9 @@ public:
                     break;
                 case EVENT_ATTACK:
                     me->RemoveUnitFlag(UNIT_FLAG_IMMUNE_TO_PC);
-                    me->SetFaction(FACTION_MONSTER);
+                    me->setFaction(FACTION_HOSTILE);
                     if (Player* player = ObjectAccessor::GetPlayer(*me, _playerGUID))
-                        me->EngageWithTarget(player);
+                        me->CombatStart(player);
                     _events.ScheduleEvent(EVENT_FIREBALL, 1);
                     _events.ScheduleEvent(EVENT_FROSTNOVA, Seconds(5));
                     break;

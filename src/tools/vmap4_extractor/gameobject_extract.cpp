@@ -42,7 +42,9 @@ bool ExtractSingleModel(std::string& fname)
     std::string originalName = fname;
 
     char* name = GetPlainName((char*)fname.c_str());
-    NormalizeFileName(name, strlen(name));
+    if (fname.substr(0, 4) != "FILE")
+        FixNameCase(name, strlen(name));
+    FixNameSpaces(name, strlen(name));
 
     std::string output(szWorkDirWmo);
     output += "/";
@@ -58,17 +60,24 @@ bool ExtractSingleModel(std::string& fname)
     return mdl.ConvertToVMAPModel(output.c_str());
 }
 
-extern std::shared_ptr<CASC::Storage> CascStorage;
+extern CASC::StorageHandle CascStorage;
+
+enum ModelTypes : uint32
+{
+    MODEL_MD20 = '02DM',
+    MODEL_MD21 = '12DM',
+    MODEL_WMO  = 'MVER'
+};
 
 bool GetHeaderMagic(std::string const& fileName, uint32* magic)
 {
     *magic = 0;
-    std::unique_ptr<CASC::File> file(CascStorage->OpenFile(fileName.c_str(), CASC_LOCALE_ALL_WOW));
+    CASC::FileHandle file = CASC::OpenFile(CascStorage, fileName.c_str(), CASC_LOCALE_ALL);
     if (!file)
         return false;
 
     uint32 bytesRead = 0;
-    if (!file->ReadFile(magic, 4, &bytesRead) || bytesRead != 4)
+    if (!CASC::ReadFile(file, magic, 4, &bytesRead) || bytesRead != 4)
         return false;
 
     return true;
@@ -80,13 +89,9 @@ void ExtractGameobjectModels()
 
     DB2CascFileSource source(CascStorage, GameobjectDisplayInfoLoadInfo::Instance()->Meta->FileDataId);
     DB2FileLoader db2;
-    try
+    if (!db2.Load(&source, GameobjectDisplayInfoLoadInfo::Instance()))
     {
-        db2.Load(&source, GameobjectDisplayInfoLoadInfo::Instance());
-    }
-    catch (std::exception const& e)
-    {
-        printf("Fatal error: Invalid GameObjectDisplayInfo.db2 file format!\n%s\n", e.what());
+        printf("Fatal error: Invalid GameObjectDisplayInfo.db2 file format!\n");
         exit(1);
     }
 
@@ -120,12 +125,12 @@ void ExtractGameobjectModels()
             continue;
 
         uint8 isWmo = 0;
-        if (!memcmp(&header, "REVM", 4))
+        if (header == MODEL_WMO)
         {
             isWmo = 1;
             result = ExtractSingleWmo(fileName);
         }
-        else if (!memcmp(&header, "MD20", 4) || !memcmp(&header, "MD21", 4))
+        else if (header == MODEL_MD20 || header == MODEL_MD21)
             result = ExtractSingleModel(fileName);
         else
             ASSERT(false, "%s header: %d - %c%c%c%c", fileName.c_str(), header, (header >> 24) & 0xFF, (header >> 16) & 0xFF, (header >> 8) & 0xFF, header & 0xFF);

@@ -20,7 +20,7 @@
 
 void MySQL::Library_Init()
 {
-    mysql_library_init(-1, nullptr, nullptr);
+    mysql_library_init(-1, NULL, NULL);
 }
 
 void MySQL::Library_End()

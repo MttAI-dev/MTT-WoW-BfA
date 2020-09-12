@@ -17,7 +17,7 @@
 
 #include "BattlegroundBFG.h"
 
-BattlegroundBFG::BattlegroundBFG(BattlegroundTemplate const* battlegroundTemplate) : Battleground(battlegroundTemplate)
+BattlegroundBFG::BattlegroundBFG()
 {
 }
 

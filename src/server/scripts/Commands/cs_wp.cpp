@@ -59,8 +59,8 @@ public:
         };
         static std::vector<ChatCommand> commandTable =
         {
-            { "wp",         rbac::RBAC_PERM_COMMAND_WP, false, nullptr, "", wpCommandTable },
-            { "script_wp",  rbac::RBAC_PERM_COMMAND_WP, false, nullptr, "", scriptWpCommandTable },
+            { "wp",         rbac::RBAC_PERM_COMMAND_WP, false, NULL, "", wpCommandTable },
+            { "script_wp",  rbac::RBAC_PERM_COMMAND_WP, false, NULL, "", scriptWpCommandTable },
         };
         return commandTable;
     }
@@ -88,7 +88,7 @@ public:
     static bool HandleWpAddCommand(ChatHandler* handler, const char* args)
     {
         // optional
-        char* path_number = nullptr;
+        char* path_number = NULL;
         uint32 pathid = 0;
 
         if (*args)
@@ -154,7 +154,7 @@ public:
             return false;
 
         // optional
-        char* path_number = nullptr;
+        char* path_number = NULL;
 
         if (*args)
             path_number = strtok((char*)args, " ");
@@ -248,7 +248,7 @@ public:
     {
 
         Creature* target = handler->getSelectedCreature();
-        WorldDatabasePreparedStatement* stmt = nullptr;
+        WorldDatabasePreparedStatement* stmt = NULL;
 
         if (!target)
         {
@@ -296,13 +296,13 @@ public:
 
         char* show_str = strtok((char*)args, " ");
         std::string show = show_str;
-        WorldDatabasePreparedStatement* stmt = nullptr;
+        WorldDatabasePreparedStatement* stmt = NULL;
 
         // Check
         if ((show != "add") && (show != "mod") && (show != "del") && (show != "listid"))
             return false;
 
-        char* arg_id = strtok(nullptr, " ");
+        char* arg_id = strtok(NULL, " ");
         uint32 id = 0;
 
         if (show == "add")
@@ -431,7 +431,7 @@ public:
                 return true;
             }
 
-            char* arg_2 = strtok(nullptr, " ");
+            char* arg_2 = strtok(NULL, " ");
 
             if (!arg_2)
             {
@@ -451,7 +451,7 @@ public:
 
             char* arg_3;
             std::string arg_str_2 = arg_2;
-            arg_3 = strtok(nullptr, " ");
+            arg_3 = strtok(NULL, " ");
 
             if (!arg_3)
             {
@@ -569,7 +569,7 @@ public:
         }
 
         // Next arg is: <PATHID> <WPNUM> <ARGUMENT>
-        char* arg_str = nullptr;
+        char* arg_str = NULL;
 
         // Did user provide a GUID
         // or did the user select a creature?
@@ -577,7 +577,7 @@ public:
         uint32 pathid = 0;
         uint32 point = 0;
         Creature* target = handler->getSelectedCreature();
-        WorldDatabasePreparedStatement* stmt = nullptr;
+        WorldDatabasePreparedStatement* stmt = NULL;
 
         // User did select a visual waypoint?
         if (!target || target->GetEntry() != VISUAL_WAYPOINT)
@@ -628,10 +628,10 @@ public:
 
         // We have the waypoint number and the GUID of the "master npc"
         // Text is enclosed in "<>", all other arguments not
-        arg_str = strtok((char*)nullptr, " ");
+        arg_str = strtok((char*)NULL, " ");
 
         // Check for argument
-        if (show != "del" && show != "move" && arg_str == nullptr)
+        if (show != "del" && show != "move" && arg_str == NULL)
         {
             handler->PSendSysMessage(LANG_WAYPOINT_ARGUMENTREQ, show_str);
             return false;
@@ -709,7 +709,7 @@ public:
 
         const char *text = arg_str;
 
-        if (text == nullptr)
+        if (text == 0)
         {
             // show_str check for present in list of correct values, no sql injection possible
             WorldDatabase.PExecute("UPDATE waypoint_data SET %s=NULL WHERE id='%u' AND point='%u'", show_str, pathid, point); // Query can't be a prepared statement
@@ -737,11 +737,11 @@ public:
             return false;
 
         // second arg: GUID (optional, if a creature is selected)
-        char* guid_str = strtok((char*)nullptr, " ");
+        char* guid_str = strtok((char*)NULL, " ");
 
         uint32 pathid = 0;
         Creature* target = handler->getSelectedCreature();
-        WorldDatabasePreparedStatement* stmt = nullptr;
+        WorldDatabasePreparedStatement* stmt = NULL;
 
         // Did player provide a PathID?
 

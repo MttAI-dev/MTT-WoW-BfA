@@ -84,17 +84,11 @@ class spell_trick: public SpellScriptLoader
             PrepareSpellScript(spell_trick_SpellScript);
             bool Validate(SpellInfo const* /*spellEntry*/) override
             {
-                return ValidateSpellInfo({
-                    SPELL_PIRATE_COSTUME_MALE,
-                    SPELL_PIRATE_COSTUME_FEMALE,
-                    SPELL_NINJA_COSTUME_MALE,
-                    SPELL_NINJA_COSTUME_FEMALE,
-                    SPELL_LEPER_GNOME_COSTUME_MALE,
-                    SPELL_LEPER_GNOME_COSTUME_FEMALE,
-                    SPELL_SKELETON_COSTUME,
-                    SPELL_GHOST_COSTUME_MALE,
-                    SPELL_TRICK_BUFF,
-                });
+                if (!sSpellMgr->GetSpellInfo(SPELL_PIRATE_COSTUME_MALE) || !sSpellMgr->GetSpellInfo(SPELL_PIRATE_COSTUME_FEMALE) || !sSpellMgr->GetSpellInfo(SPELL_NINJA_COSTUME_MALE)
+                    || !sSpellMgr->GetSpellInfo(SPELL_NINJA_COSTUME_FEMALE) || !sSpellMgr->GetSpellInfo(SPELL_LEPER_GNOME_COSTUME_MALE) || !sSpellMgr->GetSpellInfo(SPELL_LEPER_GNOME_COSTUME_FEMALE)
+                    || !sSpellMgr->GetSpellInfo(SPELL_SKELETON_COSTUME) || !sSpellMgr->GetSpellInfo(SPELL_GHOST_COSTUME_MALE) || !sSpellMgr->GetSpellInfo(SPELL_GHOST_COSTUME_FEMALE) || !sSpellMgr->GetSpellInfo(SPELL_TRICK_BUFF))
+                    return false;
+                return true;
             }
 
             void HandleScript(SpellEffIndex /*effIndex*/)
@@ -163,11 +157,9 @@ class spell_trick_or_treat: public SpellScriptLoader
 
             bool Validate(SpellInfo const* /*spellEntry*/) override
             {
-                return ValidateSpellInfo({
-                    SPELL_TRICK,
-                    SPELL_TREAT,
-                    SPELL_TRICKED_OR_TREATED,
-                });
+                if (!sSpellMgr->GetSpellInfo(SPELL_TRICK) || !sSpellMgr->GetSpellInfo(SPELL_TREAT) || !sSpellMgr->GetSpellInfo(SPELL_TRICKED_OR_TREATED))
+                    return false;
+                return true;
             }
 
             void HandleScript(SpellEffIndex /*effIndex*/)
@@ -203,11 +195,13 @@ class spell_tricky_treat: public SpellScriptLoader
 
             bool Validate(SpellInfo const* /*spellEntry*/) override
             {
-                return ValidateSpellInfo({
-                    SPELL_TRICKY_TREAT_SPEED,
-                    SPELL_TRICKY_TREAT_TRIGGER,
-                    SPELL_UPSET_TUMMY,
-                });
+                if (!sSpellMgr->GetSpellInfo(SPELL_TRICKY_TREAT_SPEED))
+                    return false;
+                if (!sSpellMgr->GetSpellInfo(SPELL_TRICKY_TREAT_TRIGGER))
+                    return false;
+                if (!sSpellMgr->GetSpellInfo(SPELL_UPSET_TUMMY))
+                    return false;
+                return true;
             }
 
             void HandleScript(SpellEffIndex /*effIndex*/)

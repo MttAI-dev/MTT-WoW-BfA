@@ -490,7 +490,7 @@ public:
 
             if (m_Events.ExecuteEvent() == eDatas::EventBurningBody)
             {
-                if (Unit* target = SelectTarget(SELECT_TARGET_MAXTHREAT))
+                if (Unit* target = SelectTarget(SELECT_TARGET_TOPAGGRO))
                     me->AddAura(eDatas::SpellBurningBody, target);
                 m_Events.ScheduleEvent(eDatas::EventBurningBody, 20000);
             }

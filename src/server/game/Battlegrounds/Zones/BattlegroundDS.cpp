@@ -22,7 +22,7 @@
 #include "Random.h"
 #include "WorldStatePackets.h"
 
-BattlegroundDS::BattlegroundDS(BattlegroundTemplate const* battlegroundTemplate) : Arena(battlegroundTemplate)
+BattlegroundDS::BattlegroundDS()
 {
     BgObjects.resize(BG_DS_OBJECT_MAX);
     BgCreatures.resize(BG_DS_NPC_MAX);

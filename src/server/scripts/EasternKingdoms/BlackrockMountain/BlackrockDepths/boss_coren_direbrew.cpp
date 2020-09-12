@@ -126,10 +126,10 @@ public:
     {
         boss_coren_direbrewAI(Creature* creature) : BossAI(creature, DATA_COREN) { }
 
-        bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
+        void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
         {
             if (menuId != GOSSIP_ID)
-                return false;
+                return;
 
             if (gossipListId == GOSSIP_OPTION_FIGHT)
             {
@@ -138,15 +138,13 @@ public:
             }
             else if (gossipListId == GOSSIP_OPTION_APOLOGIZE)
                 CloseGossipMenuFor(player);
-
-            return false;
         }
 
         void Reset() override
         {
             _Reset();
             me->AddUnitFlag(UNIT_FLAG_IMMUNE_TO_PC);
-            me->SetFaction(COREN_DIREBREW_FACTION_FRIEND);
+            me->setFaction(COREN_DIREBREW_FACTION_FRIEND);
             events.SetPhase(PHASE_ALL);
 
             for (uint8 i = 0; i < MAX_ANTAGONISTS; ++i)
@@ -169,7 +167,7 @@ public:
             {
                 events.SetPhase(PHASE_ONE);
                 me->RemoveUnitFlag(UNIT_FLAG_IMMUNE_TO_PC);
-                me->SetFaction(COREN_DIREBREW_FACTION_HOSTILE);
+                me->setFaction(COREN_DIREBREW_FACTION_HOSTILE);
                 me->SetInCombatWithZone();
 
                 EntryCheckPredicate pred(NPC_ANTAGONIST);
@@ -324,7 +322,7 @@ public:
                 })
                 .Schedule(Seconds(2), [this](TaskContext mugChuck)
                 {
-                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 0.0f, false, true, -SPELL_HAS_DARK_BREWMAIDENS_BREW))
+                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 0.0f, false, -SPELL_HAS_DARK_BREWMAIDENS_BREW))
                         DoCast(target, SPELL_CHUCK_MUG);
                     mugChuck.Repeat(Seconds(4));
                 });
@@ -360,7 +358,7 @@ public:
 
         void Reset() override
         {
-            me->SetFaction(COREN_DIREBREW_FACTION_HOSTILE);
+            me->setFaction(COREN_DIREBREW_FACTION_HOSTILE);
             DoCastAOE(SPELL_MOLE_MACHINE_EMERGE, true);
             me->SetInCombatWithZone();
         }
@@ -402,7 +400,7 @@ public:
                     break;
                 case ACTION_ANTAGONIST_HOSTILE:
                     me->RemoveUnitFlag(UNIT_FLAG_IMMUNE_TO_PC);
-                    me->SetFaction(COREN_DIREBREW_FACTION_HOSTILE);
+                    me->setFaction(COREN_DIREBREW_FACTION_HOSTILE);
                     me->SetInCombatWithZone();
                     break;
                 default:
@@ -434,16 +432,16 @@ public:
 
         void Reset() override
         {
-            me->SetLootState(GO_READY);
+            go->SetLootState(GO_READY);
             _scheduler
                 .Schedule(Seconds(1), [this](TaskContext /*context*/)
                 {
-                    me->UseDoorOrButton(8);
-                    me->CastSpell(nullptr, SPELL_MOLE_MACHINE_EMERGE, true);
+                    go->UseDoorOrButton(8);
+                    go->CastSpell((Unit*)nullptr, SPELL_MOLE_MACHINE_EMERGE, true);
                 })
                 .Schedule(Seconds(4), [this](TaskContext /*context*/)
                 {
-                    if (GameObject* trap = me->FindNearestGameObject(GO_MOLE_MACHINE_TRAP, 3.0f))
+                    if (GameObject* trap = go->FindNearestGameObject(GO_MOLE_MACHINE_TRAP, 3.0f))
                     {
                         trap->SetLootState(GO_ACTIVATED);
                         trap->UseDoorOrButton();
@@ -670,7 +668,7 @@ class spell_barreled_control_aura : public SpellScriptLoader
             void PeriodicTick(AuraEffect const* /*aurEff*/)
             {
                 PreventDefaultAction();
-                GetTarget()->CastSpell(nullptr, SPELL_BARRELED, true);
+                GetTarget()->CastSpell((Unit*)nullptr, SPELL_BARRELED, true);
             }
 
             void Register() override

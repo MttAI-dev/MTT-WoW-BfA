@@ -512,7 +512,9 @@ public:
 
         bool Validate(SpellInfo const* /*spellInfo*/) override
         {
-            return ValidateSpellInfo({ SPELL_ARCANE_SEEPAGE });
+            if (!sSpellMgr->GetSpellInfo(SPELL_ARCANE_SEEPAGE))
+                return false;
+            return true;
         }
 
         void HandleEffectProc(AuraEffect const* /*aurEff*/, ProcEventInfo& /*eventInfo*/)
@@ -544,8 +546,8 @@ public:
 
         void OnUnitEnter(Unit* unit) override
         {
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(SPELL_ARCANE_SEEPAGE_DMG);
             Unit* caster = at->GetCaster();
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(SPELL_ARCANE_SEEPAGE_DMG, caster->GetMap()->GetDifficultyID());
             if (!caster || !unit || !spellInfo)
                 return;
 

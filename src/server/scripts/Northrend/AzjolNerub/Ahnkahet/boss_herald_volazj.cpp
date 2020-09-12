@@ -131,7 +131,7 @@ public:
                 // phase the player
                 target->CastSpell(target, SPELL_INSANITY_TARGET + insanityHandled, true);
 
-                SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(SPELL_INSANITY_TARGET + insanityHandled, GetDifficulty());
+                SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(SPELL_INSANITY_TARGET + insanityHandled);
                 if (!spellInfo)
                     return;
 

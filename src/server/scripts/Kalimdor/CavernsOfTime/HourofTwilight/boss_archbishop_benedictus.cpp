@@ -323,7 +323,7 @@ public:
                         break;
                     case EVENT_START_BENEDICTUS:
                         intro = false;
-                        me->SetFaction(14);
+                        me->setFaction(14);
                         break;
                     case EVENT_SMITE:
                         if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))

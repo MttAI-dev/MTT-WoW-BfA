@@ -84,8 +84,7 @@ namespace WorldPackets
             void Read() override;
 
             WhoRequest Request;
-            uint32 RequestID = 0;
-            Array<int32, 10> Areas;
+            std::vector<int32> Areas;
         };
 
         struct WhoEntry
@@ -110,7 +109,6 @@ namespace WorldPackets
 
             WorldPacket const* Write() override;
 
-            uint32 RequestID = 0;
             WhoResponse Response;
         };
     }

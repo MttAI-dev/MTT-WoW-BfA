@@ -63,7 +63,7 @@ class TC_GAME_API WaypointMgr
             if (itr != _waypointStore.end())
                 return &itr->second;
 
-            return nullptr;
+            return NULL;
         }
 
     private:

@@ -20,7 +20,7 @@
 #include "Player.h"
 #include "WorldStatePackets.h"
 
-BattlegroundNA::BattlegroundNA(BattlegroundTemplate const* battlegroundTemplate) : Arena(battlegroundTemplate)
+BattlegroundNA::BattlegroundNA()
 {
     BgObjects.resize(BG_NA_OBJECT_MAX);
 }

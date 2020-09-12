@@ -19,7 +19,7 @@
 #define PhaseShift_h__
 
 #include "Define.h"
-#include "EnumFlag.h"
+#include "EnumClassFlag.h"
 #include "ObjectGuid.h"
 #include <boost/container/flat_set.hpp>
 #include <map>
@@ -48,9 +48,6 @@ enum class PhaseFlags : uint16
     Personal    = 0x2
 };
 
-DEFINE_ENUM_FLAG(PhaseShiftFlags);
-DEFINE_ENUM_FLAG(PhaseFlags);
-
 class TC_GAME_API PhaseShift
 {
 public:
@@ -60,7 +57,7 @@ public:
             : Id(id), Flags(flags), References(0), AreaConditions(conditions) { }
 
         uint16 Id;
-        EnumFlag<PhaseFlags> Flags;
+        EnumClassFlag<PhaseFlags> Flags;
         int32 References;
         std::vector<Condition*> const* AreaConditions;
         bool operator<(PhaseRef const& right) const { return Id < right.Id; }
@@ -110,7 +107,7 @@ public:
 protected:
     friend class PhasingHandler;
 
-    EnumFlag<PhaseShiftFlags> Flags;
+    EnumClassFlag<PhaseShiftFlags> Flags;
     ObjectGuid PersonalGuid;
     PhaseContainer Phases;
     VisibleMapIdContainer VisibleMapIds;

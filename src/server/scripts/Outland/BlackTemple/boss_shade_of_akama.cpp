@@ -384,7 +384,7 @@ public:
         void Reset() override
         {
             Initialize();
-            me->SetFaction(ASHTONGUE_FACTION_FRIEND);
+            me->setFaction(ASHTONGUE_FACTION_FRIEND);
             DoCastSelf(SPELL_STEALTH);
 
             if (_instance->GetBossState(DATA_SHADE_OF_AKAMA) != DONE)
@@ -430,7 +430,7 @@ public:
             {
                 _isInCombat = false;
                 me->CombatStop(true);
-                me->SetFaction(ASHTONGUE_FACTION_FRIEND);
+                me->setFaction(ASHTONGUE_FACTION_FRIEND);
                 me->SetWalk(true);
                 _events.Reset();
                 me->GetMotionMaster()->MovePoint(AKAMA_INTRO_WAYPOINT, AkamaWP[1]);
@@ -484,7 +484,7 @@ public:
                     case EVENT_SHADE_CHANNEL:
                         me->SetFacingTo(FACE_THE_PLATFORM);
                         DoCastSelf(SPELL_AKAMA_SOUL_CHANNEL);
-                        me->SetFaction(AKAMA_FACTION_COMBAT);
+                        me->setFaction(AKAMA_FACTION_COMBAT);
                         _events.ScheduleEvent(EVENT_FIXATE, Seconds(5));
                         break;
                     case EVENT_FIXATE:
@@ -532,7 +532,7 @@ public:
                 }
             }
 
-            if (me->GetFaction() == AKAMA_FACTION_COMBAT)
+            if (me->getFaction() == AKAMA_FACTION_COMBAT)
             {
                 if (!UpdateVictim())
                     return;
@@ -550,15 +550,13 @@ public:
                     shade->AI()->EnterEvadeMode(EVADE_REASON_OTHER);
         }
 
-        bool GossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId) override
+        void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId) override
         {
             if (gossipListId == 0)
             {
                 CloseGossipMenuFor(player);
                 _events.ScheduleEvent(EVENT_SHADE_START, Milliseconds(500));
             }
-
-            return false;
         }
 
     private:
@@ -1172,7 +1170,7 @@ public:
                     Talk(SAY_BROKEN_SPECIAL);
                     break;
                 case ACTION_BROKEN_HAIL:
-                    me->SetFaction(ASHTONGUE_FACTION_FRIEND);
+                    me->setFaction(ASHTONGUE_FACTION_FRIEND);
                     Talk(SAY_BROKEN_HAIL);
                     break;
                 case ACTION_BROKEN_EMOTE:

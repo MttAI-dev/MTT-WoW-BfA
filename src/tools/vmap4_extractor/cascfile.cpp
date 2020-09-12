@@ -19,13 +19,13 @@
 #include <CascLib.h>
 #include <cstdio>
 
-CASCFile::CASCFile(std::shared_ptr<CASC::Storage const> casc, const char* filename, bool warnNoExist /*= true*/) :
+CASCFile::CASCFile(CASC::StorageHandle const& casc, const char* filename, bool warnNoExist /*= true*/) :
     eof(false),
     buffer(nullptr),
     pointer(0),
     size(0)
 {
-    std::unique_ptr<CASC::File> file(casc->OpenFile(filename, CASC_LOCALE_ALL_WOW, false));
+    CASC::FileHandle file = CASC::OpenFile(casc, filename, CASC_LOCALE_ALL, false);
     if (!file)
     {
         if (warnNoExist || GetLastError() != ERROR_FILE_NOT_FOUND)
@@ -34,16 +34,16 @@ CASCFile::CASCFile(std::shared_ptr<CASC::Storage const> casc, const char* filena
         return;
     }
 
-    init(file.get(), filename);
+    init(file, filename);
 }
 
-CASCFile::CASCFile(std::shared_ptr<CASC::Storage const> casc, uint32 fileDataId, std::string const& description, bool warnNoExist /*= true*/) :
+CASCFile::CASCFile(CASC::StorageHandle const& casc, uint32 fileDataId, std::string const& description, bool warnNoExist /*= true*/) :
     eof(false),
     buffer(nullptr),
     pointer(0),
     size(0)
 {
-    std::unique_ptr<CASC::File> file(casc->OpenFile(fileDataId, CASC_LOCALE_ALL_WOW, false));
+    CASC::FileHandle file = CASC::OpenFile(casc, fileDataId, CASC_LOCALE_ALL, false);
     if (!file)
     {
         if (warnNoExist || GetLastError() != ERROR_FILE_NOT_FOUND)
@@ -52,12 +52,12 @@ CASCFile::CASCFile(std::shared_ptr<CASC::Storage const> casc, uint32 fileDataId,
         return;
     }
 
-    init(file.get(), description.c_str());
+    init(file, description.c_str());
 }
 
-void CASCFile::init(CASC::File* file, const char* description)
+void CASCFile::init(CASC::FileHandle const& file, const char* description)
 {
-    int64 fileSize = file->GetSize();
+    int64 fileSize = CASC::GetFileSize(file);
     if (fileSize == -1)
     {
         fprintf(stderr, "Can't open %s, failed to get size: %s!\n", description, CASC::HumanReadableCASCError(GetLastError()));
@@ -69,7 +69,7 @@ void CASCFile::init(CASC::File* file, const char* description)
 
     uint32 read = 0;
     buffer = new char[size];
-    if (!file->ReadFile(buffer, size, &read) || size != read)
+    if (!CASC::ReadFile(file, buffer, size, &read) || size != read)
     {
         fprintf(stderr, "Can't read %s, size=%u read=%u: %s\n", description, uint32(size), uint32(read), CASC::HumanReadableCASCError(GetLastError()));
         eof = true;
@@ -111,6 +111,6 @@ void CASCFile::seekRelative(int offset)
 void CASCFile::close()
 {
     delete[] buffer;
-    buffer = nullptr;
+    buffer = 0;
     eof = true;
 }

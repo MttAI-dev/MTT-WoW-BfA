@@ -51,7 +51,7 @@ public:
 
         static std::vector<ChatCommand> learnAllCommandTable =
         {
-            { "my",      rbac::RBAC_PERM_COMMAND_LEARN_ALL_MY,      false, nullptr,                       "", learnAllMyCommandTable },
+            { "my",      rbac::RBAC_PERM_COMMAND_LEARN_ALL_MY,      false, NULL,                          "", learnAllMyCommandTable },
             { "gm",      rbac::RBAC_PERM_COMMAND_LEARN_ALL_GM,      false, &HandleLearnAllGMCommand,      "" },
             { "crafts",  rbac::RBAC_PERM_COMMAND_LEARN_ALL_CRAFTS,  false, &HandleLearnAllCraftsCommand,  "" },
             { "default", rbac::RBAC_PERM_COMMAND_LEARN_ALL_DEFAULT, false, &HandleLearnAllDefaultCommand, "" },
@@ -61,13 +61,13 @@ public:
 
         static std::vector<ChatCommand> learnCommandTable =
         {
-            { "all", rbac::RBAC_PERM_COMMAND_LEARN_ALL, false, nullptr,             "", learnAllCommandTable },
+            { "all", rbac::RBAC_PERM_COMMAND_LEARN_ALL, false, NULL,                "", learnAllCommandTable },
             { "",    rbac::RBAC_PERM_COMMAND_LEARN,     false, &HandleLearnCommand, "" },
         };
 
         static std::vector<ChatCommand> commandTable =
         {
-            { "learn",   rbac::RBAC_PERM_COMMAND_LEARN,   false, nullptr,               "", learnCommandTable },
+            { "learn",   rbac::RBAC_PERM_COMMAND_LEARN,   false, NULL,                  "", learnCommandTable },
             { "unlearn", rbac::RBAC_PERM_COMMAND_UNLEARN, false, &HandleUnLearnCommand, "" },
         };
         return commandTable;
@@ -86,13 +86,13 @@ public:
 
         // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
         uint32 spell = handler->extractSpellIdFromLink((char*)args);
-        if (!spell || !sSpellMgr->GetSpellInfo(spell, DIFFICULTY_NONE))
+        if (!spell || !sSpellMgr->GetSpellInfo(spell))
             return false;
 
-        char const* all = strtok(nullptr, " ");
+        char const* all = strtok(NULL, " ");
         bool allRanks = all ? (strncmp(all, "all", strlen(all)) == 0) : false;
 
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spell, DIFFICULTY_NONE);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spell);
         if (!spellInfo || !SpellMgr::IsSpellValid(spellInfo, handler->GetSession()->GetPlayer()))
         {
             handler->PSendSysMessage(LANG_COMMAND_SPELL_BROKEN, spell);
@@ -120,13 +120,16 @@ public:
 
     static bool HandleLearnAllGMCommand(ChatHandler* handler, char const* /*args*/)
     {
-        for (std::pair<uint32 const, SkillLineAbilityEntry const*> skillSpell : Trinity::Containers::MakeIteratorPair(sSpellMgr->GetSkillLineAbilityMapBounds(SKILL_INTERNAL)))
+        for (uint32 i = 0; i < sSpellMgr->GetSpellInfoStoreSize(); ++i)
         {
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(skillSpell.second->Spell, DIFFICULTY_NONE);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(i);
             if (!spellInfo || !SpellMgr::IsSpellValid(spellInfo, handler->GetSession()->GetPlayer(), false))
                 continue;
 
-            handler->GetSession()->GetPlayer()->LearnSpell(skillSpell.second->Spell, false);
+            if (!spellInfo->IsAbilityOfSkillType(SKILL_INTERNAL))
+                continue;
+
+            handler->GetSession()->GetPlayer()->LearnSpell(i, false);
         }
 
         handler->SendSysMessage(LANG_LEARNING_GM_SKILLS);
@@ -153,7 +156,7 @@ public:
             if (!entry)
                 continue;
 
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Spell, DIFFICULTY_NONE);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Spell);
             if (!spellInfo)
                 continue;
 
@@ -194,7 +197,7 @@ public:
             if (playerClass != talentInfo->ClassID)
                 continue;
 
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(talentInfo->SpellID, DIFFICULTY_NONE);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(talentInfo->SpellID);
             if (!spellInfo || !SpellMgr::IsSpellValid(spellInfo, handler->GetSession()->GetPlayer(), false))
                 continue;
 
@@ -370,20 +373,20 @@ public:
                 !skillInfo->CanLink)                            // only prof with recipes have set
                 continue;
 
-            LocaleConstant locale = handler->GetSessionDbcLocale();
-            name = skillInfo->DisplayName[locale];
+            int locale = handler->GetSessionDbcLocale();
+            name = skillInfo->DisplayName->Str[locale];
             if (name.empty())
                 continue;
 
             if (!Utf8FitTo(name, namePart))
             {
-                locale = LOCALE_enUS;
-                for (; locale < TOTAL_LOCALES; locale = LocaleConstant(locale + 1))
+                locale = 0;
+                for (; locale < TOTAL_LOCALES; ++locale)
                 {
                     if (locale == handler->GetSessionDbcLocale())
                         continue;
 
-                    name = skillInfo->DisplayName[locale];
+                    name = skillInfo->DisplayName->Str[locale];
                     if (name.empty())
                         continue;
 
@@ -436,7 +439,7 @@ public:
             if (skillLine->ClassMask && (skillLine->ClassMask & classmask) == 0)
                 continue;
 
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(skillLine->Spell, DIFFICULTY_NONE);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(skillLine->Spell);
             if (!spellInfo || !SpellMgr::IsSpellValid(spellInfo, player, false))
                 continue;
 
@@ -454,7 +457,7 @@ public:
         if (!spellId)
             return false;
 
-        char const* allStr = strtok(nullptr, " ");
+        char const* allStr = strtok(NULL, " ");
         bool allRanks = allStr ? (strncmp(allStr, "all", strlen(allStr)) == 0) : false;
 
         Player* target = handler->getSelectedPlayer();

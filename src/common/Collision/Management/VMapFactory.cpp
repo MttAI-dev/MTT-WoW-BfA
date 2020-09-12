@@ -20,7 +20,7 @@
 
 namespace VMAP
 {
-    IVMapManager* gVMapManager = nullptr;
+    IVMapManager* gVMapManager = NULL;
 
     //===============================================
     // just return the instance
@@ -36,6 +36,6 @@ namespace VMAP
     void VMapFactory::clear()
     {
         delete gVMapManager;
-        gVMapManager = nullptr;
+        gVMapManager = NULL;
     }
 }

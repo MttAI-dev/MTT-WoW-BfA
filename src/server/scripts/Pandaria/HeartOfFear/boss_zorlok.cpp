@@ -320,8 +320,8 @@ class boss_zorlok : public CreatureScript
             {
                 isFlying = true;
                 me->AttackStop();
-                ResetThreatList();
-                me->GetThreatManager().clearReferences();
+                me->DeleteThreatList();
+                me->getThreatManager().clearReferences();
                 me->SetCanFly(true);
                 me->SetReactState(REACT_PASSIVE);
                 me->HandleEmoteCommand(EMOTE_ONESHOT_LIFTOFF);
@@ -510,7 +510,7 @@ class boss_zorlok : public CreatureScript
                     me->RemoveAura(SPELL_SONG_OF_THE_EMPRESS);
 
                 // Start attacking player
-                AddThreat(attacker, 0.0f);
+                me->AddThreat(attacker, 0.0f);
             }
 
             void KilledUnit(Unit* victim) override

@@ -20,7 +20,7 @@
 #include "Player.h"
 #include "WorldStatePackets.h"
 
-BattlegroundBE::BattlegroundBE(BattlegroundTemplate const* battlegroundTemplate) : Arena(battlegroundTemplate)
+BattlegroundBE::BattlegroundBE()
 {
     BgObjects.resize(BG_BE_OBJECT_MAX);
 }

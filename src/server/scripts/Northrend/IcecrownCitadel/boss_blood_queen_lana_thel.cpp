@@ -483,25 +483,26 @@ class boss_blood_queen_lana_thel : public CreatureScript
 
         private:
             // offtank for this encounter is the player standing closest to main tank
-            Player* SelectRandomTarget(bool includeOfftank, std::list<Player*>* targetList = nullptr)
+            Player* SelectRandomTarget(bool includeOfftank, std::list<Player*>* targetList = NULL)
             {
-                if (me->GetThreatManager().IsThreatListEmpty(true))
-                    return nullptr;
-
+                std::list<HostileReference*> const& threatlist = me->getThreatManager().getThreatList();
                 std::list<Player*> tempTargets;
-                Unit* maintank = me->GetThreatManager().GetCurrentVictim();
-                for (ThreatReference* ref : me->GetThreatManager().GetUnsortedThreatList())
-                    if (Player* refTarget = ref->GetVictim()->ToPlayer())
-                        if (refTarget != maintank && (includeOfftank || (refTarget->GetGUID() != _offtankGUID)))
+
+                if (threatlist.empty())
+                    return NULL;
+
+                for (std::list<HostileReference*>::const_iterator itr = threatlist.begin(); itr != threatlist.end(); ++itr)
+                    if (Unit* refTarget = (*itr)->getTarget())
+                        if (refTarget != me->GetVictim() && refTarget->GetTypeId() == TYPEID_PLAYER && (includeOfftank || (refTarget->GetGUID() != _offtankGUID)))
                             tempTargets.push_back(refTarget->ToPlayer());
 
                 if (tempTargets.empty())
-                    return nullptr;
+                    return NULL;
 
                 if (targetList)
                 {
                     *targetList = tempTargets;
-                    return nullptr;
+                    return NULL;
                 }
 
                 if (includeOfftank)
@@ -814,7 +815,7 @@ class spell_blood_queen_pact_of_the_darkfallen_dmg : public SpellScriptLoader
             // this is an additional effect to be executed
             void PeriodicTick(AuraEffect const* aurEff)
             {
-                SpellInfo const* damageSpell = sSpellMgr->AssertSpellInfo(SPELL_PACT_OF_THE_DARKFALLEN_DAMAGE, GetCastDifficulty());
+                SpellInfo const* damageSpell = sSpellMgr->AssertSpellInfo(SPELL_PACT_OF_THE_DARKFALLEN_DAMAGE);
                 int32 damage = damageSpell->GetEffect(EFFECT_0)->CalcValue();
                 float multiplier = 0.3375f + 0.1f * uint32(aurEff->GetTickNumber() / 10); // do not convert to 0.01f - we need tick number/10 as INT (damage increases every 10 ticks)
                 damage = int32(damage * multiplier);

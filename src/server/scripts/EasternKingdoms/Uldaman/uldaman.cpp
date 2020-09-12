@@ -91,7 +91,13 @@ class npc_jadespine_basilisk : public CreatureScript
                     //Stop attacking target thast asleep and pick new target
                     uiCslumberTimer = 28000;
 
-                    me->GetThreatManager().ResetThreat(me->GetVictim());
+                    Unit* target = SelectTarget(SELECT_TARGET_TOPAGGRO, 0);
+
+                    if (!target || target == me->GetVictim())
+                        target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true);
+
+                    if (target)
+                        me->TauntApply(target);
 
                 } else uiCslumberTimer -= uiDiff;
 

@@ -20,7 +20,7 @@
 
 #include "Define.h"
 #include "DatabaseEnvFwd.h"
-#include "EnumFlag.h"
+#include "EnumClassFlag.h"
 #include "ObjectGuid.h"
 #include <boost/dynamic_bitset_fwd.hpp>
 #include <map>
@@ -62,9 +62,7 @@ enum class ToyFlags : uint32
     HasFanfare  = 0x02
 };
 
-DEFINE_ENUM_FLAG(ToyFlags);
-
-typedef std::map<uint32, EnumFlag<ToyFlags>> ToyBoxContainer;
+typedef std::map<uint32, EnumClassFlag<ToyFlags>> ToyBoxContainer;
 typedef std::map<uint32, HeirloomData> HeirloomContainer;
 
 enum MountStatusFlags : uint8

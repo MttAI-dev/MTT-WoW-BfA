@@ -219,7 +219,7 @@ public:
                             if (Unit* oldTarget = me->GetVictim())
                             {
                                 _oldTargetGUID = oldTarget->GetGUID();
-                                _oldThreat = GetThreat(oldTarget);
+                                _oldThreat = DoGetThreat(oldTarget);
                             }
                             _targetGUID = target->GetGUID();
                             DoCastSelf(SPELL_FEL_RAGE_SELF, true);
@@ -295,9 +295,9 @@ public:
                 if (Unit* oldTarget = ObjectAccessor::GetUnit(*me, _oldTargetGUID))
                     if (Unit* currentTarget = ObjectAccessor::GetUnit(*me, _targetGUID))
                     {
-                        ModifyThreatByPercent(currentTarget, -100);
+                        DoModifyThreatPercent(currentTarget, -100);
                         AttackStart(oldTarget);
-                        AddThreat(oldTarget, _oldThreat);
+                        me->AddThreat(oldTarget, _oldThreat);
                         Initialize();
                     }
             }

@@ -20,10 +20,8 @@
 
 #include "Define.h"
 #include "Errors.h"
-#include <array>
 #include <string>
 #include <vector>
-#include "advstd.h"
 
 enum LocaleConstant : uint8;
 
@@ -65,6 +63,13 @@ TC_COMMON_API std::string secsToTimeString(uint64 timeInSecs, bool shortText = f
 TC_COMMON_API uint32 TimeStringToSecs(const std::string& timestring);
 TC_COMMON_API std::string TimeToTimestampStr(time_t t);
 
+inline void ApplyPercentModFloatVar(float& var, float val, bool apply)
+{
+    if (val == -100.0f)     // prevent set var to zero
+        val = -99.99f;
+    var *= (apply ? (100.0f + val) / 100.0f : 100.0f / (100.0f + val));
+}
+
 // Percentage calculation
 template <class T, class U>
 inline T CalculatePct(T base, U pct)
@@ -72,21 +77,14 @@ inline T CalculatePct(T base, U pct)
     return T(base * static_cast<float>(pct) / 100.0f);
 }
 
-template <class T>
-inline float GetPctOf(T value, T max)
-{
-    ASSERT(max && value <= max);
-    return float(static_cast<float>(value) / static_cast<float>(max) * 100.0f);
-}
-
 template <class T, class U>
-inline T AddPct(T &base, U pct)
+inline T AddPct(T& base, U pct)
 {
     return base += CalculatePct(base, pct);
 }
 
 template <class T, class U>
-inline T ApplyPct(T &base, U pct)
+inline T ApplyPct(T& base, U pct)
 {
     return base = CalculatePct(base, pct);
 }
@@ -310,23 +308,8 @@ TC_COMMON_API bool IsIPAddress(char const* ipaddress);
 TC_COMMON_API uint32 CreatePIDFile(std::string const& filename);
 TC_COMMON_API uint32 GetPID();
 
-TC_COMMON_API std::string ByteArrayToHexStr(uint8 const* bytes, size_t length, bool reverse = false);
-template <typename Container>
-std::string ByteArrayToHexStr(Container const& c, bool reverse = false) { return ByteArrayToHexStr(advstd::data(c), advstd::size(c), reverse); }
+TC_COMMON_API std::string ByteArrayToHexStr(uint8 const* bytes, uint32 length, bool reverse = false);
 TC_COMMON_API void HexStrToByteArray(std::string const& str, uint8* out, bool reverse = false);
-template <size_t Size>
-void HexStrToByteArray(std::string const& str, std::array<uint8, Size>& buf, bool reverse = false)
-{
-    ASSERT(str.size() == (2 * Size));
-    HexStrToByteArray(str, buf.data(), reverse);
-}
-template <size_t Size>
-std::array<uint8, Size> HexStrToByteArray(std::string const& str, bool reverse = false)
-{
-    std::array<uint8, Size> arr;
-    HexStrToByteArray(str, arr, reverse);
-    return arr;
-}
 
 TC_COMMON_API bool StringToBool(std::string const& str);
 TC_COMMON_API float DegToRad(float degrees);
@@ -434,6 +417,15 @@ public:
     inline bool operator !=(const flag128 &right) const
     {
         return !this->operator ==(right);
+    }
+
+    inline flag128 & operator =(const flag128 &right)
+    {
+        part[0] = right.part[0];
+        part[1] = right.part[1];
+        part[2] = right.part[2];
+        part[3] = right.part[3];
+        return *this;
     }
 
     inline flag128 operator &(const flag128 &right) const

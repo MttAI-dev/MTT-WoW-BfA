@@ -15,18 +15,20 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "WardenMac.h"
-#include "ByteBuffer.h"
+#include "Cryptography/SessionKeyGeneration.h"
 #include "Common.h"
-#include "GameTime.h"
-#include "Log.h"
-#include "Opcodes.h"
-#include "Player.h"
-#include "SessionKeyGenerator.h"
-#include "Util.h"
-#include "WardenModuleMac.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
+#include "Log.h"
+#include "Opcodes.h"
+#include "ByteBuffer.h"
+#include "GameTime.h"
+#include "World.h"
+#include "Player.h"
+#include "Util.h"
+#include "WardenMac.h"
+#include "WardenModuleMac.h"
+#include "SHA1.h"
 
 #include <openssl/md5.h>
 
@@ -34,11 +36,11 @@ WardenMac::WardenMac() : Warden() { }
 
 WardenMac::~WardenMac() { }
 
-void WardenMac::Init(WorldSession* pClient, SessionKey const& K)
+void WardenMac::Init(WorldSession* pClient, BigNumber* K)
 {
     _session = pClient;
     // Generate Warden Key
-    SessionKeyGenerator<Trinity::Crypto::SHA1> WK(K);
+    SessionKeyGenerator<SHA1Hash> WK(K->AsByteArray().get(), K->GetNumBytes());
     WK.Generate(_inputKey, 16);
     WK.Generate(_outputKey, 16);
     /*
@@ -154,14 +156,14 @@ void WardenMac::HandleHashResult(ByteBuffer &buff)
 
     buff.rpos(buff.wpos());
 
-    Trinity::Crypto::SHA1 sha1;
+    SHA1Hash sha1;
     sha1.UpdateData((uint8*)keyIn, 16);
     sha1.Finalize();
 
     //const uint8 validHash[20] = { 0x56, 0x8C, 0x05, 0x4C, 0x78, 0x1A, 0x97, 0x2A, 0x60, 0x37, 0xA2, 0x29, 0x0C, 0x22, 0xB5, 0x25, 0x71, 0xA0, 0x6F, 0x4E };
 
     // Verify key
-    if (memcmp(buff.contents() + 1, sha1.GetDigest().data(), 20) != 0)
+    if (memcmp(buff.contents() + 1, sha1.GetDigest(), 20) != 0)
     {
         TC_LOG_WARN("warden", "%s failed hash reply. Action: %s", _session->GetPlayerInfo().c_str(), Penalty().c_str());
         return;
@@ -235,16 +237,16 @@ void WardenMac::HandleData(ByteBuffer &buff)
 
     std::string str = "Test string!";
 
-    Trinity::Crypto::SHA1 sha1;
+    SHA1Hash sha1;
     sha1.UpdateData(str);
     uint32 magic = 0xFEEDFACE;                              // unsure
     sha1.UpdateData((uint8*)&magic, 4);
     sha1.Finalize();
 
-    std::array<uint8, Trinity::Crypto::SHA1::DIGEST_LENGTH> sha1Hash;
-    buff.read(sha1Hash.data(), sha1Hash.size());
+    uint8 sha1Hash[20];
+    buff.read(sha1Hash, 20);
 
-    if (sha1Hash != sha1.GetDigest())
+    if (memcmp(sha1Hash, sha1.GetDigest(), 20) != 0)
     {
         TC_LOG_DEBUG("warden", "Handle data failed: SHA1 hash is wrong!");
         //found = true;

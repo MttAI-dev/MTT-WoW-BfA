@@ -87,7 +87,7 @@ class boss_oondasta : public CreatureScript
             void EnterEvadeMode(EvadeReason /*why*/) override
             {
                 Reset();
-                ResetThreatList();
+                me->DeleteThreatList();
                 me->CombatStop(false);
 
                 me->GetMotionMaster()->MoveTargetedHome();

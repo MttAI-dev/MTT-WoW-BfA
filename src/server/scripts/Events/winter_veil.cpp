@@ -456,11 +456,11 @@ class spell_winter_veil_mistletoe: public SpellScriptLoader
 
             bool Validate(SpellInfo const* /*spell*/) override
             {
-                return ValidateSpellInfo({
-                    SPELL_CREATE_MISTLETOE,
-                    SPELL_CREATE_HOLLY,
-                    SPELL_CREATE_SNOWFLAKES,
-                });
+                if (!sSpellMgr->GetSpellInfo(SPELL_CREATE_MISTLETOE) ||
+                    !sSpellMgr->GetSpellInfo(SPELL_CREATE_HOLLY) ||
+                    !sSpellMgr->GetSpellInfo(SPELL_CREATE_SNOWFLAKES))
+                    return false;
+                return true;
             }
 
             void HandleScript(SpellEffIndex /*effIndex*/)

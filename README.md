@@ -1,4 +1,4 @@
-# MTT - WoW Project
+# MTT - WoW Core
 
 --------------
 
@@ -7,13 +7,12 @@
 * [Install](#install)
 * [Reporting issues](#reporting-issues)
 * [Submitting fixes](#submitting-fixes)
-* [Copyright](#copyright)
 * [Links](#links)
 
 
 ## Introduction
 
-MTT-WoW Core is a *MMORPG* Framework based mostly in C++. Its fully based on AshamaneCore
+MTT - WoW Core is a *MMORPG* Framework based mostly in C++. Its fully based on AshamaneCore
 
 which is fully based on *TrinityCore*, with upgrades like :
 
@@ -34,8 +33,8 @@ which is fully based on *TrinityCore*, with upgrades like :
     - Darkheart Thicket
     - Eye Of Azshara
     - Mardum (DH start zone)
-    - Emerald Nightmare (1/7)
-    - Tomb of Sargeras (1/9)
+    - Emerald Nightmare 
+    - Tomb of Sargeras 
 - Wod Scripts (WIP)
     - full blizzlike Jungle of Tanaan intro
     - Garrison pre-quests (for both Horde & Alliance)
@@ -53,30 +52,21 @@ with Ashamane Database (ADB) :
 - All Mist of Pandaria zones spawns
 - All Draenor zones spawns
 - All Legion zones spawns
-- All BFA spawns (up to 8.2.5)
+- All BFA spawns (up to 8.3)
 
 It is completely open source; community involvement is highly encouraged.
-
-If you wish to contribute ideas or code please visit our site linked below or
-make pull requests to our [Github repository](https://github.com/MttAI-dev/MTT-WoW-BfA).
 
 ## Requirements
 
 Software requirements are available in the [wiki](https://www.trinitycore.info/display/tc/Requirements) for
-Windows.
+Windows, Linux and macOS.
 
 ## Install
 
 Detailed installation guides are available in the [wiki](https://www.trinitycore.info/display/tc/Installation+Guide) for
 Windows, Linux and macOS.
 
-## Contribute
-
-You can help Ashamane using our [Patreon Page](https://www.patreon.com/ashamane). All the collected money will be used to pay developers for their work using bountysource
-
 ## Reporting issues
-
-Issues can be reported via our [Mantis issue tracker](https://bt.ashamane.com).
 
 Please take the time to review existing issues before submitting your own to
 prevent duplicates.
@@ -92,13 +82,8 @@ License: GPL 2.0
 
 Read file [COPYING](COPYING).
 
-## Authors &amp; Contributors
-
-Read file [AUTHORS](AUTHORS).
-
 ## Links
 
 * [Website](http://mttwow.sytes.net)
 * [Wiki](https://www.trinitycore.info)
-* [Forums](http://mttwow.sytes.net/forum)
-* [Discord](https://discord.gg/QXahfUP)
+* [Disocrd](https://discord.gg/QXahfUP)

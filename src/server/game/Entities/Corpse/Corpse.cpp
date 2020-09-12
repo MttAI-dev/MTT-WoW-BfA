@@ -36,7 +36,7 @@ Corpse::Corpse(CorpseType type) : WorldObject(type != CORPSE_BONES), m_type(type
 
     m_updateFlag.Stationary = true;
 
-    m_time = time(nullptr);
+    m_time = time(NULL);
 
     lootRecipient = nullptr;
 }

@@ -418,8 +418,8 @@ public:
 
         void Dragonspireroomcheck()
         {
-            Creature* mob = nullptr;
-            GameObject* rune = nullptr;
+            Creature* mob = NULL;
+            GameObject* rune = NULL;
 
             for (uint8 i = 0; i < 7; ++i)
             {

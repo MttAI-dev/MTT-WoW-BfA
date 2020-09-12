@@ -40,7 +40,7 @@ float ThreatCalcHelper::calcThreat(Unit* hatedUnit, Unit* /*hatingUnit*/, float 
                 threat *= threatEntry->pctMod;
 
         // Energize is not affected by Mods
-        for (SpellEffectInfo const* effect : threatSpell->GetEffects())
+        for (SpellEffectInfo const* effect : threatSpell->GetEffectsForDifficulty(hatedUnit->GetMap()->GetDifficultyID()))
             if (effect && (effect->Effect == SPELL_EFFECT_ENERGIZE || effect->ApplyAuraName == SPELL_AURA_PERIODIC_ENERGIZE))
                 return threat;
 
@@ -131,9 +131,6 @@ void HostileReference::fireStatusChanged(ThreatRefStatusChangeEvent& threatRefSt
         GetSource()->processThreatEvent(&threatRefStatusChangeEvent);
 }
 
-// -- compatibility layer for combat rewrite (PR #19930)
-Unit* HostileReference::GetOwner() const { return GetSource()->GetOwner(); }
-
 //============================================================
 
 void HostileReference::addThreat(float modThreat)
@@ -155,7 +152,7 @@ void HostileReference::addThreat(float modThreat)
     {
         Unit* victimOwner = getTarget()->GetCharmerOrOwner();
         if (victimOwner && victimOwner->IsAlive())
-            GetSource()->AddThreat(victimOwner, 0.0f);     // create a threat to the owner of a pet, if the pet attacks
+            GetSource()->addThreat(victimOwner, 0.0f);     // create a threat to the owner of a pet, if the pet attacks
     }
 }
 
@@ -267,10 +264,10 @@ void ThreatContainer::clearReferences()
 
 //============================================================
 // Return the HostileReference of NULL, if not found
-HostileReference* ThreatContainer::getReferenceByTarget(Unit const* victim) const
+HostileReference* ThreatContainer::getReferenceByTarget(Unit* victim) const
 {
     if (!victim)
-        return nullptr;
+        return NULL;
 
     ObjectGuid guid = victim->GetGUID();
     for (ThreatContainer::StorageType::const_iterator i = iThreatList.begin(); i != iThreatList.end(); ++i)
@@ -280,7 +277,7 @@ HostileReference* ThreatContainer::getReferenceByTarget(Unit const* victim) cons
             return ref;
     }
 
-    return nullptr;
+    return NULL;
 }
 
 //============================================================
@@ -290,13 +287,13 @@ HostileReference* ThreatContainer::addThreat(Unit* victim, float threat)
 {
     HostileReference* ref = getReferenceByTarget(victim);
     if (ref)
-        ref->AddThreat(threat);
+        ref->addThreat(threat);
     return ref;
 }
 
 //============================================================
 
-void ThreatContainer::ModifyThreatByPercent(Unit* victim, int32 percent)
+void ThreatContainer::modifyThreatPercent(Unit* victim, int32 percent)
 {
     if (HostileReference* ref = getReferenceByTarget(victim))
         ref->addThreatPercent(percent);
@@ -319,7 +316,7 @@ void ThreatContainer::update()
 
 HostileReference* ThreatContainer::selectNextVictim(Creature* attacker, HostileReference* currentVictim) const
 {
-    HostileReference* currentRef = nullptr;
+    HostileReference* currentRef = NULL;
     bool found = false;
     bool noPriorityTargetFound = false;
 
@@ -384,7 +381,7 @@ HostileReference* ThreatContainer::selectNextVictim(Creature* attacker, HostileR
         ++iter;
     }
     if (!found)
-        currentRef = nullptr;
+        currentRef = NULL;
 
     return currentRef;
 }
@@ -393,31 +390,7 @@ HostileReference* ThreatContainer::selectNextVictim(Creature* attacker, HostileR
 //=================== ThreatManager ==========================
 //============================================================
 
-ThreatManager::ThreatManager(Unit* owner) : iCurrentVictim(nullptr), iOwner(owner), iUpdateTimer(THREAT_UPDATE_INTERVAL) { }
-
-// -- compatibility layer for combat rewrite (PR #19930)
-void ThreatManager::ForwardThreatForAssistingMe(Unit* victim, float amount, SpellInfo const* spell, bool ignoreModifiers, bool ignoreRedirection)
-{
-    (void)ignoreModifiers; (void)ignoreRedirection;
-    GetOwner()->getHostileRefManager().threatAssist(victim, amount, spell);
-}
-
-void ThreatManager::AddThreat(Unit* victim, float amount, SpellInfo const* spell, bool ignoreModifiers, bool ignoreRedirection)
-{
-    (void)ignoreModifiers; (void)ignoreRedirection;
-    if (!iOwner->CanHaveThreatList() || iOwner->HasUnitState(UNIT_STATE_EVADE))
-        return;
-    iOwner->SetInCombatWith(victim);
-    victim->SetInCombatWith(iOwner);
-    addThreat(victim, amount, spell ? spell->GetSchoolMask() : victim->GetMeleeDamageSchoolMask(), spell);
-}
-
-void ThreatManager::ClearAllThreat()
-{
-    if (iOwner->CanHaveThreatList(true) && !isThreatListEmpty())
-        iOwner->SendClearThreatListOpcode();
-    clearReferences();
-}
+ThreatManager::ThreatManager(Unit* owner) : iCurrentVictim(NULL), iOwner(owner), iUpdateTimer(THREAT_UPDATE_INTERVAL) { }
 
 //============================================================
 
@@ -425,7 +398,7 @@ void ThreatManager::clearReferences()
 {
     iThreatContainer.clearReferences();
     iThreatOfflineContainer.clearReferences();
-    iCurrentVictim = nullptr;
+    iCurrentVictim = NULL;
     iUpdateTimer = THREAT_UPDATE_INTERVAL;
 }
 
@@ -498,9 +471,9 @@ void ThreatManager::_addThreat(Unit* victim, float threat)
 
 //============================================================
 
-void ThreatManager::ModifyThreatByPercent(Unit* victim, int32 percent)
+void ThreatManager::modifyThreatPercent(Unit* victim, int32 percent)
 {
-    iThreatContainer.ModifyThreatByPercent(victim, percent);
+    iThreatContainer.modifyThreatPercent(victim, percent);
 }
 
 //============================================================
@@ -510,7 +483,7 @@ Unit* ThreatManager::getHostilTarget()
     iThreatContainer.update();
     HostileReference* nextVictim = iThreatContainer.selectNextVictim(GetOwner()->ToCreature(), getCurrentVictim());
     setCurrentVictim(nextVictim);
-    return getCurrentVictim() != nullptr ? getCurrentVictim()->getTarget() : nullptr;
+    return getCurrentVictim() != NULL ? getCurrentVictim()->getTarget() : NULL;
 }
 
 //============================================================
@@ -580,7 +553,7 @@ void ThreatManager::processThreatEvent(ThreatRefStatusChangeEvent* threatRefStat
             {
                 if (hostilRef == getCurrentVictim())
                 {
-                    setCurrentVictim(nullptr);
+                    setCurrentVictim(NULL);
                     setDirty(true);
                 }
                 iOwner->SendRemoveFromThreatListOpcode(hostilRef);
@@ -598,7 +571,7 @@ void ThreatManager::processThreatEvent(ThreatRefStatusChangeEvent* threatRefStat
         case UEV_THREAT_REF_REMOVE_FROM_LIST:
             if (hostilRef == getCurrentVictim())
             {
-                setCurrentVictim(nullptr);
+                setCurrentVictim(NULL);
                 setDirty(true);
             }
             iOwner->SendRemoveFromThreatListOpcode(hostilRef);

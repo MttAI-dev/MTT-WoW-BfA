@@ -821,7 +821,7 @@ class npc_grandmother : public CreatureScript
             npc_grandmotherAI(Creature* creature) : ScriptedAI(creature) { }
 
 
-            bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
+            void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
             {
                 if (menuId == OPTION_WHAT_PHAT_LEWTS_YOU_HAVE && gossipListId == 0)
                 {
@@ -832,8 +832,6 @@ class npc_grandmother : public CreatureScript
 
                     me->DespawnOrUnsummon();
                 }
-
-                return false;
             }
         };
 
@@ -925,11 +923,11 @@ public:
                     {
                         Talk(SAY_WOLF_HOOD);
                         DoCast(target, SPELL_LITTLE_RED_RIDING_HOOD, true);
-                        TempThreat = GetThreat(target);
+                        TempThreat = DoGetThreat(target);
                         if (TempThreat)
-                            ModifyThreatByPercent(target, -100);
+                            DoModifyThreatPercent(target, -100);
                         HoodGUID = target->GetGUID();
-                        AddThreat(target, 1000000.0f);
+                        me->AddThreat(target, 1000000.0f);
                         ChaseTimer = 20000;
                         IsChasing = true;
                     }
@@ -941,9 +939,9 @@ public:
                     if (Unit* target = ObjectAccessor::GetUnit(*me, HoodGUID))
                     {
                         HoodGUID.Clear();
-                        if (GetThreat(target))
-                            ModifyThreatByPercent(target, -100);
-                        AddThreat(target, TempThreat);
+                        if (DoGetThreat(target))
+                            DoModifyThreatPercent(target, -100);
+                        me->AddThreat(target, TempThreat);
                         TempThreat = 0;
                     }
 
@@ -1258,8 +1256,8 @@ public:
                         Julianne->GetMotionMaster()->Clear();
                         Julianne->setDeathState(JUST_DIED);
                         Julianne->CombatStop(true);
-                        Julianne->GetThreatManager().ClearAllThreat();
-                        Julianne->SetDynamicFlags(UNIT_DYNFLAG_LOOTABLE);
+                        Julianne->DeleteThreatList();
+                        Julianne->AddDynamicFlag(UNIT_DYNFLAG_LOOTABLE);
                     }
                     return;
                 }
@@ -1286,7 +1284,7 @@ public:
                 Creature* Julianne = (ObjectAccessor::GetCreature((*me), JulianneGUID));
                 if (Julianne && Julianne->GetVictim())
                 {
-                    AddThreat(Julianne->GetVictim(), 1.0f);
+                    me->AddThreat(Julianne->GetVictim(), 1.0f);
                     AttackStart(Julianne->GetVictim());
                 }
             }
@@ -1384,7 +1382,7 @@ void boss_julianne::boss_julianneAI::UpdateAI(uint32 diff)
         {
             Talk(SAY_JULIANNE_AGGRO);
             me->RemoveUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
-            me->SetFaction(16);
+            me->setFaction(16);
             AggroYellTimer = 0;
         } else AggroYellTimer -= diff;
     }
@@ -1412,7 +1410,7 @@ void boss_julianne::boss_julianneAI::UpdateAI(uint32 diff)
                 ENSURE_AI(boss_romulo::boss_romuloAI, pRomulo->AI())->Phase = PHASE_ROMULO;
                 DoZoneInCombat(pRomulo);
 
-                pRomulo->SetFaction(16);
+                pRomulo->setFaction(16);
             }
             SummonedRomulo = true;
         } else SummonRomuloTimer -= diff;
@@ -1528,8 +1526,8 @@ void boss_julianne::boss_julianneAI::DamageTaken(Unit* /*done_by*/, uint32 &dama
                 Romulo->GetMotionMaster()->Clear();
                 Romulo->setDeathState(JUST_DIED);
                 Romulo->CombatStop(true);
-                Romulo->GetThreatManager().ClearAllThreat();
-                Romulo->SetDynamicFlags(UNIT_DYNFLAG_LOOTABLE);
+                Romulo->DeleteThreatList();
+                Romulo->AddDynamicFlag(UNIT_DYNFLAG_LOOTABLE);
             }
 
             return;

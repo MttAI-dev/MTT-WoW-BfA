@@ -66,12 +66,12 @@ public:
         };
         static std::vector<ChatCommand> disableCommandTable =
         {
-            { "add",    rbac::RBAC_PERM_COMMAND_DISABLE_ADD,    true, nullptr, "", addDisableCommandTable },
-            { "remove", rbac::RBAC_PERM_COMMAND_DISABLE_REMOVE, true, nullptr, "", removeDisableCommandTable },
+            { "add",    rbac::RBAC_PERM_COMMAND_DISABLE_ADD,    true, NULL, "", addDisableCommandTable },
+            { "remove", rbac::RBAC_PERM_COMMAND_DISABLE_REMOVE, true, NULL, "", removeDisableCommandTable },
         };
         static std::vector<ChatCommand> commandTable =
         {
-            { "disable", rbac::RBAC_PERM_COMMAND_DISABLE, false, nullptr, "", disableCommandTable },
+            { "disable", rbac::RBAC_PERM_COMMAND_DISABLE, false, NULL, "", disableCommandTable },
         };
         return commandTable;
     }
@@ -82,10 +82,10 @@ public:
         if (!entryStr || !atoi(entryStr))
             return false;
 
-        char* flagsStr = strtok(nullptr, " ");
+        char* flagsStr = strtok(NULL, " ");
         uint8 flags = flagsStr ? uint8(atoi(flagsStr)) : 0;
 
-        char* commentStr = strtok(nullptr, "");
+        char* commentStr = strtok(NULL, "");
         if (!commentStr)
             return false;
 
@@ -98,7 +98,7 @@ public:
         {
             case DISABLE_TYPE_SPELL:
             {
-                if (!sSpellMgr->GetSpellInfo(entry, DIFFICULTY_NONE))
+                if (!sSpellMgr->GetSpellInfo(entry))
                 {
                     handler->PSendSysMessage(LANG_COMMAND_NOSPELLFOUND);
                     handler->SetSentErrorMessage(true);

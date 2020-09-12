@@ -128,7 +128,7 @@ public:
 
             DoZoneInCombat();
 
-            if (!me->IsThreatened())
+            if (me->getThreatManager().isThreatListEmpty())
                 Reset();
             else
             {
@@ -235,7 +235,7 @@ public:
                     case EVENT_BLINK:
                         DoCastAOE(SPELL_CRIPPLE, true);
                         DoCastAOE(SPELL_BLINK);
-                        ResetThreatList();
+                        DoResetThreat();
                         justBlinked = true;
 
                         events.Repeat(Seconds(40));

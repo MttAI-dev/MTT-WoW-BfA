@@ -40,7 +40,7 @@ enum BattlegroundTVAObjects
 class BattlegroundTVA : public Arena
 {
     public:
-        BattlegroundTVA(BattlegroundTemplate const* battlegroundTemplate);
+        BattlegroundTVA();
 
         /* inherited from BattlegroundClass */
         void StartingEventCloseDoors() override;

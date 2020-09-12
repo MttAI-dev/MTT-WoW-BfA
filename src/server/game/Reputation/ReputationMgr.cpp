@@ -48,7 +48,7 @@ ReputationRank ReputationMgr::ReputationToRank(int32 standing)
 
 FactionState const* ReputationMgr::GetState(FactionEntry const* factionEntry) const
 {
-    return factionEntry->CanHaveReputation() ? GetState(factionEntry->ReputationIndex) : nullptr;
+    return factionEntry->CanHaveReputation() ? GetState(factionEntry->ReputationIndex) : NULL;
 }
 
 bool ReputationMgr::IsAtWar(uint32 faction_id) const
@@ -187,16 +187,13 @@ void ReputationMgr::SendState(FactionState const* faction)
     WorldPackets::Reputation::SetFactionStanding setFactionStanding;
     setFactionStanding.ReferAFriendBonus = 0.0f;
     setFactionStanding.BonusFromAchievementSystem = 0.0f;
-
-    if (faction)
-        setFactionStanding.Faction.emplace_back(int32(faction->ReputationListID), faction->Standing);
-
+    setFactionStanding.Faction.emplace_back(int32(faction->ReputationListID), faction->Standing);
     for (FactionStateList::iterator itr = _factions.begin(); itr != _factions.end(); ++itr)
     {
         if (itr->second.needSend)
         {
             itr->second.needSend = false;
-            if (!faction || itr->second.ReputationListID != faction->ReputationListID)
+            if (itr->second.ReputationListID != faction->ReputationListID)
                 setFactionStanding.Faction.emplace_back(int32(itr->second.ReputationListID), itr->second.Standing);
         }
     }
@@ -220,6 +217,12 @@ void ReputationMgr::SendInitialReputations()
     }
 
     _player->SendDirectMessage(initFactions.Write());
+}
+
+void ReputationMgr::SendStates()
+{
+    for (FactionStateList::iterator itr = _factions.begin(); itr != _factions.end(); ++itr)
+        SendState(&(itr->second));
 }
 
 void ReputationMgr::SendVisible(FactionState const* faction, bool visible) const
@@ -264,7 +267,7 @@ void ReputationMgr::Initialize()
     }
 }
 
-bool ReputationMgr::SetReputation(FactionEntry const* factionEntry, int32 standing, bool incremental, bool spillOverOnly, bool noSpillover)
+bool ReputationMgr::SetReputation(FactionEntry const* factionEntry, int32 standing, bool incremental, bool noSpillover)
 {
     sScriptMgr->OnPlayerReputationChange(_player, factionEntry->ID, standing, incremental);
     bool res = false;
@@ -331,10 +334,7 @@ bool ReputationMgr::SetReputation(FactionEntry const* factionEntry, int32 standi
     FactionStateList::iterator faction = _factions.find(factionEntry->ReputationIndex);
     if (faction != _factions.end())
     {
-        // if we update spillover only, do not update main reputation (rank exceeds creature reward rate)
-        if (!spillOverOnly)
-            res = SetOneFactionReputation(factionEntry, standing, incremental);
-
+        res = SetOneFactionReputation(factionEntry, standing, incremental);
         // only this faction gets reported to client, even if it has no own visible standing
         SendState(&faction->second);
     }

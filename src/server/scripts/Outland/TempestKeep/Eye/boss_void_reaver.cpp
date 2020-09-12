@@ -111,22 +111,27 @@ class boss_void_reaver : public CreatureScript
                             break;
                         case EVENT_ARCANE_ORB:
                         {
+                            Unit* target = NULL;
+                            std::list<HostileReference*> t_list = me->getThreatManager().getThreatList();
                             std::vector<Unit*> target_list;
-                            for (auto* ref : me->GetThreatManager().GetUnsortedThreatList())
+                            for (std::list<HostileReference*>::const_iterator itr = t_list.begin(); itr != t_list.end(); ++itr)
                             {
-                                Unit* target = ref->GetVictim();
+                                target = ObjectAccessor::GetUnit(*me, (*itr)->getUnitGuid());
+                                if (!target)
+                                    continue;
+                                // exclude pets & totems, 18 yard radius minimum
                                 if (target->GetTypeId() == TYPEID_PLAYER && target->IsAlive() && !target->IsWithinDist(me, 18, false))
                                     target_list.push_back(target);
+                                target = NULL;
                             }
 
-                            Unit* target;
                             if (!target_list.empty())
                                 target = *(target_list.begin() + rand32() % target_list.size());
                             else
                                 target = me->GetVictim();
 
                             if (target)
-                                me->CastSpell(target, SPELL_ARCANE_ORB, false, nullptr, nullptr);
+                                me->CastSpell(target, SPELL_ARCANE_ORB, false, NULL, NULL);
 
                             events.ScheduleEvent(EVENT_ARCANE_ORB, 3000);
                             break;
@@ -134,8 +139,8 @@ class boss_void_reaver : public CreatureScript
                         case EVENT_KNOCK_AWAY:
                             DoCastVictim(SPELL_KNOCK_AWAY);
                             // Drop 25% aggro
-                            if (GetThreat(me->GetVictim()))
-                                ModifyThreatByPercent(me->GetVictim(), -25);
+                            if (DoGetThreat(me->GetVictim()))
+                                DoModifyThreatPercent(me->GetVictim(), -25);
 
                             events.ScheduleEvent(EVENT_KNOCK_AWAY, 30000);
                             break;

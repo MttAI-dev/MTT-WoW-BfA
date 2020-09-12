@@ -69,7 +69,7 @@ template <class T>
 void DatabaseWorkerPool<T>::SetConnectionInfo(std::string const& infoString,
     uint8 const asyncThreads, uint8 const synchThreads)
 {
-    _connectionInfo = std::make_unique<MySQLConnectionInfo>(infoString);
+    _connectionInfo = Trinity::make_unique<MySQLConnectionInfo>(infoString);
 
     _async_threads = asyncThreads;
     _synch_threads = synchThreads;
@@ -177,7 +177,7 @@ QueryResult DatabaseWorkerPool<T>::Query(const char* sql, T* connection /*= null
     if (!result || !result->GetRowCount() || !result->NextRow())
     {
         delete result;
-        return QueryResult(nullptr);
+        return QueryResult(NULL);
     }
 
     return QueryResult(result);
@@ -196,7 +196,7 @@ PreparedQueryResult DatabaseWorkerPool<T>::Query(PreparedStatement<T>* stmt)
     if (!ret || !ret->GetRowCount())
     {
         delete ret;
-        return PreparedQueryResult(nullptr);
+        return PreparedQueryResult(NULL);
     }
 
     return PreparedQueryResult(ret);
@@ -272,7 +272,7 @@ TransactionCallback DatabaseWorkerPool<T>::AsyncCommitTransaction(SQLTransaction
     {
         case 0:
             TC_LOG_DEBUG("sql.driver", "Transaction contains 0 queries. Not executing.");
-            break;
+            return;
         case 1:
             TC_LOG_DEBUG("sql.driver", "Warning: Transaction only holds 1 query, consider removing Transaction context in code.");
             break;
@@ -365,9 +365,9 @@ uint32 DatabaseWorkerPool<T>::OpenConnections(InternalIndex type, uint8 numConne
             switch (type)
             {
             case IDX_ASYNC:
-                return std::make_unique<T>(_queue.get(), *_connectionInfo);
+                return Trinity::make_unique<T>(_queue.get(), *_connectionInfo);
             case IDX_SYNCH:
-                return std::make_unique<T>(*_connectionInfo);
+                return Trinity::make_unique<T>(*_connectionInfo);
             default:
                 ABORT();
             }

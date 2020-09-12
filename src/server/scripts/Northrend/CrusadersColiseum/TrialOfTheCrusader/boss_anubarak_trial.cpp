@@ -226,7 +226,7 @@ class boss_anubarak_trial : public CreatureScript
                 for (int i = 0; i < 10; i++)
                     if (Creature* scarab = me->SummonCreature(NPC_SCARAB, AnubarakLoc[1].GetPositionX()+urand(0, 50)-25, AnubarakLoc[1].GetPositionY()+urand(0, 50)-25, AnubarakLoc[1].GetPositionZ()))
                     {
-                        scarab->SetFaction(31);
+                        scarab->setFaction(31);
                         scarab->GetMotionMaster()->MoveRandom(10);
                     }
             }
@@ -259,7 +259,7 @@ class boss_anubarak_trial : public CreatureScript
                         summoned->SetDisplayFromModel(0);
                         if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 0.0f, true))
                         {
-                            summoned->EngageWithTarget(target);
+                            summoned->CombatStart(target);
                             Talk(EMOTE_SPIKE, target);
                         }
                         break;
@@ -812,11 +812,12 @@ class npc_anubarak_spike : public CreatureScript
                 DoCast(who, SPELL_MARK);
                 me->SetSpeedRate(MOVE_RUN, 0.5f);
                 // make sure the Spine will really follow the one he should
-                ResetThreatList();
+                me->getThreatManager().clearReferences();
                 me->SetInCombatWithZone();
-                AddThreat(who, 1000000.0f);
+                me->getThreatManager().addThreat(who, std::numeric_limits<float>::max());
                 me->GetMotionMaster()->Clear(true);
                 me->GetMotionMaster()->MoveChase(who);
+                me->TauntApply(who);
             }
 
             private:
@@ -883,9 +884,9 @@ class spell_anubarak_leeching_swarm : public SpellScriptLoader
                     if (lifeLeeched < 250)
                         lifeLeeched = 250;
                     // Damage
-                    caster->CastCustomSpell(target, SPELL_LEECHING_SWARM_DMG, &lifeLeeched, nullptr, nullptr, true);
+                    caster->CastCustomSpell(target, SPELL_LEECHING_SWARM_DMG, &lifeLeeched, 0, 0, true);
                     // Heal
-                    caster->CastCustomSpell(caster, SPELL_LEECHING_SWARM_HEAL, &lifeLeeched, nullptr, nullptr, true);
+                    caster->CastCustomSpell(caster, SPELL_LEECHING_SWARM_HEAL, &lifeLeeched, 0, 0, true);
                 }
             }
 

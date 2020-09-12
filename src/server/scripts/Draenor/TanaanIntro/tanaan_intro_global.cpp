@@ -144,8 +144,8 @@ public:
 
         void Reset() override
         {
-            me->SetGoState(GO_STATE_ACTIVE);
-            me->SetLootState(GO_ACTIVATED);
+            go->SetGoState(GO_STATE_ACTIVE);
+            go->SetLootState(GO_ACTIVATED);
         }
 
     };

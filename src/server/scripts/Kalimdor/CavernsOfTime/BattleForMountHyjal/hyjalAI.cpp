@@ -421,7 +421,7 @@ void hyjalAI::EnterEvadeMode(EvadeReason /*why*/)
 {
     if (me->GetEntry() != JAINA)
         me->RemoveAllAuras();
-    me->GetThreatManager().ClearAllThreat();
+    me->DeleteThreatList();
     me->CombatStop(true);
     me->LoadCreaturesAddon();
 
@@ -458,7 +458,7 @@ void hyjalAI::SummonCreature(uint32 entry, float Base[4][3])
     {
         SpawnLoc[i] = Base[random][i];
     }
-    Creature* creature = nullptr;
+    Creature* creature = NULL;
     switch (entry)
     {
             case 17906:    //GARGOYLE
@@ -854,7 +854,7 @@ void hyjalAI::UpdateAI(uint32 diff)
                 if (me->IsNonMeleeSpellCast(false))
                     me->InterruptNonMeleeSpells(false);
 
-                Unit* target = nullptr;
+                Unit* target = NULL;
 
                 switch (Spells[i].TargetType)
                 {
@@ -917,7 +917,7 @@ void hyjalAI::HideNearPos(float x, float y)
         for (std::list<Creature*>::const_iterator itr = creatures.begin(); itr != creatures.end(); ++itr)
         {
             (*itr)->SetVisible(false);
-            (*itr)->SetFaction(35);//make them friendly so mobs won't attack them
+            (*itr)->setFaction(35);//make them friendly so mobs won't attack them
         }
     }
 }
@@ -995,7 +995,7 @@ void hyjalAI::DoOverrun(uint32 faction, const uint32 diff)
                     if ((*itr) && (*itr)->IsAlive())
                     {
                         (*itr)->CastSpell(*itr, SPELL_TELEPORT_VISUAL, true);
-                        (*itr)->SetFaction(35);//make them friendly so mobs won't attack them
+                        (*itr)->setFaction(35);//make them friendly so mobs won't attack them
                         (*itr)->AddUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
                     }
                 }

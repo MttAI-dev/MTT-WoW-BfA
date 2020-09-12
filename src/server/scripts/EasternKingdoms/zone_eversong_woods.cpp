@@ -55,7 +55,7 @@ struct npc_apprentice_mirveda : public ScriptedAI
         summons.DespawnAll();
     }
 
-    void QuestAccept(Player* player, Quest const* quest) override
+    void sQuestAccept(Player* player, Quest const* quest) override
     {
         if (quest->GetQuestId() == QUEST_UNEXPECTED_RESULT)
         {

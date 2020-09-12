@@ -19,7 +19,6 @@
 #define _FORMATIONS_H
 
 #include "Define.h"
-#include "Position.h"
 #include "ObjectGuid.h"
 #include <unordered_map>
 #include <map>
@@ -77,7 +76,7 @@ class TC_GAME_API CreatureGroup
 
     public:
         //Group cannot be created empty
-        explicit CreatureGroup(ObjectGuid::LowType leaderSpawnID, uint32 groupID = 0) : m_leader(nullptr), m_groupId(groupID), m_leaderSpawnId(leaderSpawnID), m_Formed(false) { }
+        explicit CreatureGroup(ObjectGuid::LowType leaderSpawnID, uint32 groupID = 0) : m_leader(NULL), m_groupId(groupID), m_leaderSpawnId(leaderSpawnID), m_Formed(false) { }
         ~CreatureGroup() { }
 
         Creature* getLeader() const { return m_leader; }
@@ -91,10 +90,10 @@ class TC_GAME_API CreatureGroup
         void RemoveMember(Creature* member);
         void FormationReset(bool dismiss);
 
-        void MoveGroupTo(Position destination, bool fightMove = false);
+        void MoveGroupTo(float x, float y, float z, bool fightMove = false);
 
-        void LeaderMoveTo(Position destination, uint32 id = 0, uint32 moveType = 0, bool orientation = false);
-        void MemberEngagingTarget(Creature* member, Unit* target);
+        void LeaderMoveTo(float x, float y, float z);
+        void MemberAttackStart(Creature* member, Unit* target);
 
         void CheckWipe(Creature* killed);
 };

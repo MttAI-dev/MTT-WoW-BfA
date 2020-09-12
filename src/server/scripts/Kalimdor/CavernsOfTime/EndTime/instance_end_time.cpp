@@ -209,7 +209,7 @@ class time_deliver_device : public GameObjectScript
         {
             player->PlayerTalkClass->ClearMenus();
             CloseGossipMenuFor(player);
-            SpellInfo const* spell = sSpellMgr->GetSpellInfo(action, player->GetMap()->GetDifficultyID());
+            SpellInfo const* spell = sSpellMgr->GetSpellInfo(action);
             if (!spell)
                 return false;
 

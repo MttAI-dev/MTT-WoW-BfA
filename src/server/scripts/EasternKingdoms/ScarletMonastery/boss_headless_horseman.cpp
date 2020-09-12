@@ -260,7 +260,7 @@ public:
 
         void EnterCombat(Unit* /*who*/) override { }
 
-        void SaySound(uint8 textEntry, Unit* target = nullptr)
+        void SaySound(uint8 textEntry, Unit* target = 0)
         {
             Talk(textEntry, target);
 
@@ -531,7 +531,7 @@ public:
             }
         }
 
-        void SaySound(uint8 textEntry, Unit* target = nullptr)
+        void SaySound(uint8 textEntry, Unit* target = 0)
         {
             Talk(textEntry, target);
             laugh += 4000;
@@ -541,7 +541,7 @@ public:
         {
             Map::PlayerList const &PlayerList = me->GetMap()->GetPlayers();
             if (PlayerList.isEmpty())
-                return nullptr;
+                return NULL;
 
             std::list<Player*> temp;
             for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
@@ -555,7 +555,7 @@ public:
                 advance(j, rand32() % temp.size());
                 return (*j);
             }
-            return nullptr;
+            return NULL;
         }
 
         void SpellHitTarget(Unit* unit, const SpellInfo* spell) override
@@ -603,6 +603,14 @@ public:
                 DoCast(me, SPELL_HEAD);
                 caster->GetMotionMaster()->Clear(false);
                 caster->GetMotionMaster()->MoveFollow(me, 6, float(urand(0, 5)));
+                //DoResetThreat();//not sure if need
+                ThreatContainer::StorageType threatlist = caster->getThreatManager().getThreatList();
+                for (ThreatContainer::StorageType::const_iterator itr = threatlist.begin(); itr != threatlist.end(); ++itr)
+                {
+                    Unit* unit = ObjectAccessor::GetUnit(*me, (*itr)->getUnitGuid());
+                    if (unit && unit->IsAlive() && unit != caster)
+                        me->AddThreat(unit, caster->getThreatManager().getThreat(unit));
+                }
             }
         }
 
@@ -796,7 +804,7 @@ public:
         {
             float x, y, z;
             me->GetPosition(x, y, z);   //this visual aura some under ground
-            me->UpdatePosition(x, y, z + 0.35f, 0.0f);
+            me->SetPosition(x, y, z + 0.35f, 0.0f);
             debuffGUID.Clear();
             Despawn();
             Creature* debuff = DoSpawnCreature(HELPER, 0, 0, 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 14500);
@@ -852,7 +860,7 @@ public:
             if (!who || !me->IsValidAttackTarget(who) || me->GetVictim())
                 return;
 
-            AddThreat(who, 0.0f);
+            me->AddThreat(who, 0.0f);
             if (sprouted)
                 DoStartMovement(who);
         }

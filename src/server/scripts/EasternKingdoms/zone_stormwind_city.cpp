@@ -114,10 +114,9 @@ class npc_jaina_tides_of_war : public ScriptedAI
 public:
     npc_jaina_tides_of_war(Creature* creature) : ScriptedAI(creature) { }
 
-    bool GossipSelect(Player* player, uint32 /*menuId*/, uint32 /*gossipListId*/) override
+    void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 /*gossipListId*/) override
     {
         player->CastSpell(player, SPELL_STORMWIND_TO_BORALUS_TRANSITION, true);
-        return false;
     }
 };
 

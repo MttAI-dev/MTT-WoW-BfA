@@ -610,9 +610,20 @@ struct boss_faction_championsAI : public BossAI
 
     void UpdateThreat()
     {
-        for (ThreatReference* ref : me->GetThreatManager().GetUnsortedThreatList())
-            if (Player* victim = ref->GetVictim()->ToPlayer())
-                ref->SetThreat(1000000.0f * CalculateThreat(me->GetDistance2d(victim), victim->GetArmor(), victim->GetHealth()));
+        std::list<HostileReference*> const& tList = me->getThreatManager().getThreatList();
+        for (std::list<HostileReference*>::const_iterator itr = tList.begin(); itr != tList.end(); ++itr)
+        {
+            Unit* unit = ObjectAccessor::GetUnit(*me, (*itr)->getUnitGuid());
+            if (unit && me->getThreatManager().getThreat(unit))
+            {
+                if (unit->GetTypeId() == TYPEID_PLAYER)
+                {
+                    float threat = CalculateThreat(me->GetDistance2d(unit), (float)unit->GetArmor(), unit->GetHealth());
+                    me->getThreatManager().modifyThreatPercent(unit, -100);
+                    me->AddThreat(unit, 1000000.0f * threat);
+                }
+            }
+        }
     }
 
     void UpdatePower()
@@ -675,14 +686,14 @@ struct boss_faction_championsAI : public BossAI
         std::list<Creature*> lst = DoFindFriendlyMissingBuff(40.0f, spell);
         std::list<Creature*>::const_iterator itr = lst.begin();
         if (lst.empty())
-            return nullptr;
+            return NULL;
         advance(itr, rand32() % lst.size());
         return (*itr);
     }
 
     Unit* SelectEnemyCaster(bool /*casting*/)
     {
-        std::list<HostileReference*> const& tList = me->GetThreatManager().getThreatList();
+        std::list<HostileReference*> const& tList = me->getThreatManager().getThreatList();
         std::list<HostileReference*>::const_iterator iter;
         for (iter = tList.begin(); iter!=tList.end(); ++iter)
         {
@@ -690,15 +701,20 @@ struct boss_faction_championsAI : public BossAI
             if (target && target->GetPowerType() == POWER_MANA)
                 return target;
         }
-        return nullptr;
+        return NULL;
     }
 
     uint32 EnemiesInRange(float distance)
     {
+        std::list<HostileReference*> const& tList = me->getThreatManager().getThreatList();
+        std::list<HostileReference*>::const_iterator iter;
         uint32 count = 0;
-        for (ThreatReference* ref : me->GetThreatManager().GetUnsortedThreatList())
-            if (me->GetDistance2d(ref->GetVictim()) < distance)
-                ++count;
+        for (iter = tList.begin(); iter != tList.end(); ++iter)
+        {
+            Unit* target = ObjectAccessor::GetUnit(*me, (*iter)->getUnitGuid());
+                if (target && me->GetDistance2d(target) < distance)
+                    ++count;
+        }
         return count;
     }
 
@@ -709,7 +725,9 @@ struct boss_faction_championsAI : public BossAI
 
         if (me->Attack(who, true))
         {
-            AddThreat(who, 10.0f);
+            me->AddThreat(who, 10.0f);
+            me->SetInCombatWith(who);
+            who->SetInCombatWith(me);
 
             if (_aiType == AI_MELEE || _aiType == AI_PET)
                 DoStartMovement(who);
@@ -905,7 +923,7 @@ class npc_toc_shaman : public CreatureScript
                             events.ScheduleEvent(EVENT_SPIRIT_CLEANSE, urand(15*IN_MILLISECONDS, 35*IN_MILLISECONDS));
                             return;
                         case EVENT_HEAL_BLOODLUST_HEROISM:
-                            if (me->GetFaction()) // alliance = 1
+                            if (me->getFaction()) // alliance = 1
                             {
                                 if (!me->HasAura(AURA_EXHAUSTION))
                                     DoCastAOE(SPELL_HEROISM);
@@ -2013,7 +2031,7 @@ class npc_toc_enh_shaman : public CreatureScript
                             events.ScheduleEvent(EVENT_STORMSTRIKE, urand(8*IN_MILLISECONDS, 10*IN_MILLISECONDS));
                             return;
                         case EVENT_DPS_BLOODLUST_HEROISM:
-                            if (me->GetFaction()) //Am i alliance?
+                            if (me->getFaction()) //Am i alliance?
                             {
                                 if (!me->HasAura(AURA_EXHAUSTION))
                                     DoCastAOE(SPELL_HEROISM);
@@ -2273,7 +2291,7 @@ class spell_faction_champion_warl_unstable_affliction : public SpellScriptLoader
             void HandleDispel(DispelInfo* dispelInfo)
             {
                 if (Unit* caster = GetCaster())
-                    caster->CastSpell(dispelInfo->GetDispeller(), SPELL_UNSTABLE_AFFLICTION_DISPEL, true, nullptr, GetEffect(EFFECT_0));
+                    caster->CastSpell(dispelInfo->GetDispeller(), SPELL_UNSTABLE_AFFLICTION_DISPEL, true, NULL, GetEffect(EFFECT_0));
             }
 
             void Register() override

@@ -84,7 +84,7 @@ struct npc_ravenholdt_courier_102018 : public ScriptedAI
             DoCastSelf(SPELL_DONT_KILL_THE_MESSENGER);
     }
 
-    void QuestAccept(Player* player, Quest const* quest) override
+    void sQuestAccept(Player* player, Quest const* quest) override
     {
         if (quest->GetQuestId() == QUEST_CALL_OF_THE_UNCROWNED)
         {
@@ -167,16 +167,14 @@ struct npc_red_jack_findle_97004 : public ScriptedAI
 {
     npc_red_jack_findle_97004(Creature* creature) : ScriptedAI(creature) { }
 
-    bool GossipHello(Player* player) override
+    void sGossipHello(Player* player)
     {
         ClearGossipMenuFor(player);
         player->PrepareGossipMenu(me, RED_JACK_FINDLE_GOSSIP_MENU);
         SendGossipMenuFor(player, player->GetGossipTextId(me), me->GetGUID());
-
-        return false;
     }
 
-    bool GossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId) override
+    void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId)
     {
         if (player->HasQuest(QUEST_CALL_OF_THE_UNCROWNED))
         {
@@ -187,8 +185,6 @@ struct npc_red_jack_findle_97004 : public ScriptedAI
                 CloseGossipMenuFor(player);
             }
         }
-
-        return false;
     }
 };
 
@@ -250,7 +246,7 @@ struct npc_lord_jorach_ravenholdt_101513 : public ScriptedAI
         _scheduler.Update(diff);
     }
 
-    void QuestAccept(Player* player, Quest const* quest) override
+    void sQuestAccept(Player* player, Quest const* quest) override
     {
         if (quest->GetQuestId() == QUEST_THE_FINAL_SHADOW)
         {
@@ -280,7 +276,7 @@ struct npc_lord_jorach_ravenholdt_101513 : public ScriptedAI
         }
     }
 
-    void QuestReward(Player* player, Quest const* quest, uint32 /*opt*/)  override
+    void sQuestReward(Player* player, Quest const* quest, uint32 /*opt*/)  override
     {
         if (quest->GetQuestId() == QUEST_THE_FINAL_SHADOW) { }
     }
@@ -327,7 +323,7 @@ struct npc_valeera_sanguinar_98102 : public ScriptedAI
         _scheduler.Update(diff);
     }
 
-    bool GossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId)
+    void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId)
     {
         if (player->HasQuest(QUEST_A_WORTHY_BLADE))
         {
@@ -337,13 +333,11 @@ struct npc_valeera_sanguinar_98102 : public ScriptedAI
                 CloseGossipMenuFor(player);
             }
         }
-
-        return false;
     }
 
-    void QuestAccept(Player* player, Quest const* quest) override { }
+    void sQuestAccept(Player* player, Quest const* quest) override { }
 
-    void QuestReward(Player* player, Quest const* quest, uint32 /*opt*/) override { }
+    void sQuestReward(Player* player, Quest const* quest, uint32 /*opt*/) override { }
 
 private:
 
@@ -395,7 +389,7 @@ struct npc_fleet_admiral_tethys_94159 : public ScriptedAI
         _scheduler.Update(diff);
     }
 
-    bool GossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId)
+    void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId)
     {
         if (player->HasQuest(QUEST_A_WORTHY_BLADE))
         {
@@ -405,13 +399,11 @@ struct npc_fleet_admiral_tethys_94159 : public ScriptedAI
                 CloseGossipMenuFor(player);
             }
         }
-
-        return false;
     }
 
-    void QuestAccept(Player* player, Quest const* quest) override { }
+    void sQuestAccept(Player* player, Quest const* quest) override { }
 
-    void QuestReward(Player* player, Quest const* quest, uint32 /*opt*/) override { }
+    void sQuestReward(Player* player, Quest const* quest, uint32 /*opt*/) override { }
 
 private:
 
@@ -436,11 +428,11 @@ struct npc_princess_tess_greymane_94138 : public ScriptedAI
         _scheduler.Update(diff);
     }
 
-    void QuestAccept(Player* player, Quest const* quest) override { }
+    void sQuestAccept(Player* player, Quest const* quest) override { }
 
-    void QuestReward(Player* player, Quest const* quest, uint32 /*opt*/) override { }
+    void sQuestReward(Player* player, Quest const* quest, uint32 /*opt*/) override { }
 
-    bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
+    void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
     {
         TC_LOG_ERROR("server.worldserver", "sGossipSelect %u, %u", menuId, gossipListId);
 
@@ -452,8 +444,6 @@ struct npc_princess_tess_greymane_94138 : public ScriptedAI
                 CloseGossipMenuFor(player);
             }
         }
-
-        return false;
     }
 
 private:

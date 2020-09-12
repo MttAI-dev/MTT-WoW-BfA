@@ -31,7 +31,6 @@ UpdateTime::UpdateTime()
     _maxUpdateTime = 0;
     _maxUpdateTimeOfLastTable = 0;
     _maxUpdateTimeOfCurrentTable = 0;
-    _recordedTime = 0;
 
     _updateTimeDataTable = { };
 }

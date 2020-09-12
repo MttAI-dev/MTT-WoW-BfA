@@ -29,7 +29,7 @@ class TC_GAME_API PassiveAI : public CreatureAI
         void AttackStart(Unit*) override { }
         void UpdateAI(uint32) override;
 
-        static int32 Permissible(Creature const* /*creature*/) { return PERMIT_BASE_NO; }
+        static int Permissible(const Creature*) { return PERMIT_BASE_IDLE;  }
 };
 
 class TC_GAME_API PossessedAI : public CreatureAI
@@ -47,7 +47,7 @@ class TC_GAME_API PossessedAI : public CreatureAI
 
         void OnCharmed(bool /*apply*/) override;
 
-        static int32 Permissible(Creature const* /*creature*/) { return PERMIT_BASE_NO; }
+        static int Permissible(const Creature*) { return PERMIT_BASE_IDLE;  }
 };
 
 class TC_GAME_API NullCreatureAI : public CreatureAI
@@ -61,7 +61,7 @@ class TC_GAME_API NullCreatureAI : public CreatureAI
         void EnterEvadeMode(EvadeReason /*why*/) override { }
         void OnCharmed(bool /*apply*/) override { }
 
-        static int32 Permissible(Creature const* creature);
+        static int Permissible(const Creature*) { return PERMIT_BASE_IDLE;  }
 };
 
 class TC_GAME_API CritterAI : public PassiveAI
@@ -71,8 +71,6 @@ class TC_GAME_API CritterAI : public PassiveAI
 
         void DamageTaken(Unit* done_by, uint32& /*damage*/) override;
         void EnterEvadeMode(EvadeReason why) override;
-
-        static int32 Permissible(Creature const* creature);
 };
 
 class TC_GAME_API TriggerAI : public NullCreatureAI
@@ -80,8 +78,6 @@ class TC_GAME_API TriggerAI : public NullCreatureAI
     public:
         explicit TriggerAI(Creature* c) : NullCreatureAI(c) { }
         void IsSummonedBy(Unit* summoner) override;
-
-        static int32 Permissible(Creature const* creature);
 };
 
 #endif

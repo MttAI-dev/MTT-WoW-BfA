@@ -302,8 +302,8 @@ class npc_slaincrewmember : public CreatureScript
                         break;
                     case 4:
                         me->Say(CREW_SAY_5, LANG_UNIVERSAL);
-                        me->SetFaction(14);
-                        AddThreat(player, 53.0f);
+                        me->setFaction(14);
+                        me->AddThreat(player, 53.0f);
                         me->AI()->AttackStart(player);
                         QuestInProgress = false;
                         break;

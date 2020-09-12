@@ -30,17 +30,17 @@ struct go_se_sewer_access_portal : public GameObjectAI
 
     void Reset() override
     {
-        me->GetScheduler().CancelAll();
-        me->GetScheduler().Schedule(1s, [this](TaskContext context)
+        go->GetScheduler().CancelAll();
+        go->GetScheduler().Schedule(1s, [this](TaskContext context)
         {
-            if (Player* player = me->SelectNearestPlayer(1.f))
+            if (Player* player = go->SelectNearestPlayer(1.f))
                 if (Scenario* scenario = player->GetScenario())
                     if (scenario->CheckCompletedCriteriaTree(CRITERIA_TREE_OPEN_SEWERS, player))
                     {
                         player->CastSpell(player, SPELL_TELEPORT_STOCKADE, true);
                         scenario->SendScenarioEvent(player, SCENARIO_EVENT_ENTER_STOCKADE);
 
-                        if (InstanceScript* instanceScript = me->GetInstanceScript())
+                        if (InstanceScript* instanceScript = go->GetInstanceScript())
                             instanceScript->SetData(SCENARIO_EVENT_ENTER_STOCKADE, 1);
                         return;
                     }
@@ -89,7 +89,7 @@ struct npc_se_saurfang : public ScriptedAI
 {
     npc_se_saurfang(Creature * creature) : ScriptedAI(creature) { }
 
-    bool GossipSelect(Player* player, uint32 /*menuId*/, uint32 /*gossipListId*/) override
+    void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 /*gossipListId*/) override
     {
         me->RemoveNpcFlag(UNIT_NPC_FLAG_GOSSIP);
         me->RemoveAurasDueToSpell(SPELL_CHAT_BUBBLE);
@@ -105,8 +105,6 @@ struct npc_se_saurfang : public ScriptedAI
             if (InstanceScript* instanceScript = GetContextPlayer()->GetInstanceScript())
                 instanceScript->SetData(SCENARIO_EVENT_FREE_SAURFANG, 1);
         });
-
-        return false;
     }
 };
 
@@ -115,11 +113,11 @@ struct go_se_talanji_zul_cell_door : public GameObjectAI
 {
     go_se_talanji_zul_cell_door(GameObject* go) : GameObjectAI(go) { }
 
-    void OnStateChanged(uint32 state) override
+    void OnStateChanged(uint32 state, Unit* /*unit*/) override
     {
         if (state == GO_ACTIVATED)
         {
-            if (InstanceScript* instanceScript = me->GetInstanceScript())
+            if (InstanceScript* instanceScript = go->GetInstanceScript())
             {
                 instanceScript->DoSendScenarioEvent(SCENARIO_EVENT_FREE_PRISONNERS);
                 instanceScript->SetData(SCENARIO_EVENT_FREE_PRISONNERS, 1);

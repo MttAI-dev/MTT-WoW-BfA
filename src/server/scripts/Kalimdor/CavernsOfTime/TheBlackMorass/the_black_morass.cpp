@@ -311,7 +311,7 @@ public:
 
             if (Unit* Summon = DoSummon(creature_entry, pos, 30000, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT))
                 if (Unit* temp = ObjectAccessor::GetUnit(*me, instance->GetGuidData(DATA_MEDIVH)))
-                    AddThreat(temp, 0.0f, Summon);
+                    Summon->AddThreat(temp, 0.0f);
         }
 
         void DoSelectSummon()

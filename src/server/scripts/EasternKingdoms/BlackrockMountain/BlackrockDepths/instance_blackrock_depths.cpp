@@ -354,7 +354,7 @@ public:
             {
                 if (Creature* boss = instance->GetCreature(TombBossGUIDs[TombEventCounter]))
                 {
-                    boss->SetFaction(FACTION_HOSTILE);
+                    boss->setFaction(FACTION_HOSTILE);
                     boss->RemoveUnitFlag(UNIT_FLAG_IMMUNE_TO_PC);
                     if (Unit* target = boss->SelectNearestTarget(500))
                         boss->AI()->AttackStart(target);
@@ -374,13 +374,13 @@ public:
                     {//do not call EnterEvadeMode(EvadeReason /*why*/), it will create infinit loops
                         boss->Respawn();
                         boss->RemoveAllAuras();
-                        boss->GetThreatManager().ClearAllThreat();
+                        boss->DeleteThreatList();
                         boss->CombatStop(true);
                         boss->LoadCreaturesAddon();
                         boss->GetMotionMaster()->MoveTargetedHome();
                         boss->ResetLootRecipients();
                     }
-                    boss->SetFaction(FACTION_FRIEND);
+                    boss->setFaction(FACTION_FRIEND);
                 }
             }
             GhostKillCount = 0;

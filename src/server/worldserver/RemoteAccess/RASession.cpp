@@ -20,7 +20,6 @@
 #include "Config.h"
 #include "DatabaseEnv.h"
 #include "Log.h"
-#include "SRP6.h"
 #include "Util.h"
 #include "World.h"
 #include <boost/asio/buffer.hpp>
@@ -160,21 +159,22 @@ bool RASession::CheckPassword(const std::string& user, const std::string& pass)
     std::string safe_pass = pass;
     Utf8ToUpperOnlyLatin(safe_pass);
 
+    std::string hash = AccountMgr::CalculateShaPassHash(safe_user, safe_pass);
+
     LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_CHECK_PASSWORD_BY_NAME);
 
     stmt->setString(0, safe_user);
+    stmt->setString(1, hash);
 
-    if (PreparedQueryResult result = LoginDatabase.Query(stmt))
+    PreparedQueryResult result = LoginDatabase.Query(stmt);
+
+    if (!result)
     {
-        Trinity::Crypto::SRP6::Salt salt = (*result)[0].GetBinary<Trinity::Crypto::SRP6::SALT_LENGTH>();
-        Trinity::Crypto::SRP6::Verifier verifier = (*result)[1].GetBinary<Trinity::Crypto::SRP6::VERIFIER_LENGTH>();
-
-        if (Trinity::Crypto::SRP6::CheckLogin(safe_user, safe_pass, salt, verifier))
-            return true;
+        TC_LOG_INFO("commands.ra", "Wrong password for user: %s", user.c_str());
+        return false;
     }
 
-    TC_LOG_INFO("commands.ra", "Wrong password for user: %s", user.c_str());
-    return false;
+    return true;
 }
 
 bool RASession::ProcessCommand(std::string& command)

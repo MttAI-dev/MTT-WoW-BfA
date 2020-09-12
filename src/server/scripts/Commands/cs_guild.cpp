@@ -54,7 +54,7 @@ public:
         };
         static std::vector<ChatCommand> commandTable =
         {
-            { "guild", rbac::RBAC_PERM_COMMAND_GUILD,  true, nullptr, "", guildCommandTable },
+            { "guild", rbac::RBAC_PERM_COMMAND_GUILD,  true, NULL, "", guildCommandTable },
         };
         return commandTable;
     }
@@ -74,10 +74,10 @@ public:
 
         // if not guild name only (in "") then player name
         Player* target;
-        if (!handler->extractPlayerTarget(*args != '"' ? (char*)args : nullptr, &target))
+        if (!handler->extractPlayerTarget(*args != '"' ? (char*)args : NULL, &target))
             return false;
 
-        char* tailStr = *args != '"' ? strtok(nullptr, "") : (char*)args;
+        char* tailStr = *args != '"' ? strtok(NULL, "") : (char*)args;
         if (!tailStr)
             return false;
 
@@ -135,10 +135,10 @@ public:
 
         // if not guild name only (in "") then player name
         ObjectGuid targetGuid;
-        if (!handler->extractPlayerTarget(*args != '"' ? (char*)args : nullptr, nullptr, &targetGuid))
+        if (!handler->extractPlayerTarget(*args != '"' ? (char*)args : NULL, NULL, &targetGuid))
             return false;
 
-        char* tailStr = *args != '"' ? strtok(nullptr, "") : (char*)args;
+        char* tailStr = *args != '"' ? strtok(NULL, "") : (char*)args;
         if (!tailStr)
             return false;
 
@@ -218,7 +218,7 @@ public:
             return false;
         }
 
-        char const* newGuildStr = handler->extractQuotedArg(strtok(nullptr, ""));
+        char const* newGuildStr = handler->extractQuotedArg(strtok(NULL, ""));
         if (!newGuildStr)
         {
             handler->SendSysMessage(LANG_INSERT_GUILD_NAME);

@@ -15,31 +15,36 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "HomeMovementGenerator.h"
 #include "Creature.h"
 #include "CreatureAI.h"
 #include "MoveSplineInit.h"
 #include "MoveSpline.h"
-#include "PathGenerator.h"
-#include "HomeMovementGenerator.h"
 
-template<class T>
-HomeMovementGenerator<T>::~HomeMovementGenerator() { }
-
-template<>
-HomeMovementGenerator<Creature>::~HomeMovementGenerator()
+void HomeMovementGenerator<Creature>::DoInitialize(Creature* owner)
 {
-    delete _path;
+    _setTargetLocation(owner);
 }
 
-template<class T>
-void HomeMovementGenerator<T>::SetTargetLocation(T*) { }
+void HomeMovementGenerator<Creature>::DoFinalize(Creature* owner)
+{
+    if (arrived)
+    {
+        owner->ClearUnitState(UNIT_STATE_EVADE);
+        owner->SetWalk(true);
+        owner->LoadCreaturesAddon();
+        owner->AI()->JustReachedHome();
+        owner->SetSpawnHealth();
+    }
+}
 
-template<>
-void HomeMovementGenerator<Creature>::SetTargetLocation(Creature* owner)
+void HomeMovementGenerator<Creature>::DoReset(Creature*) { }
+
+void HomeMovementGenerator<Creature>::_setTargetLocation(Creature* owner)
 {
     if (owner->HasUnitState(UNIT_STATE_ROOT | UNIT_STATE_STUNNED | UNIT_STATE_DISTRACTED))
     { // if we are ROOT/STUNNED/DISTRACTED even after aura clear, finalize on next update - otherwise we would get stuck in evade
-        _skipToHome = true;
+        skipToHome = true;
         return;
     }
 
@@ -55,59 +60,14 @@ void HomeMovementGenerator<Creature>::SetTargetLocation(Creature* owner)
     init.SetWalk(false);
     init.Launch();
 
-    _skipToHome = false;
-    _arrived = false;
+    skipToHome = false;
+    arrived = false;
 
-    owner->ClearUnitState(UNIT_STATE_ALL_ERASABLE & ~UNIT_STATE_EVADE);
+    owner->ClearUnitState(uint32(UNIT_STATE_ALL_STATE & ~(UNIT_STATE_EVADE | UNIT_STATE_IGNORE_PATHFINDING)));
 }
 
-template<class T>
-void HomeMovementGenerator<T>::DoInitialize(T*) { }
-
-template<>
-void HomeMovementGenerator<Creature>::DoInitialize(Creature* owner)
+bool HomeMovementGenerator<Creature>::DoUpdate(Creature* owner, const uint32 /*time_diff*/)
 {
-    SetTargetLocation(owner);
-}
-
-template<class T>
-void HomeMovementGenerator<T>::DoFinalize(T*) { }
-
-template<>
-void HomeMovementGenerator<Creature>::DoFinalize(Creature* owner)
-{
-    if (_arrived)
-    {
-        owner->ClearUnitState(UNIT_STATE_EVADE);
-        owner->SetWalk(true);
-        owner->LoadCreaturesAddon();
-        owner->AI()->JustReachedHome();
-        if (owner->isRegeneratingHealth())
-        {
-            owner->SetFullHealth();
-            owner->SetPower(POWER_MANA, owner->GetMaxPower(POWER_MANA));
-        }
-    }
-}
-
-template<class T>
-void HomeMovementGenerator<T>::DoReset(T*) { }
-
-template<>
-void HomeMovementGenerator<Creature>::DoReset(Creature* owner)
-{
-    DoInitialize(owner);
-}
-
-template<class T>
-bool HomeMovementGenerator<T>::DoUpdate(T*, uint32)
-{
-    return false;
-}
-
-template<>
-bool HomeMovementGenerator<Creature>::DoUpdate(Creature* owner, uint32 /*diff*/)
-{
-    _arrived = _skipToHome || owner->movespline->Finalized();
-    return !_arrived;
+    arrived = skipToHome || owner->movespline->Finalized();
+    return !arrived;
 }

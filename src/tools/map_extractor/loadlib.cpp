@@ -24,7 +24,7 @@ u_map_fcc MverMagic = { { 'R','E','V','M' } };
 
 ChunkedFile::ChunkedFile()
 {
-    data = nullptr;
+    data = 0;
     data_size = 0;
 }
 
@@ -33,21 +33,21 @@ ChunkedFile::~ChunkedFile()
     free();
 }
 
-bool ChunkedFile::loadFile(std::shared_ptr<CASC::Storage const> mpq, std::string const& fileName, bool log)
+bool ChunkedFile::loadFile(CASC::StorageHandle const& mpq, std::string const& fileName, bool log)
 {
     free();
-    std::unique_ptr<CASC::File> file(mpq->OpenFile(fileName.c_str(), CASC_LOCALE_ALL_WOW, log));
+    CASC::FileHandle file = CASC::OpenFile(mpq, fileName.c_str(), CASC_LOCALE_ALL, log);
     if (!file)
         return false;
 
-    int64 fileSize = file->GetSize();
+    int64 fileSize = CASC::GetFileSize(file);
     if (fileSize == -1)
         return false;
 
     data_size = uint32(fileSize);
     data = new uint8[data_size];
     uint32 bytesRead = 0;
-    if (!file->ReadFile(data, data_size, &bytesRead) || bytesRead != data_size)
+    if (!CASC::ReadFile(file, data, data_size, &bytesRead) || bytesRead != data_size)
         return false;
 
     parseChunks();
@@ -60,21 +60,21 @@ bool ChunkedFile::loadFile(std::shared_ptr<CASC::Storage const> mpq, std::string
     return false;
 }
 
-bool ChunkedFile::loadFile(std::shared_ptr<CASC::Storage const> mpq, uint32 fileDataId, std::string const& description, bool log)
+bool ChunkedFile::loadFile(CASC::StorageHandle const& mpq, uint32 fileDataId, std::string const& description, bool log)
 {
     free();
-    std::unique_ptr<CASC::File> file(mpq->OpenFile(fileDataId, CASC_LOCALE_ALL_WOW, log));
+    CASC::FileHandle file = CASC::OpenFile(mpq, fileDataId, CASC_LOCALE_ALL, log);
     if (!file)
         return false;
 
-    int64 fileSize = file->GetSize();
+    int64 fileSize = CASC::GetFileSize(file);
     if (fileSize == -1)
         return false;
 
     data_size = fileSize;
     data = new uint8[data_size];
     uint32 bytesRead = 0;
-    if (!file->ReadFile(data, data_size, &bytesRead) || bytesRead != data_size)
+    if (!CASC::ReadFile(file, data, data_size, &bytesRead) || bytesRead != data_size)
         return false;
 
     parseChunks();
@@ -104,13 +104,13 @@ bool ChunkedFile::prepareLoadedData()
 
 void ChunkedFile::free()
 {
-    for (auto& chunk : chunks)
+    for (auto chunk : chunks)
         delete chunk.second;
 
     chunks.clear();
 
     delete[] data;
-    data = nullptr;
+    data = 0;
     data_size = 0;
 }
 
@@ -171,12 +171,12 @@ FileChunk* ChunkedFile::GetChunk(std::string const& name)
     if (std::distance(range.first, range.second) == 1)
         return range.first->second;
 
-    return nullptr;
+    return NULL;
 }
 
 FileChunk::~FileChunk()
 {
-    for (auto& subchunk : subchunks)
+    for (auto subchunk : subchunks)
         delete subchunk.second;
 
     subchunks.clear();
@@ -215,5 +215,5 @@ FileChunk* FileChunk::GetSubChunk(std::string const& name)
     if (std::distance(range.first, range.second) == 1)
         return range.first->second;
 
-    return nullptr;
+    return NULL;
 }

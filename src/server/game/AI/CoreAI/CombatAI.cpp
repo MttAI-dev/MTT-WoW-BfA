@@ -20,7 +20,6 @@
 #include "Creature.h"
 #include "CreatureAIImpl.h"
 #include "Log.h"
-#include "Map.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
@@ -32,11 +31,11 @@
 // AggressorAI
 /////////////////
 
-int32 AggressorAI::Permissible(Creature const* creature)
+int AggressorAI::Permissible(const Creature* creature)
 {
     // have some hostile factions, it will be selected by IsHostileTo check at MoveInLineOfSight
     if (!creature->IsCivilian() && !creature->IsNeutralToAll())
-        return PERMIT_BASE_REACTIVE;
+        return PERMIT_BASE_PROACTIVE;
 
     return PERMIT_BASE_NO;
 }
@@ -56,7 +55,7 @@ void AggressorAI::UpdateAI(uint32 /*diff*/)
 void CombatAI::InitializeAI()
 {
     for (uint32 i = 0; i < MAX_CREATURE_SPELLS; ++i)
-        if (me->m_spells[i] && sSpellMgr->GetSpellInfo(me->m_spells[i], me->GetMap()->GetDifficultyID()))
+        if (me->m_spells[i] && sSpellMgr->GetSpellInfo(me->m_spells[i]))
             spells.push_back(me->m_spells[i]);
 
     CreatureAI::InitializeAI();
@@ -73,22 +72,18 @@ void CombatAI::Reset()
 void CombatAI::JustDied(Unit* killer)
 {
     for (SpellVct::iterator i = spells.begin(); i != spells.end(); ++i)
-        if (AISpellInfoType const* info = GetAISpellInfo(*i, me->GetMap()->GetDifficultyID()))
-            if (info->condition == AICOND_DIE)
-                me->CastSpell(killer, *i, true);
+        if (AISpellInfo[*i].condition == AICOND_DIE)
+            me->CastSpell(killer, *i, true);
 }
 
 void CombatAI::EnterCombat(Unit* who)
 {
     for (SpellVct::iterator i = spells.begin(); i != spells.end(); ++i)
     {
-        if (AISpellInfoType const* info = GetAISpellInfo(*i, me->GetMap()->GetDifficultyID()))
-        {
-            if (info->condition == AICOND_AGGRO)
-                me->CastSpell(who, *i, false);
-            else if (info->condition == AICOND_COMBAT)
-                spellEvents.ScheduleEvent(*i, info->cooldown + rand32() % info->cooldown);
-        }
+        if (AISpellInfo[*i].condition == AICOND_AGGRO)
+            me->CastSpell(who, *i, false);
+        else if (AISpellInfo[*i].condition == AICOND_COMBAT)
+            spellEvents.ScheduleEvent(*i, AISpellInfo[*i].cooldown + rand32() % AISpellInfo[*i].cooldown);
     }
 }
 
@@ -116,8 +111,7 @@ void CombatAI::UpdateAI(uint32 diff)
     if (uint32 spellId = spellEvents.ExecuteEvent())
     {
         DoCast(spellId);
-        if (AISpellInfoType const* info = GetAISpellInfo(spellId, me->GetMap()->GetDifficultyID()))
-            spellEvents.ScheduleEvent(spellId, info->cooldown + rand32() % info->cooldown);
+        spellEvents.ScheduleEvent(spellId, AISpellInfo[spellId].cooldown + rand32() % AISpellInfo[spellId].cooldown);
     }
     else
         DoMeleeAttackIfReady();
@@ -137,7 +131,7 @@ bool CombatAI::UpdateVictim()
 
         return me->GetVictim() != nullptr;
     }
-    else if (me->GetThreatManager().isThreatListEmpty())
+    else if (me->getThreatManager().isThreatListEmpty())
     {
         EnterEvadeMode(EVADE_REASON_NO_HOSTILES);
         return false;
@@ -200,10 +194,8 @@ void CasterAI::InitializeAI()
 
     m_attackDist = 30.0f;
     for (SpellVct::iterator itr = spells.begin(); itr != spells.end(); ++itr)
-        if (AISpellInfoType const* info = GetAISpellInfo(*itr, me->GetMap()->GetDifficultyID()))
-            if (info->condition == AICOND_COMBAT && m_attackDist > info->maxRange)
-                m_attackDist = info->maxRange;
-
+        if (AISpellInfo[*itr].condition == AICOND_COMBAT && m_attackDist > GetAISpellInfo(*itr)->maxRange)
+            m_attackDist = GetAISpellInfo(*itr)->maxRange;
     if (m_attackDist == 30.0f)
         m_attackDist = MELEE_RANGE;
 }
@@ -217,20 +209,17 @@ void CasterAI::EnterCombat(Unit* who)
     uint32 count = 0;
     for (SpellVct::iterator itr = spells.begin(); itr != spells.end(); ++itr, ++count)
     {
-        if (AISpellInfoType const* info = GetAISpellInfo(*itr, me->GetMap()->GetDifficultyID()))
+        if (AISpellInfo[*itr].condition == AICOND_AGGRO)
+            me->CastSpell(who, *itr, false);
+        else if (AISpellInfo[*itr].condition == AICOND_COMBAT)
         {
-            if (info->condition == AICOND_AGGRO)
-                me->CastSpell(who, *itr, false);
-            else if (info->condition == AICOND_COMBAT)
+            uint32 cooldown = GetAISpellInfo(*itr)->realCooldown;
+            if (count == spell)
             {
-                uint32 cooldown = info->realCooldown;
-                if (count == spell)
-                {
-                    DoCast(spells[spell]);
-                    cooldown += me->GetCurrentSpellCastTime(*itr);
-                }
-                events.ScheduleEvent(*itr, cooldown);
+                DoCast(spells[spell]);
+                cooldown += me->GetCurrentSpellCastTime(*itr);
             }
+            events.ScheduleEvent(*itr, cooldown);
         }
     }
 }
@@ -255,8 +244,7 @@ void CasterAI::UpdateAI(uint32 diff)
     {
         DoCast(spellId);
         uint32 casttime = me->GetCurrentSpellCastTime(spellId);
-        if (AISpellInfoType const* info = GetAISpellInfo(spellId, me->GetMap()->GetDifficultyID()))
-            events.ScheduleEvent(spellId, (casttime ? casttime : 500) + info->realCooldown);
+        events.ScheduleEvent(spellId, (casttime ? casttime : 500) + GetAISpellInfo(spellId)->realCooldown);
     }
 }
 
@@ -269,7 +257,7 @@ ArcherAI::ArcherAI(Creature* c) : CreatureAI(c)
     if (!me->m_spells[0])
         TC_LOG_ERROR("misc", "ArcherAI set for creature (entry = %u) with spell1=0. AI will do nothing", me->GetEntry());
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(me->m_spells[0], me->GetMap()->GetDifficultyID());
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(me->m_spells[0]);
     m_minRange = spellInfo ? spellInfo->GetMinRange(false) : 0;
 
     if (!m_minRange)
@@ -318,7 +306,7 @@ TurretAI::TurretAI(Creature* c) : CreatureAI(c)
     if (!me->m_spells[0])
         TC_LOG_ERROR("misc", "TurretAI set for creature (entry = %u) with spell1=0. AI will do nothing", me->GetEntry());
 
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(me->m_spells[0], me->GetMap()->GetDifficultyID());
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(me->m_spells[0]);
     m_minRange = spellInfo ? spellInfo->GetMinRange(false) : 0;
     me->m_CombatDistance = spellInfo ? spellInfo->GetMaxRange(false) : 0;
     me->m_SightDistance = me->m_CombatDistance;
@@ -419,12 +407,4 @@ void VehicleAI::CheckConditions(uint32 diff)
     }
     else
         m_ConditionsTimer -= diff;
-}
-
-int32 VehicleAI::Permissible(Creature const* creature)
-{
-    if (creature->IsVehicle())
-        return PERMIT_BASE_SPECIAL;
-
-    return PERMIT_BASE_NO;
 }

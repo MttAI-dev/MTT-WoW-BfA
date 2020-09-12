@@ -24,7 +24,7 @@
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
 
-int32 TotemAI::Permissible(Creature const* creature)
+int TotemAI::Permissible(Creature const* creature)
 {
     if (creature->IsTotem())
         return PERMIT_BASE_PROACTIVE;
@@ -53,7 +53,7 @@ void TotemAI::UpdateAI(uint32 /*diff*/)
         return;
 
     // Search spell
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(me->ToTotem()->GetSpell(), me->GetMap()->GetDifficultyID());
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(me->ToTotem()->GetSpell());
     if (!spellInfo)
         return;
 
@@ -63,14 +63,14 @@ void TotemAI::UpdateAI(uint32 /*diff*/)
     // SPELLMOD_RANGE not applied in this place just because not existence range mods for attacking totems
 
     // pointer to appropriate target if found any
-    Unit* victim = !i_victimGuid.IsEmpty() ? ObjectAccessor::GetUnit(*me, i_victimGuid) : nullptr;
+    Unit* victim = !i_victimGuid.IsEmpty() ? ObjectAccessor::GetUnit(*me, i_victimGuid) : NULL;
 
     // Search victim if no, not attackable, or out of range, or friendly (possible in case duel end)
     if (!victim ||
         !victim->isTargetableForAttack() || !me->IsWithinDistInMap(victim, max_range) ||
         me->IsFriendlyTo(victim) || !me->CanSeeOrDetect(victim))
     {
-        victim = nullptr;
+        victim = NULL;
         Trinity::NearestAttackableUnitInObjectRangeCheck u_check(me, me->GetCharmerOrOwnerOrSelf(), max_range);
         Trinity::UnitLastSearcher<Trinity::NearestAttackableUnitInObjectRangeCheck> checker(me, victim, u_check);
         Cell::VisitAllObjects(me, checker, max_range);
@@ -83,7 +83,8 @@ void TotemAI::UpdateAI(uint32 /*diff*/)
         i_victimGuid = victim->GetGUID();
 
         // attack
-        me->CastSpell(victim, me->ToTotem()->GetSpell());
+        me->SetInFront(victim);                         // client change orientation by self
+        me->CastSpell(victim, me->ToTotem()->GetSpell(), false);
     }
     else
         i_victimGuid.Clear();

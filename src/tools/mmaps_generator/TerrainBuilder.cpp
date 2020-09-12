@@ -394,7 +394,7 @@ namespace MMAP
 
         // make a copy of liquid vertices
         // used to pad right-bottom frame due to lost vertex data at extraction
-        float* lverts_copy = nullptr;
+        float* lverts_copy = NULL;
         if (meshData.liquidVerts.size())
         {
             lverts_copy = new float[meshData.liquidVerts.size()];
@@ -652,7 +652,7 @@ namespace MMAP
             if (!instanceTrees[mapID])
                 break;
 
-            ModelInstance* models = nullptr;
+            ModelInstance* models = NULL;
             uint32 count = 0;
             instanceTrees[mapID]->getModelInstances(models, count);
 
@@ -689,7 +689,7 @@ namespace MMAP
                     std::vector<G3D::Vector3> tempVertices;
                     std::vector<G3D::Vector3> transformedVertices;
                     std::vector<MeshTriangle> tempTriangles;
-                    WmoLiquid* liquid = nullptr;
+                    WmoLiquid* liquid = NULL;
 
                     it->getMeshData(tempVertices, tempTriangles, liquid);
 
@@ -889,7 +889,7 @@ namespace MMAP
     void TerrainBuilder::loadOffMeshConnections(uint32 mapID, uint32 tileX, uint32 tileY, MeshData &meshData, const char* offMeshFilePath)
     {
         // no meshfile input given?
-        if (offMeshFilePath == nullptr)
+        if (offMeshFilePath == NULL)
             return;
 
         FILE* fp = fopen(offMeshFilePath, "rb");

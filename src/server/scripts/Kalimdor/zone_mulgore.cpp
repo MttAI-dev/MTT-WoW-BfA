@@ -53,7 +53,7 @@ struct npc_agitated_earth_spirit : public ScriptedAI
             {
                 case 0:
                 {
-                    me->SetFaction(35);
+                    me->setFaction(35);
                     if (Player* player = ObjectAccessor::GetPlayer(*me, _playerGUID))
                         player->KilledMonsterCredit(NPC_EARTH_SPIRIT_CREDIT_BUNNY);
 
@@ -65,7 +65,7 @@ struct npc_agitated_earth_spirit : public ScriptedAI
                     break;
                 }
                 case 1:
-                    me->SetFaction(14);
+                    me->setFaction(14);
                     if (Player* player = ObjectAccessor::GetPlayer(*me, _playerGUID))
                         AttackStart(player);
                     break;

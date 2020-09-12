@@ -765,7 +765,7 @@ namespace Trinity
     {
         public:
             AnyDeadUnitSpellTargetInRangeCheck(Unit* searchObj, float range, SpellInfo const* spellInfo, SpellTargetCheckTypes check)
-                : AnyDeadUnitObjectInRangeCheck(searchObj, range), i_spellInfo(spellInfo), i_check(searchObj, searchObj, spellInfo, check, nullptr)
+                : AnyDeadUnitObjectInRangeCheck(searchObj, range), i_spellInfo(spellInfo), i_check(searchObj, searchObj, spellInfo, check, NULL)
             { }
             bool operator()(Player* u);
             bool operator()(Corpse* u);
@@ -797,13 +797,16 @@ namespace Trinity
 
             bool operator()(GameObject* go) const
             {
-                if (go->GetGOInfo()->GetSpellFocusType() != i_focusId)
+                if (go->GetGOInfo()->type != GAMEOBJECT_TYPE_SPELL_FOCUS)
+                    return false;
+
+                if (go->GetGOInfo()->spellFocus.spellFocusType != i_focusId)
                     return false;
 
                 if (!go->isSpawned())
                     return false;
 
-                float dist = go->GetGOInfo()->GetSpellFocusRadius() / 2.f;
+                float dist = go->GetGOInfo()->spellFocus.radius / 2.f;
 
                 return go->IsWithinDistInMap(i_unit, dist);
             }
@@ -1080,27 +1083,11 @@ namespace Trinity
     class AnyFriendlyUnitInObjectRangeCheck
     {
         public:
-            AnyFriendlyUnitInObjectRangeCheck(WorldObject const* obj, Unit const* funit, float range, bool playerOnly = false, bool incOwnRadius = true, bool incTargetRadius = true)
-                : i_obj(obj), i_funit(funit), i_range(range), i_playerOnly(playerOnly), i_incOwnRadius(incOwnRadius), i_incTargetRadius(incTargetRadius) { }
+            AnyFriendlyUnitInObjectRangeCheck(WorldObject const* obj, Unit const* funit, float range, bool playerOnly = false, bool exceptSelf = false) : i_obj(obj), i_funit(funit), i_range(range), i_playerOnly(playerOnly), i_exceptSelf(exceptSelf) { }
 
             bool operator()(Unit* u) const
             {
-                if (!u->IsAlive())
-                    return false;
-
-                float searchRadius = i_range;
-                if (i_incOwnRadius)
-                    searchRadius += i_obj->GetCombatReach();
-                if (i_incTargetRadius)
-                    searchRadius += u->GetCombatReach();
-
-                if (!u->IsInMap(i_obj) || !u->IsInPhase(i_obj) || !u->IsWithinDoubleVerticalCylinder(i_obj, searchRadius, searchRadius))
-                    return false;
-
-                if (!i_funit->IsFriendlyTo(u))
-                    return false;
-
-                return !i_playerOnly || u->GetTypeId() == TYPEID_PLAYER;
+                return u->IsAlive() && i_obj->IsWithinDistInMap(u, i_range) && i_funit->IsFriendlyTo(u) && (!i_playerOnly || u->IsPlayer()) && (!i_exceptSelf || u != i_funit);
             }
 
         private:
@@ -1109,15 +1096,12 @@ namespace Trinity
             float i_range;
             bool i_playerOnly;
             bool i_exceptSelf;
-            bool i_incOwnRadius;
-            bool i_incTargetRadius;
     };
 
     class AnyGroupedUnitInObjectRangeCheck
     {
         public:
-            AnyGroupedUnitInObjectRangeCheck(WorldObject const* obj, Unit const* funit, float range, bool raid, bool playerOnly = false, bool incOwnRadius = true, bool incTargetRadius = true)
-                : _source(obj), _refUnit(funit), _range(range), _raid(raid), _playerOnly(playerOnly), i_incOwnRadius(incOwnRadius), i_incTargetRadius(incTargetRadius) { }
+            AnyGroupedUnitInObjectRangeCheck(WorldObject const* obj, Unit const* funit, float range, bool raid, bool playerOnly = false) : _source(obj), _refUnit(funit), _range(range), _raid(raid), _playerOnly(playerOnly) { }
 
             bool operator()(Unit* u) const
             {
@@ -1132,19 +1116,7 @@ namespace Trinity
                 else if (!_refUnit->IsInPartyWith(u))
                     return false;
 
-                if (_refUnit->IsHostileTo(u))
-                    return false;
-
-                if (!u->IsAlive())
-                    return false;
-
-                float searchRadius = _range;
-                if (i_incOwnRadius)
-                    searchRadius += _source->GetCombatReach();
-                if (i_incTargetRadius)
-                    searchRadius += u->GetCombatReach();
-
-                return u->IsInMap(_source) && u->IsInPhase(_source) && u->IsWithinDoubleVerticalCylinder(_source, searchRadius, searchRadius);
+                return !_refUnit->IsHostileTo(u) && u->IsAlive() && _source->IsWithinDistInMap(u, _range);
             }
 
         private:
@@ -1153,8 +1125,6 @@ namespace Trinity
             float _range;
             bool _raid;
             bool _playerOnly;
-            bool i_incOwnRadius;
-            bool i_incTargetRadius;
     };
 
     class AnyUnitInObjectRangeCheck
@@ -1265,8 +1235,8 @@ namespace Trinity
     class AnyAoETargetUnitInObjectRangeCheck
     {
         public:
-            AnyAoETargetUnitInObjectRangeCheck(WorldObject const* obj, Unit const* funit, float range, SpellInfo const* spellInfo = nullptr, bool incOwnRadius = true, bool incTargetRadius = true)
-                : i_obj(obj), i_funit(funit), _spellInfo(spellInfo), i_range(range), i_incOwnRadius(incOwnRadius), i_incTargetRadius(incTargetRadius)
+            AnyAoETargetUnitInObjectRangeCheck(WorldObject const* obj, Unit const* funit, float range, SpellInfo const* spellInfo = nullptr)
+                : i_obj(obj), i_funit(funit), _spellInfo(spellInfo), i_range(range)
             {
                 if (!_spellInfo)
                     if (DynamicObject const* dynObj = i_obj->ToDynObject())
@@ -1282,16 +1252,7 @@ namespace Trinity
                 if (_spellInfo && _spellInfo->HasAttribute(SPELL_ATTR3_ONLY_TARGET_PLAYERS) && u->GetTypeId() != TYPEID_PLAYER)
                     return false;
 
-                if (!i_funit->_IsValidAttackTarget(u, _spellInfo, i_obj->GetTypeId() == TYPEID_DYNAMICOBJECT ? i_obj : nullptr))
-                    return false;
-
-                float searchRadius = i_range;
-                if (i_incOwnRadius)
-                    searchRadius += i_obj->GetCombatReach();
-                if (i_incTargetRadius)
-                    searchRadius += u->GetCombatReach();
-
-                return u->IsInMap(i_obj) && u->IsInPhase(i_obj) && u->IsWithinDoubleVerticalCylinder(i_obj, searchRadius, searchRadius);
+                return i_funit->_IsValidAttackTarget(u, _spellInfo, i_obj->GetTypeId() == TYPEID_DYNAMICOBJECT ? i_obj : nullptr) && i_obj->IsWithinDistInMap(u, i_range);
             }
 
         private:
@@ -1299,8 +1260,6 @@ namespace Trinity
             Unit const* i_funit;
             SpellInfo const* _spellInfo;
             float i_range;
-            bool i_incOwnRadius;
-            bool i_incTargetRadius;
     };
 
     // do attack at call of help to friendly crearture

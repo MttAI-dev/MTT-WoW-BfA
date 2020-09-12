@@ -166,7 +166,7 @@ struct boss_fallen_avatar : public BossAI
     void ExecuteEvent(uint32 eventId) override
     {
         /*
-        for (auto threat : me->GetThreatManager().getThreatList())
+        for (auto threat : me->getThreatManager().getThreatList())
             if (me->IsWithinCombatRange(threat->getTarget(), me->GetCombatReach()))
                 me->RemoveAurasDueToSpell(SPELL_RIPPLE_OF_DARKNESS);
          */
@@ -298,7 +298,7 @@ struct boss_fallen_avatar : public BossAI
         {
         case NPC_MAIDEN_OF_VALOR:
         {
-            summon->SetFaction(me->GetFaction());
+            summon->setFaction(me->getFaction());
             uint64 health = (uint64)(me->GetMaxHealth()*0.5f);
             summon->SetMaxHealth(health);
             summon->SetHealth(health);
@@ -306,7 +306,7 @@ struct boss_fallen_avatar : public BossAI
         }
         case NPC_CORRUPTED_BLADE:
         {
-            summon->SetFaction(me->GetFaction());
+            summon->setFaction(me->getFaction());
             if (Unit* target1 = SelectTarget(SELECT_TARGET_RANDOM, 0.0, 0.0, true))
             {
                 AddTimedDelayedOperation(3000, [this, summon, target1]() -> void

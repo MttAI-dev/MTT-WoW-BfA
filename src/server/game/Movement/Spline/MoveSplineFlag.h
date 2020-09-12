@@ -75,6 +75,7 @@ namespace Movement
 
         MoveSplineFlag() { raw() = 0; }
         MoveSplineFlag(uint32 f) { raw() = f; }
+        MoveSplineFlag(const MoveSplineFlag& f) { raw() = f.raw(); }
 
         // Constant interface
 

@@ -18,8 +18,7 @@
 #ifndef DB2_FILE_LOADER_H
 #define DB2_FILE_LOADER_H
 
-#include "Common.h"
-#include <exception>
+#include "Define.h"
 #include <string>
 #include <vector>
 
@@ -78,6 +77,7 @@ struct TC_COMMON_API DB2FieldMeta
 
 struct TC_COMMON_API DB2FileLoadInfo
 {
+    DB2FileLoadInfo();
     DB2FileLoadInfo(DB2FieldMeta const* fields, std::size_t fieldCount, DB2Meta const* meta);
 
     uint32 GetStringFieldCount(bool localizedOnly) const;
@@ -88,12 +88,6 @@ struct TC_COMMON_API DB2FileLoadInfo
     std::size_t FieldCount;
     DB2Meta const* Meta;
     std::string TypesString;
-};
-
-enum class DB2EncryptedSectionHandling
-{
-    Skip,
-    Process
 };
 
 struct TC_COMMON_API DB2FileSource
@@ -115,8 +109,6 @@ struct TC_COMMON_API DB2FileSource
     virtual int64 GetFileSize() const = 0;
 
     virtual char const* GetFileName() const = 0;
-
-    virtual DB2EncryptedSectionHandling HandleEncryptedSection(DB2SectionHeader const& sectionHeader) const = 0;
 };
 
 class TC_COMMON_API DB2Record
@@ -164,17 +156,6 @@ struct DB2RecordCopy
 };
 #pragma pack(pop)
 
-class TC_COMMON_API DB2FileLoadException : public std::exception
-{
-public:
-    DB2FileLoadException(std::string msg) : _msg(std::move(msg)) { }
-
-    char const* what() const noexcept override { return _msg.c_str(); }
-
-private:
-    std::string _msg;
-};
-
 class TC_COMMON_API DB2FileLoader
 {
 public:
@@ -182,10 +163,10 @@ public:
     ~DB2FileLoader();
 
     // loadInfo argument is required when trying to read data from the file
-    void LoadHeaders(DB2FileSource* source, DB2FileLoadInfo const* loadInfo);
-    void Load(DB2FileSource* source, DB2FileLoadInfo const* loadInfo);
-    char* AutoProduceData(uint32& indexTableSize, char**& indexTable);
-    char* AutoProduceStrings(char** indexTable, uint32 indexTableSize, LocaleConstant locale);
+    bool LoadHeaders(DB2FileSource* source, DB2FileLoadInfo const* loadInfo);
+    bool Load(DB2FileSource* source, DB2FileLoadInfo const* loadInfo);
+    char* AutoProduceData(uint32& count, char**& indexTable, std::vector<char*>& stringPool);
+    char* AutoProduceStrings(char** indexTable, uint32 indexTableSize, uint32 locale);
     void AutoProduceRecordCopies(uint32 records, char** indexTable, char* dataTable);
 
     uint32 GetCols() const { return _header.TotalFieldCount; }

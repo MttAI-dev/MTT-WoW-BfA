@@ -8,10 +8,7 @@
 # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-set(PRIVATE_SOURCES
-  TileAssembler.cpp
-  TileAssembler.h
-  VMapAssembler.cpp)
+set(PRIVATE_SOURCES VMapAssembler.cpp)
 
 if (WIN32)
   list(APPEND PRIVATE_SOURCES ${sources_windows})

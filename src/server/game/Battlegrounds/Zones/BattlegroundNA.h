@@ -43,7 +43,7 @@ enum BattlegroundNAGameObjects
 class BattlegroundNA : public Arena
 {
     public:
-        BattlegroundNA(BattlegroundTemplate const* battlegroundTemplate);
+        BattlegroundNA();
 
         /* inherited from BattlegroundClass */
         void StartingEventCloseDoors() override;

@@ -18,17 +18,18 @@
 #ifndef _WORLDPACKETCRYPT_H
 #define _WORLDPACKETCRYPT_H
 
-#include "AES.h"
-#include <array>
+#include "Cryptography/AES.h"
+
+class BigNumber;
 
 class TC_COMMON_API WorldPacketCrypt
 {
 public:
     WorldPacketCrypt();
 
-    void Init(Trinity::Crypto::AES::Key const& key);
-    bool DecryptRecv(uint8* data, size_t length, Trinity::Crypto::AES::Tag& tag);
-    bool EncryptSend(uint8* data, size_t length, Trinity::Crypto::AES::Tag& tag);
+    void Init(uint8 const* key);
+    bool DecryptRecv(uint8* data, size_t length, uint8 (&tag)[12]);
+    bool EncryptSend(uint8* data, size_t length, uint8 (&tag)[12]);
 
     bool IsInitialized() const { return _initialized; }
 

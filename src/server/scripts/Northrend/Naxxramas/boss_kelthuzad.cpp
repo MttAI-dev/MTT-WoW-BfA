@@ -189,7 +189,7 @@ class KelThuzadCharmedPlayerAI : public SimpleCharmedPlayerAI
             {
                 if (Unit* target = charmer->AI()->SelectTarget(SELECT_TARGET_RANDOM, 0, CharmedPlayerTargetSelectPred()))
                     return target;
-                if (Unit* target = charmer->AI()->SelectTarget(SELECT_TARGET_RANDOM, 0, 0.0f, true, true, -SPELL_CHAINS))
+                if (Unit* target = charmer->AI()->SelectTarget(SELECT_TARGET_RANDOM, 0, 0.0f, true, -SPELL_CHAINS))
                     return target;
             }
             return nullptr;
@@ -283,9 +283,10 @@ public:
                 {
                     Talk(SAY_CHAINS);
                     std::list<Unit*> targets;
-                    SelectTargetList(targets, 3, SELECT_TARGET_RANDOM, 0, 0.0f, true, false);
+                    SelectTargetList(targets, 3, SELECT_TARGET_RANDOM, 0.0f, true);
                     for (Unit* target : targets)
-                        DoCast(target, SPELL_CHAINS);
+                        if (me->GetVictim() != target) // skip MT
+                            DoCast(target, SPELL_CHAINS);
                 }
             }
 
@@ -425,7 +426,7 @@ public:
                             me->CastStop();
                             events.SetPhase(PHASE_TWO);
                             me->RemoveUnitFlag(UnitFlags(UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_IMMUNE_TO_PC));
-                            ResetThreatList();
+                            me->getThreatManager().resetAllAggro();
                             me->SetReactState(REACT_AGGRESSIVE);
                             Talk(EMOTE_PHASE_TWO);
 
@@ -880,14 +881,20 @@ public:
     {
         PrepareAuraScript(spell_kelthuzad_chains_AuraScript);
 
-        void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+        void HandleApply(AuraEffect const* /*eff*/, AuraEffectHandleModes /*mode*/)
         {
-            aurEff->HandleAuraModScale(GetTargetApplication(), mode, true);
+            Unit* target = GetTarget();
+            float scale = target->GetObjectScale();
+            ApplyPercentModFloatVar(scale, 200.0f, true);
+            target->SetObjectScale(scale);
         }
 
-        void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+        void HandleRemove(AuraEffect const* /*eff*/, AuraEffectHandleModes /*mode*/)
         {
-            aurEff->HandleAuraModScale(GetTargetApplication(), mode, false);
+            Unit* target = GetTarget();
+            float scale = target->GetObjectScale();
+            ApplyPercentModFloatVar(scale, 200.0f, false);
+            target->SetObjectScale(scale);
         }
 
         void Register() override
@@ -925,7 +932,7 @@ public:
             if (int32 mana = int32(target->GetMaxPower(POWER_MANA) / 10))
             {
                 mana = target->ModifyPower(POWER_MANA, -mana);
-                target->CastCustomSpell(SPELL_MANA_DETONATION_DAMAGE, SPELLVALUE_BASE_POINT0, -mana * 10, target, true, nullptr, aurEff);
+                target->CastCustomSpell(SPELL_MANA_DETONATION_DAMAGE, SPELLVALUE_BASE_POINT0, -mana * 10, target, true, NULL, aurEff);
             }
         }
 

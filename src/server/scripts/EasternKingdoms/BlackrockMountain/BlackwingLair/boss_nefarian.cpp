@@ -190,7 +190,7 @@ public:
 
                 me->SetVisible(true);
                 me->AddNpcFlag(UNIT_NPC_FLAG_GOSSIP);
-                me->SetFaction(35);
+                me->setFaction(35);
                 me->SetStandState(UNIT_STAND_STATE_SIT_HIGH_CHAIR);
                 me->RemoveAura(SPELL_NEFARIANS_BARRIER);
             }
@@ -207,7 +207,7 @@ public:
 
             Talk(SAY_GAMESBEGIN_2);
 
-            me->SetFaction(103);
+            me->setFaction(103);
             me->AddNpcFlag(UNIT_NPC_FLAG_NONE);
             DoCast(me, SPELL_NEFARIANS_BARRIER);
             me->SetStandState(UNIT_STAND_STATE_STAND);
@@ -319,7 +319,7 @@ public:
                                         DoCast(target, SPELL_SHADOWBOLT);
                                     break;
                             }
-                            ResetThreatList();
+                            DoResetThreat();
                             events.ScheduleEvent(EVENT_SHADOW_BOLT, urand(3000, 10000));
                             break;
                         case EVENT_FEAR:
@@ -342,7 +342,7 @@ public:
                                     CreatureID = Entry[urand(0, 4)];
                                 if (Creature* dragon = me->SummonCreature(CreatureID, DrakeSpawnLoc[i]))
                                 {
-                                    dragon->SetFaction(103);
+                                    dragon->setFaction(103);
                                     dragon->AI()->AttackStart(me->GetVictim());
                                 }
 
@@ -353,7 +353,7 @@ public:
                                         nefarian->setActive(true);
                                         nefarian->SetCanFly(true);
                                         nefarian->SetDisableGravity(true);
-                                        nefarian->CastSpell(nullptr, SPELL_SHADOWFLAME_INITIAL);
+                                        nefarian->CastSpell((Unit*)NULL, SPELL_SHADOWFLAME_INITIAL);
                                         nefarian->GetMotionMaster()->MovePoint(1, NefarianLoc[1]);
                                     }
                                     events.CancelEvent(EVENT_MIND_CONTROL);
@@ -373,7 +373,7 @@ public:
             }
         }
 
-        bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
+        void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
         {
             if (menuId == GOSSIP_ID && gossipListId == GOSSIP_OPTION_ID)
             {
@@ -381,8 +381,6 @@ public:
                 Talk(SAY_GAMESBEGIN_1);
                 BeginEvent(player);
             }
-
-            return false;
         }
 
         private:

@@ -22,7 +22,7 @@
 #include "Player.h"
 #include "WorldStatePackets.h"
 
-BattlegroundRV::BattlegroundRV(BattlegroundTemplate const* battlegroundTemplate) : Arena(battlegroundTemplate)
+BattlegroundRV::BattlegroundRV()
 {
     BgObjects.resize(BG_RV_OBJECT_MAX);
 

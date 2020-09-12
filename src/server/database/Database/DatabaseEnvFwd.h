@@ -21,7 +21,6 @@
 #include <future>
 #include <memory>
 
-struct QueryResultFieldMetadata;
 class Field;
 
 class ResultSet;

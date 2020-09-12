@@ -23,7 +23,6 @@
 #include "MapInstanced.h"
 #include "GridStates.h"
 #include "MapUpdater.h"
-#include <boost/dynamic_bitset.hpp>
 
 class PhaseShift;
 class Transport;
@@ -39,23 +38,23 @@ class TC_GAME_API MapManager
         Map* CreateMap(uint32 mapId, Player* player, uint32 loginInstanceId=0);
         Map* FindMap(uint32 mapId, uint32 instanceId) const;
 
-        uint32 GetAreaId(PhaseShift const& phaseShift, uint32 mapid, float x, float y, float z)
+        uint32 GetAreaId(PhaseShift const& phaseShift, uint32 mapid, float x, float y, float z) const
         {
-            Map* m = CreateBaseMap(mapid);
+            Map const* m = const_cast<MapManager*>(this)->CreateBaseMap(mapid);
             return m->GetAreaId(phaseShift, x, y, z);
         }
-        uint32 GetZoneId(PhaseShift const& phaseShift, uint32 mapid, float x, float y, float z)
+        uint32 GetZoneId(PhaseShift const& phaseShift, uint32 mapid, float x, float y, float z) const
         {
-            Map* m = CreateBaseMap(mapid);
+            Map const* m = const_cast<MapManager*>(this)->CreateBaseMap(mapid);
             return m->GetZoneId(phaseShift, x, y, z);
         }
         void GetZoneAndAreaId(PhaseShift const& phaseShift, uint32& zoneid, uint32& areaid, uint32 mapid, float x, float y, float z)
         {
-            Map* m = CreateBaseMap(mapid);
+            Map const* m = const_cast<MapManager*>(this)->CreateBaseMap(mapid);
             m->GetZoneAndAreaId(phaseShift, zoneid, areaid, x, y, z);
         }
 
-        void Initialize();
+        void Initialize(void);
         void InitializeParentMapData(std::unordered_map<uint32, std::vector<uint32>> const& mapData);
         void Update(uint32);
 
@@ -117,6 +116,9 @@ class TC_GAME_API MapManager
         void RegisterInstanceId(uint32 instanceId);
         void FreeInstanceId(uint32 instanceId);
 
+        uint32 GetNextInstanceId() const { return _nextInstanceId; };
+        void SetNextInstanceId(uint32 nextInstanceId) { _nextInstanceId = nextInstanceId; };
+
         MapUpdater * GetMapUpdater() { return &m_updater; }
 
         template<typename Worker>
@@ -132,7 +134,7 @@ class TC_GAME_API MapManager
 
     private:
         typedef std::unordered_map<uint32, Map*> MapMapType;
-        typedef boost::dynamic_bitset<size_t> InstanceIds;
+        typedef std::vector<bool> InstanceIds;
 
         MapManager();
         ~MapManager();
@@ -140,7 +142,7 @@ class TC_GAME_API MapManager
         Map* FindBaseMap(uint32 mapId) const
         {
             MapMapType::const_iterator iter = i_maps.find(mapId);
-            return (iter == i_maps.end() ? nullptr : iter->second);
+            return (iter == i_maps.end() ? NULL : iter->second);
         }
 
         Map* CreateBaseMap_i(MapEntry const* mapEntry);
@@ -153,7 +155,7 @@ class TC_GAME_API MapManager
         MapMapType i_maps;
         IntervalTimer i_timer;
 
-        InstanceIds _freeInstanceIds;
+        InstanceIds _instanceIds;
         uint32 _nextInstanceId;
         MapUpdater m_updater;
 

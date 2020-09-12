@@ -18,7 +18,6 @@
 #include "Session.h"
 #include "BattlenetRpcErrorCodes.h"
 #include "ByteConverter.h"
-#include "CryptoRandom.h"
 #include "DatabaseEnv.h"
 #include "Errors.h"
 #include "IPLocation.h"
@@ -54,7 +53,7 @@ void Battlenet::Session::AccountInfo::LoadResult(PreparedQueryResult result)
 
 void Battlenet::Session::GameAccountInfo::LoadResult(Field* fields)
 {
-    // a.id, a.username, ab.unbandate, ab.unbandate = ab.bandate, aa.SecurityLevel
+    // a.id, a.username, ab.unbandate, ab.unbandate = ab.bandate, aa.gmlevel
     Id = fields[0].GetUInt32();
     Name = fields[1].GetString();
     UnbanDate = fields[2].GetUInt32();
@@ -219,7 +218,7 @@ uint32 Battlenet::Session::HandleLogon(authentication::v1::LogonRequest const* l
         return ERROR_BAD_PLATFORM;
     }
 
-    if (!IsValidLocale(GetLocaleByName(logonRequest->locale())))
+    if (GetLocaleByName(logonRequest->locale()) == LOCALE_enUS && logonRequest->locale() != "enUS")
     {
         TC_LOG_DEBUG("session", "[Battlenet::LogonRequest] %s attempted to log in with unsupported locale (using %s)!", GetClientInfo().c_str(), logonRequest->locale().c_str());
         return ERROR_BAD_LOCALE;
@@ -387,8 +386,9 @@ uint32 Battlenet::Session::VerifyWebCredentials(std::string const& webCredential
         if (!_ipCountry.empty())
             logonResult.set_geoip_country(_ipCountry);
 
-        std::array<uint8, 64> k = Trinity::Crypto::GetRandomBytes<64>();
-        logonResult.set_session_key(k.data(), 64);
+        BigNumber k;
+        k.SetRand(8 * 64);
+        logonResult.set_session_key(k.AsByteArray(64).get(), 64);
 
         _authed = true;
 

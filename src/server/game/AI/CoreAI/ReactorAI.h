@@ -29,6 +29,6 @@ class TC_GAME_API ReactorAI : public CreatureAI
         void MoveInLineOfSight(Unit*) override { }
         void UpdateAI(uint32 diff) override;
 
-        static int32 Permissible(Creature const* creature);
+        static int Permissible(const Creature*);
 };
 #endif

@@ -164,6 +164,12 @@ class LinkedListHead
                 {                                           // construct with node pointer _Pnode
                 }
 
+                Iterator& operator=(Iterator const &_Right)
+                {
+                    _Ptr = _Right._Ptr;
+                    return *this;
+                }
+
                 Iterator& operator=(const_pointer const &_Right)
                 {
                     _Ptr = pointer(_Right);

@@ -40,7 +40,7 @@ enum BattlegroundTTPObjects
 class BattlegroundTTP : public Arena
 {
     public:
-        BattlegroundTTP(BattlegroundTemplate const* battlegroundTemplate);
+        BattlegroundTTP();
 
         /* inherited from BattlegroundClass */
         void StartingEventCloseDoors() override;

@@ -202,10 +202,14 @@ class TC_PROTO_API ReportService : public ServiceBase
 
   static google::protobuf::ServiceDescriptor const* descriptor();
 
-  void CallServerMethod(uint32 token, uint32 methodId, MessageBuffer buffer) final;
+  // client methods --------------------------------------------------
+
+  void SubmitReport(::bgs::protocol::report::v2::SubmitReportRequest const* request, std::function<void(::bgs::protocol::NoData const*)> responseCallback);
+  // server methods --------------------------------------------------
+
+  void CallServerMethod(uint32 token, uint32 methodId, MessageBuffer buffer) override final;
 
  protected:
-  // server methods --------------------------------------------------
   virtual uint32 HandleSubmitReport(::bgs::protocol::report::v2::SubmitReportRequest const* request, ::bgs::protocol::NoData* response, std::function<void(ServiceBase*, uint32, ::google::protobuf::Message const*)>& continuation);
 
  private:

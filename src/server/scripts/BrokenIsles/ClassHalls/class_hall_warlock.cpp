@@ -62,7 +62,7 @@ struct npc_ritssyn_flamescowl_103506 : public ScriptedAI
         }
     }
 
-    void QuestAccept(Player* player, Quest const* quest) override
+    void sQuestAccept(Player* player, Quest const* quest) override
     {
         if (quest->GetQuestId() == QUEST_THE_SIXTH)
         {

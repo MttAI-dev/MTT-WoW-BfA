@@ -230,7 +230,7 @@ void WorldSession::HandleVoidSwapItem(WorldPackets::VoidStorage::SwapVoidItem& s
         return;
     }
 
-    bool usedDestSlot = _player->GetVoidStorageItem(swapVoidItem.DstSlot) != nullptr;
+    bool usedDestSlot = _player->GetVoidStorageItem(swapVoidItem.DstSlot) != NULL;
     ObjectGuid itemIdDest;
     if (usedDestSlot)
         itemIdDest = ObjectGuid::Create<HighGuid::Item>(_player->GetVoidStorageItem(swapVoidItem.DstSlot)->ItemId);

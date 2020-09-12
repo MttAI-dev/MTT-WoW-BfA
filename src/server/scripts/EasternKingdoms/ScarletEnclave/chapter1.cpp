@@ -128,7 +128,7 @@ public:
         {
             Initialize();
             events.Reset();
-            me->SetFaction(7);
+            me->setFaction(7);
             me->AddUnitFlag(UNIT_FLAG_IMMUNE_TO_PC);
             me->SetStandState(UNIT_STAND_STATE_KNEEL);
             me->LoadEquipment(0, true);
@@ -193,7 +193,7 @@ public:
                         TC_LOG_ERROR("scripts", "npc_unworthy_initiateAI: unable to find anchor!");
 
                     float dist = 99.0f;
-                    GameObject* prison = nullptr;
+                    GameObject* prison = NULL;
 
                     for (uint8 i = 0; i < 12; ++i)
                     {
@@ -234,7 +234,7 @@ public:
                         wait_timer -= diff;
                     else
                     {
-                        me->SetFaction(14);
+                        me->setFaction(14);
                         me->RemoveUnitFlag(UNIT_FLAG_IMMUNE_TO_PC);
                         phase = PHASE_ATTACKING;
 
@@ -594,7 +594,7 @@ public:
                 {
                     if (m_uiDuelTimer <= uiDiff)
                     {
-                        me->SetFaction(FACTION_HOSTILE);
+                        me->setFaction(FACTION_HOSTILE);
 
                         if (Unit* unit = ObjectAccessor::GetUnit(*me, m_uiDuelerGUID))
                             AttackStart(unit);
@@ -759,15 +759,13 @@ public:
     {
         npc_salanar_the_horsemanAI(Creature* creature) : ScriptedAI(creature) { }
 
-        bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
+        void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
         {
             if (menuId == GOSSIP_SALANAR_MENU && gossipListId == GOSSIP_SALANAR_OPTION)
             {
                 player->CastSpell(player, SPELL_REALM_OF_SHADOWS, true);
                 player->PlayerTalkClass->SendCloseGossip();
             }
-
-            return false;
         }
 
         void SpellHit(Unit* caster, const SpellInfo* spell) override
@@ -782,7 +780,7 @@ public:
                         {
                             charmer->RemoveAurasDueToSpell(SPELL_EFFECT_STOLEN_HORSE);
                             caster->RemoveNpcFlag(UNIT_NPC_FLAG_SPELLCLICK);
-                            caster->SetFaction(35);
+                            caster->setFaction(35);
                             DoCast(caster, SPELL_CALL_DARK_RIDER, true);
                             if (Creature* Dark_Rider = me->FindNearestCreature(NPC_DARK_RIDER_OF_ACHERUS, 15))
                                 ENSURE_AI(npc_dark_rider_of_acherus::npc_dark_rider_of_acherusAI, Dark_Rider->AI())->InitDespawnHorse(caster);
@@ -874,7 +872,7 @@ public:
             {
                 deathcharger->AddNpcFlag(UNIT_NPC_FLAG_SPELLCLICK);
                 deathcharger->RemoveUnitFlag(UNIT_FLAG_NOT_SELECTABLE);
-                deathcharger->SetFaction(2096);
+                deathcharger->setFaction(2096);
             }
         }
     };
@@ -1062,7 +1060,7 @@ class npc_scarlet_miner_cart : public CreatureScript
                 if (apply)
                 {
                     _playerGUID = who->GetGUID();
-                    me->CastSpell(nullptr, SPELL_SUMMON_MINER, true);
+                    me->CastSpell((Unit*)NULL, SPELL_SUMMON_MINER, true);
                 }
                 else
                 {

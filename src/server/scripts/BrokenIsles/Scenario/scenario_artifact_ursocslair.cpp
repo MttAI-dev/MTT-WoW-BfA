@@ -616,7 +616,7 @@ struct npc_lea_stonepaw_105243 : public ScriptedAI
             isSayHi = true;
             me->Say(104079);
             me->SetOwnerGUID(player->GetGUID());
-            me->SetFaction(player->GetFaction());
+            me->setFaction(player->getFaction());
             //PhasingHandler::InheritPhaseShift(tempSumm, caster);
             //me->GetMotionMaster()->MoveFollow(player, PET_FOLLOW_DIST, me->GetFollowAngle());
         }

@@ -66,7 +66,7 @@ public:
             if (instance)
                 instance->SetBossState(DATA_HYRJA, FAIL);
 
-            me->SetFaction(14);
+            me->setFaction(14);
 
             events.Reset();
         }

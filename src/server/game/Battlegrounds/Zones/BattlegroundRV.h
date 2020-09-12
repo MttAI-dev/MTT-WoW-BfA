@@ -92,7 +92,7 @@ enum BattlegroundRVData
 class BattlegroundRV : public Arena
 {
     public:
-        BattlegroundRV(BattlegroundTemplate const* battlegroundTemplate);
+        BattlegroundRV();
 
         /* inherited from BattlegroundClass */
         void StartingEventOpenDoors() override;

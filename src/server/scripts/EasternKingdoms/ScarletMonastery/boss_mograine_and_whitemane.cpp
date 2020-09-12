@@ -332,7 +332,7 @@ public:
             //If we are <75% hp cast healing spells at self or Mograine
             if (Heal_Timer <= diff)
             {
-                Creature* target = nullptr;
+                Creature* target = NULL;
 
                 if (!HealthAbovePct(75))
                     target = me;

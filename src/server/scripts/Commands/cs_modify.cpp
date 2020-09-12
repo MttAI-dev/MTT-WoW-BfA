@@ -69,7 +69,7 @@ public:
             { "reputation",   rbac::RBAC_PERM_COMMAND_MODIFY_REPUTATION,   false, &HandleModifyRepCommand,           "" },
             { "runicpower",   rbac::RBAC_PERM_COMMAND_MODIFY_RUNICPOWER,   false, &HandleModifyRunicPowerCommand,    "" },
             { "scale",        rbac::RBAC_PERM_COMMAND_MODIFY_SCALE,        false, &HandleModifyScaleCommand,         "" },
-            { "speed",        rbac::RBAC_PERM_COMMAND_MODIFY_SPEED,        false, nullptr,           "", modifyspeedCommandTable },
+            { "speed",        rbac::RBAC_PERM_COMMAND_MODIFY_SPEED,        false, NULL,           "", modifyspeedCommandTable },
             { "spell",        rbac::RBAC_PERM_COMMAND_MODIFY_SPELL,        false, &HandleModifySpellCommand,         "" },
             { "standstate",   rbac::RBAC_PERM_COMMAND_MODIFY_STANDSTATE,   false, &HandleModifyStandStateCommand,    "" },
             { "talentpoints", rbac::RBAC_PERM_COMMAND_MODIFY_TALENTPOINTS, false, &HandleModifyTalentCommand,        "" },
@@ -80,7 +80,7 @@ public:
         {
             { "morph",   rbac::RBAC_PERM_COMMAND_MORPH,   false, &HandleModifyMorphCommand,          "" },
             { "demorph", rbac::RBAC_PERM_COMMAND_DEMORPH, false, &HandleDeMorphCommand,              "" },
-            { "modify",  rbac::RBAC_PERM_COMMAND_MODIFY,  false, nullptr,                 "", modifyCommandTable },
+            { "modify",  rbac::RBAC_PERM_COMMAND_MODIFY,  false, NULL,                 "", modifyCommandTable },
         };
         return commandTable;
     }
@@ -218,7 +218,7 @@ public:
 
         if (!pfactionid)
         {
-            uint32 factionid = target->GetFaction();
+            uint32 factionid = target->getFaction();
             uint32 flag      = target->m_unitData->Flags;
             uint64 npcflag;
             memcpy(&npcflag, target->m_unitData->NpcFlags.begin(), sizeof(uint64));
@@ -230,13 +230,13 @@ public:
         uint32 factionid = atoul(pfactionid);
         uint32 flag;
 
-        char *pflag = strtok(nullptr, " ");
+        char *pflag = strtok(NULL, " ");
         if (!pflag)
             flag = target->m_unitData->Flags;
         else
             flag = atoul(pflag);
 
-        char* pnpcflag = strtok(nullptr, " ");
+        char* pnpcflag = strtok(NULL, " ");
 
         uint64 npcflag;
         if (!pnpcflag)
@@ -244,7 +244,7 @@ public:
         else
             npcflag = atoull(pnpcflag);
 
-        char* pdyflag = strtok(nullptr, " ");
+        char* pdyflag = strtok(NULL, " ");
 
         uint32  dyflag;
         if (!pdyflag)
@@ -261,7 +261,7 @@ public:
 
         handler->PSendSysMessage(LANG_YOU_CHANGE_FACTION, target->GetGUID().ToString().c_str(), factionid, flag, std::to_string(npcflag).c_str(), dyflag);
 
-        target->SetFaction(factionid);
+        target->setFaction(factionid);
         target->SetUnitFlags(UnitFlags(flag));
         target->SetNpcFlags(NPCFlags(npcflag & 0xFFFFFFFF));
         target->SetNpcFlags2(NPCFlags2(npcflag >> 32));
@@ -280,17 +280,17 @@ public:
         if (!pspellflatid)
             return false;
 
-        char* pop = strtok(nullptr, " ");
+        char* pop = strtok(NULL, " ");
         if (!pop)
             return false;
 
-        char* pval = strtok(nullptr, " ");
+        char* pval = strtok(NULL, " ");
         if (!pval)
             return false;
 
         uint16 mark;
 
-        char* pmark = strtok(nullptr, " ");
+        char* pmark = strtok(NULL, " ");
 
         uint8 spellflatid = atoi(pspellflatid);
         uint8 op   = atoi(pop);
@@ -301,7 +301,7 @@ public:
             mark = atoi(pmark);
 
         Player* target = handler->getSelectedPlayerOrSelf();
-        if (target == nullptr)
+        if (target == NULL)
         {
             handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
             handler->SetSentErrorMessage(true);
@@ -510,7 +510,7 @@ public:
             return false;
 
         const char* mount_cstr = strtok(const_cast<char*>(args), " ");
-        const char* speed_cstr = strtok(nullptr, " ");
+        const char* speed_cstr = strtok(NULL, " ");
 
         if (!mount_cstr || !speed_cstr)
             return false;
@@ -678,7 +678,7 @@ public:
         uint32 factionId = atoi(factionTxt);
 
         int32 amount = 0;
-        char *rankTxt = strtok(nullptr, " ");
+        char *rankTxt = strtok(NULL, " ");
         if (!factionId || !rankTxt)
             return false;
 
@@ -707,7 +707,7 @@ public:
 
                 if (wrank.substr(0, wrankStr.size()) == wrankStr)
                 {
-                    char *deltaTxt = strtok(nullptr, " ");
+                    char *deltaTxt = strtok(NULL, " ");
                     if (deltaTxt)
                     {
                         int32 delta = atoi(deltaTxt);
@@ -742,14 +742,14 @@ public:
 
         if (factionEntry->ReputationIndex < 0)
         {
-            handler->PSendSysMessage(LANG_COMMAND_FACTION_NOREP_ERROR, factionEntry->Name[handler->GetSessionDbcLocale()], factionId);
+            handler->PSendSysMessage(LANG_COMMAND_FACTION_NOREP_ERROR, factionEntry->Name->Str[handler->GetSessionDbcLocale()], factionId);
             handler->SetSentErrorMessage(true);
             return false;
         }
 
         target->GetReputationMgr().SetOneFactionReputation(factionEntry, amount, false);
         target->GetReputationMgr().SendState(target->GetReputationMgr().GetState(factionEntry));
-        handler->PSendSysMessage(LANG_COMMAND_MODIFY_REP, factionEntry->Name[handler->GetSessionDbcLocale()], factionId,
+        handler->PSendSysMessage(LANG_COMMAND_MODIFY_REP, factionEntry->Name->Str[handler->GetSessionDbcLocale()], factionId,
             handler->GetNameLink(target).c_str(), target->GetReputationMgr().GetReputation(factionEntry));
         return true;
     }
@@ -936,7 +936,7 @@ public:
         if (!currencyType)
             return false;
 
-        uint32 amount = atoi(strtok(nullptr, " "));
+        uint32 amount = atoi(strtok(NULL, " "));
         if (!amount)
             return false;
 

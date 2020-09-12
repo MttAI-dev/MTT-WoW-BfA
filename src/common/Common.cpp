@@ -33,13 +33,13 @@ char const* localeNames[TOTAL_LOCALES] =
   "itIT"
 };
 
-LocaleConstant GetLocaleByName(std::string const& name)
+LocaleConstant GetLocaleByName(const std::string& name)
 {
     for (uint32 i = 0; i < TOTAL_LOCALES; ++i)
         if (name == localeNames[i])
             return LocaleConstant(i);
 
-    return TOTAL_LOCALES;
+    return LOCALE_enUS;                                     // including enGB case
 }
 
 LockedQueue<DiscordMessage*> DiscordMessageQueue;

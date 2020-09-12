@@ -74,10 +74,18 @@ class boss_ironaya : public CreatureScript
                     return;
 
                 //If we are <50% hp do knockaway ONCE
-                if (!bHasCastKnockaway && HealthBelowPct(50) && me->GetVictim())
+                if (!bHasCastKnockaway && HealthBelowPct(50))
                 {
                     DoCastVictim(SPELL_KNOCKAWAY, true);
-                    me->GetThreatManager().ResetThreat(me->EnsureVictim());
+
+                    // current aggro target is knocked away pick new target
+                    Unit* target = SelectTarget(SELECT_TARGET_TOPAGGRO, 0);
+
+                    if (!target || target == me->GetVictim())
+                        target = SelectTarget(SELECT_TARGET_TOPAGGRO, 1);
+
+                    if (target)
+                        me->TauntApply(target);
 
                     //Shouldn't cast this agian
                     bHasCastKnockaway = true;

@@ -28,7 +28,6 @@
 #include "GuildMgr.h"
 #include "Item.h"
 #include "Log.h"
-#include "LootItemStorage.h"
 #include "LootMgr.h"
 #include "LootPackets.h"
 #include "Object.h"
@@ -215,7 +214,7 @@ void WorldSession::HandleLootMoneyOpcode(WorldPackets::Loot::LootMoney& /*packet
             Group* group = player->GetGroup();
 
             std::vector<Player*> playersNear;
-            for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+            for (GroupReference* itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
             {
                 Player* member = itr->GetSource();
                 if (!member)
@@ -259,7 +258,7 @@ void WorldSession::HandleLootMoneyOpcode(WorldPackets::Loot::LootMoney& /*packet
 
         // Delete the money loot record from the DB
         if (!loot->containerID.IsEmpty())
-            sLootItemStorage->RemoveStoredMoneyForContainer(loot->containerID.GetCounter());
+            loot->DeleteLootMoneyFromContainerItemDB();
 
         // Delete container if empty
         if (loot->isLooted() && guid.IsItem())
@@ -440,105 +439,104 @@ void WorldSession::DoLootReleaseAll()
         DoLootRelease(lootPair.second);
 }
 
-void WorldSession::HandleLootMasterGiveOpcode(WorldPackets::Loot::MasterLootItem& masterLootItem)
+void WorldSession::HandleLootMasterGiveOpcode(WorldPacket& recvData)
 {
-    AELootResult aeResult;
+    uint8 slotid;
+    ObjectGuid lootguid, target_playerguid;
+
+    recvData >> lootguid >> slotid >> target_playerguid;
 
     if (!_player->GetGroup() || _player->GetGroup()->GetMasterLooterGuid() != _player->GetGUID() || _player->GetGroup()->GetLootMethod() != MASTER_LOOT)
     {
-        _player->SendLootError(ObjectGuid::Empty, ObjectGuid::Empty, LOOT_ERROR_DIDNT_KILL);
+        _player->SendLootError(lootguid, ObjectGuid::Empty, LOOT_ERROR_DIDNT_KILL);
         return;
     }
 
     // player on other map
-    Player* target = ObjectAccessor::GetPlayer(*_player, masterLootItem.Target);
+    Player* target = ObjectAccessor::GetPlayer(*_player, target_playerguid);
     if (!target)
     {
-        _player->SendLootError(ObjectGuid::Empty, ObjectGuid::Empty, LOOT_ERROR_PLAYER_NOT_FOUND);
+        _player->SendLootError(lootguid, ObjectGuid::Empty, LOOT_ERROR_PLAYER_NOT_FOUND);
         return;
     }
 
     TC_LOG_DEBUG("network", "WorldSession::HandleLootMasterGiveOpcode (CMSG_LOOT_MASTER_GIVE, 0x02A3) Target = [%s].", target->GetName().c_str());
 
-    for (WorldPackets::Loot::LootRequest const& req : masterLootItem.Loot)
+    if (_player->GetLootGUID() != lootguid)
     {
-        Loot* loot = nullptr;
-        ObjectGuid lootguid = _player->GetLootWorldObjectGUID(req.Object);
-
-        if (!_player->IsInRaidWith(target) || !_player->IsInMap(target))
-        {
-            _player->SendLootError(req.Object, ObjectGuid::Empty, LOOT_ERROR_MASTER_OTHER);
-            TC_LOG_INFO("entities.player.cheat", "MasterLootItem: Player %s tried to give an item to ineligible player %s !", GetPlayer()->GetName().c_str(), target->GetName().c_str());
-            return;
-        }
-
-        if (GetPlayer()->GetLootGUID().IsCreatureOrVehicle())
-        {
-            Creature* creature = GetPlayer()->GetMap()->GetCreature(lootguid);
-            if (!creature)
-                return;
-
-            loot = &creature->loot;
-        }
-        else if (GetPlayer()->GetLootGUID().IsGameObject())
-        {
-            GameObject* pGO = GetPlayer()->GetMap()->GetGameObject(lootguid);
-            if (!pGO)
-                return;
-
-            loot = &pGO->loot;
-        }
-
-        if (!loot)
-            return;
-
-        uint8 slotid = req.LootListID - 1;
-        if (slotid >= loot->items[GetPlayer()->GetGUID()].size())
-        {
-            TC_LOG_DEBUG("loot", "MasterLootItem: Player %s might be using a hack! (slot %d, size %lu)",
-                GetPlayer()->GetName().c_str(), slotid, (unsigned long)loot->items.size());
-            return;
-        }
-
-        LootItemList& itemList = loot->items[GetPlayer()->GetGUID()];
-        LootItem& item = itemList[slotid];
-
-        ItemPosCountVec dest;
-        InventoryResult msg = target->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, item.itemid, item.count);
-        if (item.follow_loot_rules && !item.AllowedForPlayer(target))
-            msg = EQUIP_ERR_CANT_EQUIP_EVER;
-        if (msg != EQUIP_ERR_OK)
-        {
-            if (msg == EQUIP_ERR_ITEM_MAX_COUNT)
-                _player->SendLootError(req.Object, ObjectGuid::Empty, LOOT_ERROR_MASTER_UNIQUE_ITEM);
-            else if (msg == EQUIP_ERR_INV_FULL)
-                _player->SendLootError(req.Object, ObjectGuid::Empty, LOOT_ERROR_MASTER_INV_FULL);
-            else
-                _player->SendLootError(req.Object, ObjectGuid::Empty, LOOT_ERROR_MASTER_OTHER);
-
-            target->SendEquipError(msg, nullptr, nullptr, item.itemid);
-            return;
-        }
-
-        // now move item from loot to target inventory
-        Item* newitem = target->StoreNewItem(dest, item.itemid, true, item.randomBonusListId, item.GetAllowedLooters(), item.context, item.BonusListIDs);
-        aeResult.Add(newitem, item.count, loot->loot_type);
-
-        // mark as looted
-        item.count = 0;
-        item.is_looted = true;
-
-        loot->NotifyItemRemoved(slotid);
-        --loot->unlootedCount;
+        _player->SendLootError(lootguid, ObjectGuid::Empty, LOOT_ERROR_DIDNT_KILL);
+        return;
     }
 
-    for (AELootResult::ResultValue const& resultValue : aeResult)
+    if (!_player->IsInRaidWith(target) || !_player->IsInMap(target))
     {
-        target->SendNewItem(resultValue.item, resultValue.count, false, false, true);
-        target->UpdateCriteria(CRITERIA_TYPE_LOOT_ITEM, resultValue.item->GetEntry(), resultValue.count);
-        target->UpdateCriteria(CRITERIA_TYPE_LOOT_TYPE, resultValue.item->GetEntry(), resultValue.count, resultValue.lootType);
-        target->UpdateCriteria(CRITERIA_TYPE_LOOT_EPIC_ITEM, resultValue.item->GetEntry(), resultValue.count);
+        _player->SendLootError(lootguid, ObjectGuid::Empty, LOOT_ERROR_MASTER_OTHER);
+        TC_LOG_INFO("entities.player.cheat", "MasterLootItem: Player %s tried to give an item to ineligible player %s !", GetPlayer()->GetName().c_str(), target->GetName().c_str());
+        return;
     }
+
+    Loot* loot = NULL;
+
+    if (GetPlayer()->GetLootGUID().IsCreatureOrVehicle())
+    {
+        Creature* creature = GetPlayer()->GetMap()->GetCreature(lootguid);
+        if (!creature)
+            return;
+
+        loot = &creature->loot;
+    }
+    else if (GetPlayer()->GetLootGUID().IsGameObject())
+    {
+        GameObject* pGO = GetPlayer()->GetMap()->GetGameObject(lootguid);
+        if (!pGO)
+            return;
+
+        loot = &pGO->loot;
+    }
+
+    if (!loot)
+        return;
+
+    if (slotid >= loot->items[GetPlayer()->GetGUID()].size())
+    {
+        TC_LOG_DEBUG("loot", "MasterLootItem: Player %s might be using a hack! (slot %d, size %lu)",
+            GetPlayer()->GetName().c_str(), slotid, (unsigned long)loot->items.size());
+        return;
+    }
+
+    LootItemList& itemList = loot->items[GetPlayer()->GetGUID()];
+    LootItem& item = itemList[slotid];
+
+    ItemPosCountVec dest;
+    InventoryResult msg = target->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, item.itemid, item.count);
+    if (item.follow_loot_rules && !item.AllowedForPlayer(target))
+        msg = EQUIP_ERR_CANT_EQUIP_EVER;
+    if (msg != EQUIP_ERR_OK)
+    {
+        if (msg == EQUIP_ERR_ITEM_MAX_COUNT)
+            _player->SendLootError(lootguid, ObjectGuid::Empty, LOOT_ERROR_MASTER_UNIQUE_ITEM);
+        else if (msg == EQUIP_ERR_INV_FULL)
+            _player->SendLootError(lootguid, ObjectGuid::Empty, LOOT_ERROR_MASTER_INV_FULL);
+        else
+            _player->SendLootError(lootguid, ObjectGuid::Empty, LOOT_ERROR_MASTER_OTHER);
+
+        target->SendEquipError(msg, NULL, NULL, item.itemid);
+        return;
+    }
+
+    // now move item from loot to target inventory
+    Item* newitem = target->StoreNewItem(dest, item.itemid, true, item.randomBonusListId, item.GetAllowedLooters(), item.context, item.BonusListIDs);
+    target->SendNewItem(newitem, uint32(item.count), false, false, true);
+    target->UpdateCriteria(CRITERIA_TYPE_LOOT_ITEM, item.itemid, item.count);
+    target->UpdateCriteria(CRITERIA_TYPE_LOOT_TYPE, item.itemid, item.count, loot->loot_type);
+    target->UpdateCriteria(CRITERIA_TYPE_LOOT_EPIC_ITEM, item.itemid, item.count);
+
+    // mark as looted
+    item.count = 0;
+    item.is_looted = true;
+
+    loot->NotifyItemRemoved(slotid);
+    --loot->unlootedCount;
 }
 
 void WorldSession::HandleSetLootSpecialization(WorldPackets::Loot::SetLootSpecialization& packet)

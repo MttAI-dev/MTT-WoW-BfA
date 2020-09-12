@@ -47,6 +47,8 @@ enum UnkorTheRuthless
 {
     SAY_SUBMIT              = 0,
     REQUIRED_KILL_COUNT     = 10,
+    FACTION_FRIENDLY        = 35,
+    FACTION_HOSTILE         = 45,
     SPELL_PULVERIZE         = 2676,
     QUEST_DONTKILLTHEFATONE = 9889,
     NPC_BOULDERFIST_INVADER = 18260
@@ -84,7 +86,7 @@ public:
         {
             Initialize();
             me->SetStandState(UNIT_STAND_STATE_STAND);
-            me->SetFaction(FACTION_OGRE);
+            me->setFaction(FACTION_HOSTILE);
         }
 
         void EnterCombat(Unit* /*who*/) override { }
@@ -92,10 +94,10 @@ public:
         void DoNice()
         {
             Talk(SAY_SUBMIT);
-            me->SetFaction(FACTION_FRIENDLY);
+            me->setFaction(FACTION_FRIENDLY);
             me->SetStandState(UNIT_STAND_STATE_SIT);
             me->RemoveAllAuras();
-            me->GetThreatManager().ClearAllThreat();
+            me->DeleteThreatList();
             me->CombatStop(true);
             UnkorUnfriendly_Timer = 60000;
         }
@@ -108,7 +110,7 @@ public:
             {
                 if (Group* group = player->GetGroup())
                 {
-                    for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
+                    for (GroupReference* itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
                     {
                         Player* groupie = itr->GetSource();
                         if (groupie && groupie->IsInMap(player) &&
@@ -336,7 +338,7 @@ public:
         if (action == GOSSIP_ACTION_INFO_DEF+1)
         {
             CloseGossipMenuFor(player);
-            creature->SetFaction(FACTION_HOSTILE_FLOON);
+            creature->setFaction(FACTION_HOSTILE_FLOON);
             creature->AI()->Talk(SAY_FLOON_ATTACK, player);
             creature->AI()->AttackStart(player);
         }
@@ -362,7 +364,7 @@ public:
         npc_floonAI(Creature* creature) : ScriptedAI(creature)
         {
             Initialize();
-            m_uiNormFaction = creature->GetFaction();
+            m_uiNormFaction = creature->getFaction();
         }
 
         void Initialize()
@@ -380,8 +382,8 @@ public:
         void Reset() override
         {
             Initialize();
-            if (me->GetFaction() != m_uiNormFaction)
-                me->SetFaction(m_uiNormFaction);
+            if (me->getFaction() != m_uiNormFaction)
+                me->setFaction(m_uiNormFaction);
         }
 
         void EnterCombat(Unit* /*who*/) override { }
@@ -501,7 +503,7 @@ public:
         if (quest->GetQuestId() == ESCAPE_FROM_FIREWING_POINT_H || quest->GetQuestId() == ESCAPE_FROM_FIREWING_POINT_A)
         {
             ENSURE_AI(npc_escortAI, (creature->AI()))->Start(true, false, player->GetGUID());
-            creature->SetFaction(FACTION_ESCORTEE);
+            creature->setFaction(FACTION_ESCORTEE);
         }
         return true;
     }
@@ -641,9 +643,9 @@ public:
                 pEscortAI->Start(false, false, player->GetGUID());
 
             if (player->GetTeamId() == TEAM_ALLIANCE)
-                creature->SetFaction(FACTION_ESCORTEE_A_NEUTRAL_PASSIVE);
+                creature->setFaction(FACTION_ESCORT_A_NEUTRAL_PASSIVE);
             else
-                creature->SetFaction(FACTION_ESCORTEE_H_NEUTRAL_PASSIVE);
+                creature->setFaction(FACTION_ESCORT_H_NEUTRAL_PASSIVE);
         }
         return true;
     }

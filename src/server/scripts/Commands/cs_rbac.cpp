@@ -34,7 +34,7 @@ EndScriptData */
 
 struct RBACCommandData
 {
-    RBACCommandData(): id(0), realmId(0), rbac(nullptr), needDelete(false) { }
+    RBACCommandData(): id(0), realmId(0), rbac(NULL), needDelete(false) { }
     ~RBACCommandData()
     {
         if (needDelete)
@@ -64,13 +64,13 @@ public:
 
         static std::vector<ChatCommand> rbacCommandTable =
         {
-            {    "account", rbac::RBAC_PERM_COMMAND_RBAC_ACC,  true, nullptr, "", rbacAccountCommandTable },
+            {    "account", rbac::RBAC_PERM_COMMAND_RBAC_ACC,  true, NULL, "", rbacAccountCommandTable },
             {       "list", rbac::RBAC_PERM_COMMAND_RBAC_LIST, true, &HandleRBACListPermissionsCommand, "" },
         };
 
         static std::vector<ChatCommand> commandTable =
         {
-            {       "rbac", rbac::RBAC_PERM_COMMAND_RBAC, true, nullptr, "", rbacCommandTable },
+            {       "rbac", rbac::RBAC_PERM_COMMAND_RBAC, true, NULL, "", rbacCommandTable },
         };
 
         return commandTable;
@@ -79,18 +79,18 @@ public:
     static RBACCommandData* ReadParams(ChatHandler* handler, char const* args, bool checkParams = true)
     {
         if (!args)
-            return nullptr;
+            return NULL;
 
         char* param1 = strtok((char*)args, " ");
-        char* param2 = strtok(nullptr, " ");
-        char* param3 = strtok(nullptr, " ");
+        char* param2 = strtok(NULL, " ");
+        char* param3 = strtok(NULL, " ");
 
         int32 realmId = -1;
         uint32 accountId = 0;
         std::string accountName;
         uint32 id = 0;
-        RBACCommandData* data = nullptr;
-        rbac::RBACData* rdata = nullptr;
+        RBACCommandData* data = NULL;
+        rbac::RBACData* rdata = NULL;
         bool useSelectedPlayer = false;
 
         if (checkParams)
@@ -115,14 +115,14 @@ public:
             {
                 handler->PSendSysMessage(LANG_RBAC_WRONG_PARAMETER_ID, id);
                 handler->SetSentErrorMessage(true);
-                return nullptr;
+                return NULL;
             }
 
             if (realmId < -1 || !realmId)
             {
                 handler->PSendSysMessage(LANG_RBAC_WRONG_PARAMETER_REALM, realmId);
                 handler->SetSentErrorMessage(true);
-                return nullptr;
+                return NULL;
             }
         }
         else if (!param1)
@@ -132,7 +132,7 @@ public:
         {
             Player* player = handler->getSelectedPlayer();
             if (!player)
-                return nullptr;
+                return NULL;
 
             rdata = player->GetSession()->GetRBACData();
             accountId = rdata->GetId();
@@ -149,12 +149,12 @@ public:
             {
                 handler->PSendSysMessage(LANG_ACCOUNT_NOT_EXIST, accountName.c_str());
                 handler->SetSentErrorMessage(true);
-                return nullptr;
+                return NULL;
             }
         }
 
-        if (checkParams && handler->HasLowerSecurityAccount(nullptr, accountId, true))
-            return nullptr;
+        if (checkParams && handler->HasLowerSecurityAccount(NULL, accountId, true))
+            return NULL;
 
         data = new RBACCommandData();
 

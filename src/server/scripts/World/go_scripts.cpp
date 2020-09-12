@@ -254,7 +254,7 @@ public:
                     if (Spell)
                         creature->CastSpell(player, Spell, false);
                     else
-                        TC_LOG_ERROR("scripts", "go_ethereum_prison summoned Creature (entry %u) but faction (%u) are not expected by script.", creature->GetEntry(), creature->GetFaction());
+                        TC_LOG_ERROR("scripts", "go_ethereum_prison summoned Creature (entry %u) but faction (%u) are not expected by script.", creature->GetEntry(), creature->getFaction());
                 }
             }
         }
@@ -359,7 +359,7 @@ public:
         uint32 BirdEntry = 0;
 
         float fX, fY, fZ;
-        go->GetClosePoint(fX, fY, fZ, go->GetCombatReach(), INTERACTION_DISTANCE);
+        go->GetClosePoint(fX, fY, fZ, go->GetObjectSize(), INTERACTION_DISTANCE);
 
         switch (go->GetEntry())
         {
@@ -840,9 +840,12 @@ class go_soulwell : public GameObjectScript
             {
             }
 
-            bool GossipHello(Player* player) override
+            bool GossipHello(Player* player, bool isUse) override
             {
-                Unit* owner = me->GetOwner();
+                if (!isUse)
+                    return true;
+
+                Unit* owner = go->GetOwner();
                 if (!owner || owner->GetTypeId() != TYPEID_PLAYER || !player->IsInSameRaidWith(owner->ToPlayer()))
                     return true;
                 return false;
@@ -1169,7 +1172,7 @@ class go_toy_train_set : public GameObjectScript
                     _pulseTimer -= diff;
                 else
                 {
-                    me->CastSpell(nullptr, SPELL_TOY_TRAIN_PULSE, true);
+                    go->CastSpell(nullptr, SPELL_TOY_TRAIN_PULSE, true);
                     _pulseTimer = 6 * IN_MILLISECONDS;
                 }
             }
@@ -1177,7 +1180,7 @@ class go_toy_train_set : public GameObjectScript
             // triggered on wrecker'd
             void DoAction(int32 /*action*/) override
             {
-                me->Delete();
+                go->Delete();
             }
 
         private:
@@ -1254,49 +1257,49 @@ public:
                     if (!IsHolidayActive(HOLIDAY_BREWFEST)) // Check if Brewfest is active
                         break;
                     // Check if gob is correct area, play music, set time of music
-                    if (me->GetAreaId() == ZONE_EVERSONG_WOODS ||
-                        me->GetAreaId() == ZONE_UNDERCITY ||
-                        me->GetAreaId() == AREA_DUROTAR_ROCKTUSK_FARM ||
-                        me->GetAreaId() == ZONE_DUROTAR ||
-                        me->GetAreaId() == ZONE_THUNDER_BLUFF ||
-                        me->GetAreaId() == ZONE_SHATTRATH)
+                    if (go->GetAreaId() == ZONE_EVERSONG_WOODS ||
+                        go->GetAreaId() == ZONE_UNDERCITY ||
+                        go->GetAreaId() == AREA_DUROTAR_ROCKTUSK_FARM ||
+                        go->GetAreaId() == ZONE_DUROTAR ||
+                        go->GetAreaId() == ZONE_THUNDER_BLUFF ||
+                        go->GetAreaId() == ZONE_SHATTRATH)
                     {
                         if (rnd == 0)
                         {
-                            me->PlayDirectMusic(EVENT_BREWFESTGOBLIN01);
+                            go->PlayDirectMusic(EVENT_BREWFESTGOBLIN01);
                             musicTime = EVENT_BREWFESTGOBLIN01_TIME;
                         }
                         else if (rnd == 1)
                         {
-                            me->PlayDirectMusic(EVENT_BREWFESTGOBLIN02);
+                            go->PlayDirectMusic(EVENT_BREWFESTGOBLIN02);
                             musicTime = EVENT_BREWFESTGOBLIN02_TIME;
                         }
                         else
                         {
-                            me->PlayDirectMusic(EVENT_BREWFESTGOBLIN03);
+                            go->PlayDirectMusic(EVENT_BREWFESTGOBLIN03);
                             musicTime = EVENT_BREWFESTGOBLIN03_TIME;
                         }
                     }
-                    if (me->GetAreaId() == AREA_DUN_MOROGH_GATES_OF_IRONFORGE ||
-                        me->GetAreaId() == ZONE_DUN_MOROGH ||
-                        me->GetAreaId() == ZONE_ELWYNN_FOREST ||
-                        me->GetAreaId() == ZONE_EXODAR ||
-                        me->GetAreaId() == ZONE_DARNASSUS ||
-                        me->GetAreaId() == ZONE_SHATTRATH)
+                    if (go->GetAreaId() == AREA_DUN_MOROGH_GATES_OF_IRONFORGE ||
+                        go->GetAreaId() == ZONE_DUN_MOROGH ||
+                        go->GetAreaId() == ZONE_ELWYNN_FOREST ||
+                        go->GetAreaId() == ZONE_EXODAR ||
+                        go->GetAreaId() == ZONE_DARNASSUS ||
+                        go->GetAreaId() == ZONE_SHATTRATH)
                     {
                         if (rnd == 0)
                         {
-                            me->PlayDirectMusic(EVENT_BREWFESTDWARF01);
+                            go->PlayDirectMusic(EVENT_BREWFESTDWARF01);
                             musicTime = EVENT_BREWFESTDWARF01_TIME;
                         }
                         else if (rnd == 1)
                         {
-                            me->PlayDirectMusic(EVENT_BREWFESTDWARF02);
+                            go->PlayDirectMusic(EVENT_BREWFESTDWARF02);
                             musicTime = EVENT_BREWFESTDWARF02_TIME;
                         }
                         else
                         {
-                            me->PlayDirectMusic(EVENT_BREWFESTDWARF03);
+                            go->PlayDirectMusic(EVENT_BREWFESTDWARF03);
                             musicTime = EVENT_BREWFESTDWARF03_TIME;
                         }
                     }
@@ -1357,13 +1360,13 @@ public:
                             break;
 
                         std::vector<Player*> playersNearby;
-                        me->GetPlayerListInGrid(playersNearby, me->GetMap()->GetVisibilityRange());
+                        go->GetPlayerListInGrid(playersNearby, go->GetMap()->GetVisibilityRange());
                         for (Player* player : playersNearby)
                         {
                             if (player->GetTeamId() == TEAM_HORDE)
-                                me->PlayDirectMusic(EVENTMIDSUMMERFIREFESTIVAL_H, player);
+                                go->PlayDirectMusic(EVENTMIDSUMMERFIREFESTIVAL_H, player);
                             else
-                                me->PlayDirectMusic(EVENTMIDSUMMERFIREFESTIVAL_A, player);
+                                go->PlayDirectMusic(EVENTMIDSUMMERFIREFESTIVAL_A, player);
                         }
                         _events.ScheduleEvent(EVENT_MM_START_MUSIC, 5000); // Every 5 second's SMSG_PLAY_MUSIC packet (PlayDirectMusic) is pushed to the client (sniffed value)
                         break;
@@ -1419,7 +1422,7 @@ public:
                 case EVENT_DFM_START_MUSIC:
                     if (!IsHolidayActive(HOLIDAY_DARKMOON_FAIRE_ELWYNN) || !IsHolidayActive(HOLIDAY_DARKMOON_FAIRE_THUNDER) || !IsHolidayActive(HOLIDAY_DARKMOON_FAIRE_SHATTRATH))
                         break;
-                    me->PlayDirectMusic(MUSIC_DARKMOON_FAIRE_MUSIC);
+                    go->PlayDirectMusic(MUSIC_DARKMOON_FAIRE_MUSIC);
                     _events.ScheduleEvent(EVENT_DFM_START_MUSIC, 5000);  // Every 5 second's SMSG_PLAY_MUSIC packet (PlayDirectMusic) is pushed to the client (sniffed value)
                     break;
                 default:
@@ -1473,7 +1476,7 @@ public:
                 case EVENT_PDM_START_MUSIC:
                     if (!IsHolidayActive(HOLIDAY_PIRATES_DAY))
                         break;
-                    me->PlayDirectMusic(MUSIC_PIRATE_DAY_MUSIC);
+                    go->PlayDirectMusic(MUSIC_PIRATE_DAY_MUSIC);
                     _events.ScheduleEvent(EVENT_PDM_START_MUSIC, 5000);  // Every 5 second's SMSG_PLAY_MUSIC packet (PlayDirectMusic) is pushed to the client (sniffed value)
                     break;
                 default:

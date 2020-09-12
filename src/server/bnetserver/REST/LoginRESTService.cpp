@@ -17,8 +17,6 @@
 
 #include "LoginRESTService.h"
 #include "Configuration/Config.h"
-#include "CryptoHash.h"
-#include "CryptoRandom.h"
 #include "DatabaseEnv.h"
 #include "Errors.h"
 #include "IpNetwork.h"
@@ -26,6 +24,8 @@
 #include "Realm.h"
 #include "Resolver.h"
 #include "SessionManager.h"
+#include "SHA1.h"
+#include "SHA256.h"
 #include "SslContext.h"
 #include "Util.h"
 #include "httpget.h"
@@ -82,6 +82,7 @@ bool LoginRESTService::Start(Trinity::Asio::IoContext* ioContext)
         _port = 8081;
     }
 
+    boost::system::error_code ec;
     boost::asio::ip::tcp::resolver resolver(*ioContext);
 
     std::string configuredAddress = sConfigMgr->GetStringDefault("LoginREST.ExternalAddress", "127.0.0.1");
@@ -253,7 +254,7 @@ int32 LoginRESTService::HandleGetGameAccounts(std::shared_ptr<AsyncRequest> requ
     if (!request->GetClient()->userid)
         return 401;
 
-    request->SetCallback(std::make_unique<QueryCallback>(LoginDatabase.AsyncQuery([&] {
+    request->SetCallback(Trinity::make_unique<QueryCallback>(LoginDatabase.AsyncQuery([&] {
         LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_BNET_GAME_ACCOUNT_LIST);
         stmt->setString(0, request->GetClient()->userid);
         return stmt;
@@ -345,7 +346,7 @@ int32 LoginRESTService::HandlePostLogin(std::shared_ptr<AsyncRequest> request)
 
     std::string sentPasswordHash = CalculateShaPassHash(login, password);
 
-    request->SetCallback(std::make_unique<QueryCallback>(LoginDatabase.AsyncQuery(stmt)
+    request->SetCallback(Trinity::make_unique<QueryCallback>(LoginDatabase.AsyncQuery(stmt)
         .WithChainingPreparedCallback([request, login, sentPasswordHash, this](QueryCallback& callback, PreparedQueryResult result)
     {
         if (result)
@@ -362,9 +363,10 @@ int32 LoginRESTService::HandlePostLogin(std::shared_ptr<AsyncRequest> request)
             {
                 if (loginTicket.empty() || loginTicketExpiry < time(nullptr))
                 {
-                    std::array<uint8, 20> ticket = Trinity::Crypto::GetRandomBytes<20>();
+                    BigNumber ticket;
+                    ticket.SetRand(20 * 8);
 
-                    loginTicket = "TC-" + ByteArrayToHexStr(ticket);
+                    loginTicket = "TC-" + ByteArrayToHexStr(ticket.AsByteArray(20).get(), 20);
                 }
 
                 LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_UPD_BNET_AUTHENTICATION);
@@ -443,7 +445,7 @@ int32 LoginRESTService::HandlePostRefreshLoginTicket(std::shared_ptr<AsyncReques
     if (!request->GetClient()->userid)
         return 401;
 
-    request->SetCallback(std::make_unique<QueryCallback>(LoginDatabase.AsyncQuery([&] {
+    request->SetCallback(Trinity::make_unique<QueryCallback>(LoginDatabase.AsyncQuery([&] {
         LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_BNET_EXISTING_AUTHENTICATION);
         stmt->setString(0, request->GetClient()->userid);
         return stmt;
@@ -502,17 +504,17 @@ void LoginRESTService::HandleAsyncRequest(std::shared_ptr<AsyncRequest> request)
 
 std::string LoginRESTService::CalculateShaPassHash(std::string const& name, std::string const& password)
 {
-    Trinity::Crypto::SHA256 email;
+    SHA256Hash email;
     email.UpdateData(name);
     email.Finalize();
 
-    Trinity::Crypto::SHA256 sha;
-    sha.UpdateData(ByteArrayToHexStr(email.GetDigest()));
+    SHA256Hash sha;
+    sha.UpdateData(ByteArrayToHexStr(email.GetDigest(), email.GetLength()));
     sha.UpdateData(":");
     sha.UpdateData(password);
     sha.Finalize();
 
-    return ByteArrayToHexStr(sha.GetDigest(), true);
+    return ByteArrayToHexStr(sha.GetDigest(), sha.GetLength(), true);
 }
 
 Namespace namespaces[] =

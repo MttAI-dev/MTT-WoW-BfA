@@ -177,11 +177,11 @@ enum SMART_EVENT
     SMART_EVENT_JUST_CREATED             = 63,      // none
     SMART_EVENT_GOSSIP_HELLO             = 64,      // noReportUse (for GOs)
     SMART_EVENT_FOLLOW_COMPLETED         = 65,      // none
-    SMART_EVENT_EVENT_PHASE_CHANGE       = 66,      // event phase mask (<= SMART_EVENT_PHASE_ALL)
+    // 66 unused
     SMART_EVENT_IS_BEHIND_TARGET         = 67,      // cooldownMin, CooldownMax
     SMART_EVENT_GAME_EVENT_START         = 68,      // game_event.Entry
     SMART_EVENT_GAME_EVENT_END           = 69,      // game_event.Entry
-    SMART_EVENT_GO_LOOT_STATE_CHANGED    = 70,      // go LootState
+    SMART_EVENT_GO_STATE_CHANGED         = 70,      // go state
     SMART_EVENT_GO_EVENT_INFORM          = 71,      // eventId
     SMART_EVENT_ACTION_DONE              = 72,      // eventId (SharedDefines.EventId)
     SMART_EVENT_ON_SPELLCLICK            = 73,      // clicker (unit)
@@ -392,11 +392,6 @@ struct SmartEvent
 
         struct
         {
-            uint32 phasemask;
-        } eventPhaseChange;
-
-        struct
-        {
             uint32 cooldownMin;
             uint32 cooldownMax;
         } behindTarget;
@@ -408,8 +403,8 @@ struct SmartEvent
 
         struct
         {
-            uint32 lootState;
-        } goLootStateChanged;
+            uint32 state;
+        } goStateChanged;
 
         struct
         {
@@ -681,7 +676,12 @@ struct SmartAction
 
         struct
         {
-            uint32 emotes[SMART_ACTION_PARAM_COUNT];
+            uint32 emote1;
+            uint32 emote2;
+            uint32 emote3;
+            uint32 emote4;
+            uint32 emote5;
+            uint32 emote6;
         } randomEmote;
 
         struct
@@ -776,7 +776,12 @@ struct SmartAction
 
         struct
         {
-            uint32 phases[SMART_ACTION_PARAM_COUNT];
+            uint32 phase1;
+            uint32 phase2;
+            uint32 phase3;
+            uint32 phase4;
+            uint32 phase5;
+            uint32 phase6;
         } randomPhase;
 
         struct
@@ -1013,7 +1018,12 @@ struct SmartAction
 
         struct
         {
-            uint32 actionLists[SMART_ACTION_PARAM_COUNT];
+            uint32 entry1;
+            uint32 entry2;
+            uint32 entry3;
+            uint32 entry4;
+            uint32 entry5;
+            uint32 entry6;
         } randTimedActionList;
 
         struct
@@ -1123,7 +1133,12 @@ struct SmartAction
 
         struct
         {
-            uint32 wps[SMART_ACTION_PARAM_COUNT];
+            uint32 wp1;
+            uint32 wp2;
+            uint32 wp3;
+            uint32 wp4;
+            uint32 wp5;
+            uint32 wp6;
         } closestWaypointFromList;
 
         struct
@@ -1581,11 +1596,11 @@ const uint32 SmartAIEventMask[SMART_EVENT_END][2] =
     {SMART_EVENT_JUST_CREATED,              SMART_SCRIPT_TYPE_MASK_CREATURE + SMART_SCRIPT_TYPE_MASK_GAMEOBJECT },
     {SMART_EVENT_GOSSIP_HELLO,              SMART_SCRIPT_TYPE_MASK_CREATURE + SMART_SCRIPT_TYPE_MASK_GAMEOBJECT },
     {SMART_EVENT_FOLLOW_COMPLETED,          SMART_SCRIPT_TYPE_MASK_CREATURE },
-    {SMART_EVENT_EVENT_PHASE_CHANGE,        SMART_SCRIPT_TYPE_MASK_CREATURE + SMART_SCRIPT_TYPE_MASK_GAMEOBJECT },
+    {66,                                    0                               }, // unused
     {SMART_EVENT_IS_BEHIND_TARGET,          SMART_SCRIPT_TYPE_MASK_CREATURE },
     {SMART_EVENT_GAME_EVENT_START,          SMART_SCRIPT_TYPE_MASK_CREATURE + SMART_SCRIPT_TYPE_MASK_GAMEOBJECT },
     {SMART_EVENT_GAME_EVENT_END,            SMART_SCRIPT_TYPE_MASK_CREATURE + SMART_SCRIPT_TYPE_MASK_GAMEOBJECT },
-    {SMART_EVENT_GO_LOOT_STATE_CHANGED,     SMART_SCRIPT_TYPE_MASK_GAMEOBJECT },
+    {SMART_EVENT_GO_STATE_CHANGED,          SMART_SCRIPT_TYPE_MASK_GAMEOBJECT },
     {SMART_EVENT_GO_EVENT_INFORM,           SMART_SCRIPT_TYPE_MASK_GAMEOBJECT },
     {SMART_EVENT_ACTION_DONE,               SMART_SCRIPT_TYPE_MASK_CREATURE },
     {SMART_EVENT_ON_SPELLCLICK,             SMART_SCRIPT_TYPE_MASK_CREATURE },
@@ -1660,29 +1675,31 @@ struct SmartScriptHolder
 
 typedef std::unordered_map<uint32, WayPoint*> WPPath;
 
-typedef std::vector<WorldObject*> ObjectVector;
+typedef std::list<WorldObject*> ObjectList;
 
-class ObjectGuidVector
+class ObjectGuidList
 {
-    public:
-        explicit ObjectGuidVector(ObjectVector const& objectVector);
+    ObjectList* m_objectList;
+    GuidList* m_guidList;
+    WorldObject* m_baseObject;
 
-        ObjectVector const* GetObjectVector(WorldObject const& ref) const
-        {
-            UpdateObjects(ref);
-            return &_objectVector;
-        }
+public:
+    ObjectGuidList(ObjectList* objectList, WorldObject* baseObject);
 
-        ~ObjectGuidVector() { }
+    ObjectList* GetObjectList();
 
-    private:
-        GuidVector _guidVector;
-        mutable ObjectVector _objectVector;
+    bool Equals(ObjectList* objectList)
+    {
+        return m_objectList == objectList;
+    }
 
-        //sanitize vector using _guidVector
-        void UpdateObjects(WorldObject const& ref) const;
+    ~ObjectGuidList()
+    {
+        delete m_objectList;
+        delete m_guidList;
+    }
 };
-typedef std::unordered_map<uint32, ObjectGuidVector> ObjectVectorMap;
+typedef std::unordered_map<uint32, ObjectGuidList*> ObjectListMap;
 
 class TC_GAME_API SmartWaypointMgr
 {

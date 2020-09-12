@@ -313,7 +313,7 @@ public:
                     me->SetFullHealth();
                     me->RemoveAllAuras();
                     me->CombatStop(false);
-                    ResetThreatList();
+                    me->DeleteThreatList();
                     eventActive = false;
 
                     DespawnMinions();
@@ -608,7 +608,7 @@ public:
                     { // is First Tron
                         me->SetReactState(REACT_AGGRESSIVE);
                         me->RemoveAllAuras();
-                        ResetThreatList();
+                        me->DeleteThreatList();
                         me->CombatStop(true);
                         me->AttackStop();
                         if(instance)
@@ -623,7 +623,7 @@ public:
                 case ACTION_DEACTIVATE:
                     me->SetReactState(REACT_PASSIVE);
                     me->AttackStop();
-                    ResetThreatList();
+                    me->DeleteThreatList();
                     me->CombatStop(true);
                     me->RemoveAllAuras();
                     if(instance)
@@ -652,7 +652,7 @@ public:
             {
                 me->SetReactState(REACT_PASSIVE);
                 me->AttackStop();
-                ResetThreatList();
+                me->DeleteThreatList();
                 me->CombatStop(true);
                 me->RemoveAllAuras();
                 activated = false;
@@ -838,7 +838,7 @@ public:
 
         void JustSummoned(Creature* summon) override
         {
-            summon->SetFaction(me->GetFaction());
+            summon->setFaction(me->getFaction());
             if(summon->GetEntry() != MOB_POISON_BOMB)
             summon->SetInCombatWithZone();
 

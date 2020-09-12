@@ -89,7 +89,7 @@ void PhaseShift::Clear()
 
 void PhaseShift::ClearPhases()
 {
-    Flags &= PhaseShiftFlags::AlwaysVisible | PhaseShiftFlags::Inverse;
+    Flags &= EnumClassFlag<PhaseShiftFlags>(PhaseShiftFlags::AlwaysVisible) | PhaseShiftFlags::Inverse;
     Phases.clear();
     NonCosmeticReferences = 0;
     CosmeticReferences = 0;
@@ -161,7 +161,7 @@ void PhaseShift::ModifyPhasesReferences(PhaseContainer::iterator itr, int32 refe
         if (CosmeticReferences)
             Flags |= PhaseShiftFlags::NoCosmetic;
         else
-            Flags &= ~PhaseShiftFlags::NoCosmetic;
+            Flags &= ~EnumClassFlag<PhaseShiftFlags>(PhaseShiftFlags::NoCosmetic);
 
         UpdateUnphasedFlag();
     }
@@ -169,8 +169,8 @@ void PhaseShift::ModifyPhasesReferences(PhaseContainer::iterator itr, int32 refe
 
 void PhaseShift::UpdateUnphasedFlag()
 {
-    EnumFlag<PhaseShiftFlags> unphasedFlag = !Flags.HasFlag(PhaseShiftFlags::Inverse) ? PhaseShiftFlags::Unphased : PhaseShiftFlags::InverseUnphased;
-    Flags &= ~(!Flags.HasFlag(PhaseShiftFlags::Inverse) ? PhaseShiftFlags::InverseUnphased : PhaseShiftFlags::Unphased);
+    EnumClassFlag<PhaseShiftFlags> unphasedFlag = !Flags.HasFlag(PhaseShiftFlags::Inverse) ? PhaseShiftFlags::Unphased : PhaseShiftFlags::InverseUnphased;
+    Flags &= ~EnumClassFlag<PhaseShiftFlags>(!Flags.HasFlag(PhaseShiftFlags::Inverse) ? PhaseShiftFlags::InverseUnphased : PhaseShiftFlags::Unphased);
     if (NonCosmeticReferences && !DefaultReferences)
         Flags &= ~unphasedFlag;
     else

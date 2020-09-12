@@ -330,7 +330,7 @@ public:
                     }
                 }
 
-                if (Unit* target = SelectTarget(SELECT_TARGET_MAXTHREAT))
+                if (Unit* target = SelectTarget(SELECT_TARGET_TOPAGGRO))
                     DoStartMovement(target);
             }
         }

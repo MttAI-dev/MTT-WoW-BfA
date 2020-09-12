@@ -158,7 +158,7 @@ public:
                         HandleGameObject(StageDoorRightGUID, true);
                         if (GameObject* sideEntrance = instance->GetGameObject(SideEntranceDoor))
                             sideEntrance->RemoveFlag(GO_FLAG_LOCKED);
-                        UpdateEncounterStateForKilledCreature(16812, nullptr);
+                        UpdateEncounterStateForKilledCreature(16812, NULL);
                     }
                     break;
                 case DATA_CHESS:

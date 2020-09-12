@@ -559,7 +559,7 @@ class boss_voice_of_yogg_saron : public CreatureScript
                             if (Creature* yogg = ObjectAccessor::GetCreature(*me, instance->GetGuidData(BOSS_YOGG_SARON)))
                             {
                                 yogg->AI()->Talk(EMOTE_YOGG_SARON_EXTINGUISH_ALL_LIFE, me);
-                                yogg->CastSpell(nullptr, SPELL_EXTINGUISH_ALL_LIFE, true);
+                                yogg->CastSpell((Unit*)NULL, SPELL_EXTINGUISH_ALL_LIFE, true);
                             }
                             events.ScheduleEvent(EVENT_EXTINGUISH_ALL_LIFE, 10000);    // cast it again after a short while, players can survive
                             break;
@@ -774,7 +774,7 @@ class boss_sara : public CreatureScript
             {
                 me->RemoveAllAuras();
                 me->SetReactState(REACT_PASSIVE);
-                me->SetFaction(35);
+                me->setFaction(35);
                 _events.Reset();
                 _events.SetPhase(PHASE_ONE);
             }
@@ -817,7 +817,7 @@ class boss_sara : public CreatureScript
                         case EVENT_TRANSFORM_3:
                             Talk(SAY_SARA_TRANSFORM_4);
                             DoCast(me, SPELL_FULL_HEAL);
-                            me->SetFaction(16);
+                            me->setFaction(16);
                             if (Creature* voice = ObjectAccessor::GetCreature(*me, _instance->GetGuidData(DATA_VOICE_OF_YOGG_SARON)))
                                 voice->AI()->DoAction(ACTION_PHASE_TWO);
                             if (Creature* mimiron = ObjectAccessor::GetCreature(*me, _instance->GetGuidData(DATA_MIMIRON_YS)))
@@ -1102,7 +1102,7 @@ class boss_brain_of_yogg_saron : public CreatureScript
                         uint8 illusion = _instance->GetData(DATA_ILLUSION);
                         if (++_tentaclesKilled >= (illusion == ICECROWN_ILLUSION ? 9 : 8))
                         {
-                            sCreatureTextMgr->SendChat(me, EMOTE_BRAIN_ILLUSION_SHATTERED, nullptr, CHAT_MSG_ADDON, LANG_ADDON, TEXT_RANGE_AREA);
+                            sCreatureTextMgr->SendChat(me, EMOTE_BRAIN_ILLUSION_SHATTERED, NULL, CHAT_MSG_ADDON, LANG_ADDON, TEXT_RANGE_AREA);
                             _summons.DespawnAll();
                             DoCastAOE(SPELL_SHATTERED_ILLUSION, true);
                             _instance->HandleGameObject(_instance->GetGuidData(GO_BRAIN_ROOM_DOOR_1 + illusion), true);
@@ -1532,10 +1532,10 @@ class npc_observation_ring_keeper : public CreatureScript
                 DoCast(SPELL_KEEPER_ACTIVE);
             }
 
-            bool GossipSelect(Player* player, uint32 menuId, uint32 /*gossipListId*/) override
+            void sGossipSelect(Player* player, uint32 menuId, uint32 /*gossipListId*/) override
             {
                 if (menuId != 10333)
-                    return false;
+                    return;
 
                 me->RemoveNpcFlag(UNIT_NPC_FLAG_GOSSIP);
                 me->DespawnOrUnsummon(2000);
@@ -1558,8 +1558,6 @@ class npc_observation_ring_keeper : public CreatureScript
                         me->SummonCreature(NPC_MIMIRON_YS, YSKeepersPos[3]);
                         break;
                 }
-
-                return false;
             }
 
             void UpdateAI(uint32 /*diff*/) override { }
@@ -2340,7 +2338,7 @@ class spell_yogg_saron_empowering_shadows_missile : public SpellScriptLoader    
             void HandleScript(SpellEffIndex /*effIndex*/)
             {
                 if (Unit* target = GetHitUnit())
-                    target->CastSpell(nullptr, SPELL_EMPOWERING_SHADOWS, true);
+                    target->CastSpell((Unit*)NULL, SPELL_EMPOWERING_SHADOWS, true);
             }
 
             void Register() override
@@ -2600,7 +2598,7 @@ class spell_yogg_saron_death_ray_warning_visual : public SpellScriptLoader     /
                 if (Unit* caster = GetCaster())
                 {
                     caster->CastSpell(caster, SPELL_DEATH_RAY_PERIODIC, true);
-                    caster->CastSpell(nullptr, SPELL_DEATH_RAY_DAMAGE_VISUAL, true);
+                    caster->CastSpell((Unit*)NULL, SPELL_DEATH_RAY_DAMAGE_VISUAL, true);
                     // TODO: set better movement
                     caster->GetMotionMaster()->MoveConfused();
                 }
@@ -2778,7 +2776,7 @@ class spell_yogg_saron_induce_madness : public SpellScriptLoader    // 64059
 
             void ClearShatteredIllusion()
             {
-                GetCaster()->CastSpell(nullptr, SPELL_SHATTERED_ILLUSION_REMOVE);
+                GetCaster()->CastSpell((Unit*)NULL, SPELL_SHATTERED_ILLUSION_REMOVE);
 
                 if (InstanceScript* instance = GetCaster()->GetInstanceScript())
                     if (Creature* voice = ObjectAccessor::GetCreature(*GetCaster(), instance->GetGuidData(DATA_VOICE_OF_YOGG_SARON)))
@@ -3028,7 +3026,7 @@ class spell_yogg_saron_hate_to_zero : public SpellScriptLoader    // 63984
             {
                 if (Unit* target = GetHitUnit())
                     if (target->CanHaveThreatList())
-                        target->GetThreatManager().ModifyThreatByPercent(GetCaster(), -100);
+                        target->getThreatManager().modifyThreatPercent(GetCaster(), -100);
             }
 
             void Register() override

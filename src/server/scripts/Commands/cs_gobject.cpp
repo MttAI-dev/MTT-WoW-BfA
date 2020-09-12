@@ -67,12 +67,12 @@ public:
             { "near",     rbac::RBAC_PERM_COMMAND_GOBJECT_NEAR,     false, &HandleGameObjectNearCommand,      ""       },
             { "target",   rbac::RBAC_PERM_COMMAND_GOBJECT_TARGET,   false, &HandleGameObjectTargetCommand,    ""       },
             { "turn",     rbac::RBAC_PERM_COMMAND_GOBJECT_TURN,     false, &HandleGameObjectTurnCommand,      ""       },
-            { "add",      rbac::RBAC_PERM_COMMAND_GOBJECT_ADD,      false, nullptr,         "", gobjectAddCommandTable },
-            { "set",      rbac::RBAC_PERM_COMMAND_GOBJECT_SET,      false, nullptr,         "", gobjectSetCommandTable },
+            { "add",      rbac::RBAC_PERM_COMMAND_GOBJECT_ADD,      false, NULL,            "", gobjectAddCommandTable },
+            { "set",      rbac::RBAC_PERM_COMMAND_GOBJECT_SET,      false, NULL,            "", gobjectSetCommandTable },
         };
         static std::vector<ChatCommand> commandTable =
         {
-            { "gobject", rbac::RBAC_PERM_COMMAND_GOBJECT, false, nullptr, "", gobjectCommandTable },
+            { "gobject", rbac::RBAC_PERM_COMMAND_GOBJECT, false, NULL, "", gobjectCommandTable },
         };
         return commandTable;
     }
@@ -116,11 +116,9 @@ public:
             return false;
         }
 
-        uint32_t const autoCloseTime = object->GetGOInfo()->GetAutoCloseTime() ? 10000u : 0u;
-
         // Activate
         object->SetLootState(GO_READY);
-        object->UseDoorOrButton(autoCloseTime, false, handler->GetSession()->GetPlayer());
+        object->UseDoorOrButton(10000, false, handler->GetSession()->GetPlayer());
 
         handler->PSendSysMessage("Object activated!");
 
@@ -210,7 +208,7 @@ public:
 
         Player* player = handler->GetSession()->GetPlayer();
 
-        char* spawntime = strtok(nullptr, " ");
+        char* spawntime = strtok(NULL, " ");
         uint32 spawntm = 300;
 
         if (spawntime)
@@ -342,7 +340,7 @@ public:
 
         if (target)
         {
-            int32 curRespawnDelay = int32(target->GetRespawnTimeEx() - time(nullptr));
+            int32 curRespawnDelay = int32(target->GetRespawnTimeEx() - time(NULL));
             if (curRespawnDelay < 0)
                 curRespawnDelay = 0;
 
@@ -407,18 +405,18 @@ public:
             return false;
         }
 
-        char* orientation = strtok(nullptr, " ");
+        char* orientation = strtok(NULL, " ");
         float oz = 0.f, oy = 0.f, ox = 0.f;
 
         if (orientation)
         {
             oz = float(atof(orientation));
 
-            orientation = strtok(nullptr, " ");
+            orientation = strtok(NULL, " ");
             if (orientation)
             {
                 oy = float(atof(orientation));
-                orientation = strtok(nullptr, " ");
+                orientation = strtok(NULL, " ");
                 if (orientation)
                     ox = float(atof(orientation));
             }
@@ -457,9 +455,9 @@ public:
             return false;
         }
 
-        char* toX = strtok(nullptr, " ");
-        char* toY = strtok(nullptr, " ");
-        char* toZ = strtok(nullptr, " ");
+        char* toX = strtok(NULL, " ");
+        char* toY = strtok(NULL, " ");
+        char* toZ = strtok(NULL, " ");
 
         float x, y, z, o;
         if (!toX)
@@ -519,7 +517,7 @@ public:
             return false;
         }
 
-        char* phase = strtok (nullptr, " ");
+        char* phase = strtok (NULL, " ");
         uint32 phaseMask = phase ? atoul(phase) : 0;
         if (phaseMask == 0)
         {
@@ -652,7 +650,7 @@ public:
             return false;
         }
 
-        char* type = strtok(nullptr, " ");
+        char* type = strtok(NULL, " ");
         if (!type)
             return false;
 
@@ -666,7 +664,7 @@ public:
             return true;
         }
 
-        char* state = strtok(nullptr, " ");
+        char* state = strtok(NULL, " ");
         if (!state)
             return false;
 

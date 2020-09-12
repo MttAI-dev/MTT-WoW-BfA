@@ -74,7 +74,7 @@ struct npc_malfurion_stormrage_106482 : public ScriptedAI
         }
     }
 
-    bool GossipHello(Player* player) override
+    void sGossipHello(Player* player)
     {
 
         ClearGossipMenuFor(player);
@@ -82,17 +82,13 @@ struct npc_malfurion_stormrage_106482 : public ScriptedAI
         consoleToUtf8("¿ªÊ¼", tempstr);
         AddGossipItemFor(player, GOSSIP_ICON_CHAT, tempstr, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 2);
         SendGossipMenuFor(player, player->GetGossipTextId(me), me->GetGUID());
-
-        return false;
     }
 
-    bool GossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId)
+    void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId)
     {
         CloseGossipMenuFor(player);
         if (instance)
             player->TeleportTo(1520, Position(11196.4f, -12614.2f, 549.707f, 20.4509f));
-
-        return false;
     }
 
     void MoveInLineOfSight(Unit* who) override

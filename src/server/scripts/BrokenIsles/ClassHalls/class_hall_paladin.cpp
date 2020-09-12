@@ -68,7 +68,7 @@ struct npc_travard_108692 : public ScriptedAI
 {
     npc_travard_108692(Creature* creature) : ScriptedAI(creature) {  }
 
-    bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
+    void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
     {
         TC_LOG_ERROR("server.worldserver", "sGossipSelect %u, %u", menuId, gossipListId);
         if (player->HasQuest(QUEST_An_Urgent_Gathering))
@@ -80,8 +80,6 @@ struct npc_travard_108692 : public ScriptedAI
                 Talk(0);
             }
         }
-
-        return false;
     }
 };
 
@@ -89,7 +87,7 @@ struct npc_orik_trueheart_108693 : public ScriptedAI
 {
     npc_orik_trueheart_108693(Creature* creature) : ScriptedAI(creature) {  }
 
-    bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
+    void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
     {
         TC_LOG_ERROR("server.worldserver", "sGossipSelect %u, %u", menuId, gossipListId);
         if (player->HasQuest(QUEST_An_Urgent_Gathering))
@@ -101,8 +99,6 @@ struct npc_orik_trueheart_108693 : public ScriptedAI
                 Talk(0);
             }
         }
-
-        return false;
     }
 };
 
@@ -110,7 +106,7 @@ struct npc_tahu_sagewind_105727 : public ScriptedAI
 {
    npc_tahu_sagewind_105727(Creature* creature) : ScriptedAI(creature) {  }
 
-   bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
+    void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
     {
         if (player->HasQuest(QUEST_The_End_of_the_Saga))
         {
@@ -120,8 +116,6 @@ struct npc_tahu_sagewind_105727 : public ScriptedAI
                 CloseGossipMenuFor(player);
             }
         }
-
-        return false;
     }
 };
 
@@ -145,7 +139,7 @@ struct npc_orik_trueheart_105813 : public ScriptedAI
 {
     npc_orik_trueheart_105813(Creature* creature) : ScriptedAI(creature) {  }
 
-    void QuestAccept(Player* player, Quest const* quest) override
+    void sQuestAccept(Player* player, Quest const* quest) override
     {
         if (quest->GetQuestId() == QUEST_SHRINE_OF_THE_TRUTHGUARD)
         {

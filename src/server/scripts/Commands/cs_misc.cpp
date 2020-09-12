@@ -94,6 +94,7 @@ public:
             { "kick",             rbac::RBAC_PERM_COMMAND_KICK,              true, &HandleKickPlayerCommand,       "" },
             { "linkgrave",        rbac::RBAC_PERM_COMMAND_LINKGRAVE,        false, &HandleLinkGraveCommand,        "" },
             { "listfreeze",       rbac::RBAC_PERM_COMMAND_LISTFREEZE,       false, &HandleListFreezeCommand,       "" },
+            { "maxskill",         rbac::RBAC_PERM_COMMAND_MAXSKILL,         false, &HandleMaxSkillCommand,         "" },
             { "movegens",         rbac::RBAC_PERM_COMMAND_MOVEGENS,         false, &HandleMovegensCommand,         "" },
             { "mute",             rbac::RBAC_PERM_COMMAND_MUTE,              true, &HandleMuteCommand,             "" },
             { "mutehistory",      rbac::RBAC_PERM_COMMAND_MUTEHISTORY,       true, &HandleMuteInfoCommand,         "" },
@@ -261,7 +262,7 @@ public:
 
         sDB2Manager.Map2ZoneCoordinates(zoneId, zoneX, zoneY);
 
-        Map* map = object->GetMap();
+        Map const* map = object->GetMap();
         float groundZ = map->GetHeight(object->GetPhaseShift(), object->GetPositionX(), object->GetPositionY(), MAX_HEIGHT);
         float floorZ = map->GetHeight(object->GetPhaseShift(), object->GetPositionX(), object->GetPositionY(), object->GetPositionZ());
 
@@ -287,9 +288,9 @@ public:
         char const* unknown = handler->GetTrinityString(LANG_UNKNOWN);
 
         handler->PSendSysMessage(LANG_MAP_POSITION,
-            mapId, (mapEntry ? mapEntry->MapName[handler->GetSessionDbcLocale()] : unknown),
-            zoneId, (zoneEntry ? zoneEntry->AreaName[handler->GetSessionDbcLocale()] : unknown),
-            areaId, (areaEntry ? areaEntry->AreaName[handler->GetSessionDbcLocale()] : unknown),
+            mapId, (mapEntry ? mapEntry->MapName->Str[handler->GetSessionDbcLocale()] : unknown),
+            zoneId, (zoneEntry ? zoneEntry->AreaName->Str[handler->GetSessionDbcLocale()] : unknown),
+            areaId, (areaEntry ? areaEntry->AreaName->Str[handler->GetSessionDbcLocale()] : unknown),
             object->GetPositionX(), object->GetPositionY(), object->GetPositionZ(), object->GetOrientation());
         if (Transport* transport = object->GetTransport())
             handler->PSendSysMessage(LANG_TRANSPORT_POSITION,
@@ -300,7 +301,7 @@ public:
             zoneX, zoneY, groundZ, floorZ, haveMap, haveVMap, haveMMap);
 
         LiquidData liquidStatus;
-        ZLiquidStatus status = map->GetLiquidStatus(object->GetPhaseShift(), object->GetPositionX(), object->GetPositionY(), object->GetPositionZ(), MAP_ALL_LIQUIDS, &liquidStatus);
+        ZLiquidStatus status = map->getLiquidStatus(object->GetPhaseShift(), object->GetPositionX(), object->GetPositionY(), object->GetPositionZ(), MAP_ALL_LIQUIDS, &liquidStatus);
 
         if (status)
             handler->PSendSysMessage(LANG_LIQUID_STATUS, liquidStatus.level, liquidStatus.depth_level, liquidStatus.entry, liquidStatus.type_flags, status);
@@ -329,10 +330,10 @@ public:
         // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
         uint32 spellId = handler->extractSpellIdFromLink((char*)args);
 
-        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, target->GetMap()->GetDifficultyID()))
+        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId))
         {
             ObjectGuid castId = ObjectGuid::Create<HighGuid::Cast>(SPELL_CAST_SOURCE_NORMAL, target->GetMapId(), spellId, target->GetMap()->GenerateLowGuid<HighGuid::Cast>());
-            Aura::TryRefreshStackOrCreate(spellInfo, castId, MAX_EFFECT_MASK, target, target, target->GetMap()->GetDifficultyID());
+            Aura::TryRefreshStackOrCreate(spellInfo, castId, MAX_EFFECT_MASK, target, target);
         }
 
         return true;
@@ -445,7 +446,7 @@ public:
                 {
                     Group* group = _player->GetGroup();
                     // if no bind exists, create a solo bind
-                    InstanceGroupBind* gBind = group ? group->GetBoundInstance(target) : nullptr;                // if no bind exists, create a solo bind
+                    InstanceGroupBind* gBind = group ? group->GetBoundInstance(target) : NULL;                // if no bind exists, create a solo bind
                     if (!gBind)
                         if (InstanceSave* save = sInstanceSaveMgr->GetInstanceSave(target->GetInstanceId()))
                             _player->BindToInstance(save, !save->CanReset());
@@ -483,7 +484,7 @@ public:
         else
         {
             // check offline security
-            if (handler->HasLowerSecurity(nullptr, targetGuid))
+            if (handler->HasLowerSecurity(NULL, targetGuid))
                 return false;
 
             std::string nameLink = handler->playerLink(targetName);
@@ -543,7 +544,7 @@ public:
                 return false;
             }
 
-            Map* map = _player->GetMap();
+            Map* map = handler->GetSession()->GetPlayer()->GetMap();
 
             if (map->IsBattlegroundOrArena())
             {
@@ -555,35 +556,30 @@ public:
                     return false;
                 }
                 // if both players are in different bgs
-                else if (target->GetBattlegroundId() && _player->GetBattlegroundId() != target->GetBattlegroundId())
+                else if (target->GetBattlegroundId() && handler->GetSession()->GetPlayer()->GetBattlegroundId() != target->GetBattlegroundId())
                     target->LeaveBattleground(false); // Note: should be changed so target gets no Deserter debuff
 
                 // all's well, set bg id
                 // when porting out from the bg, it will be reset to 0
-                target->SetBattlegroundId(_player->GetBattlegroundId(), _player->GetBattlegroundTypeId());
+                target->SetBattlegroundId(handler->GetSession()->GetPlayer()->GetBattlegroundId(), handler->GetSession()->GetPlayer()->GetBattlegroundTypeId());
                 // remember current position as entry point for return at bg end teleportation
                 if (!target->GetMap()->IsBattlegroundOrArena())
                     target->SetBattlegroundEntryPoint();
             }
-            else if (map->Instanceable())
+            else if (map->IsDungeon())
             {
-                Group* targetGroup = target->GetGroup();
-                Map* targetMap = target->GetMap();
-                Player* targetGroupLeader = ObjectAccessor::GetPlayer(map, targetGroup->GetLeaderGUID());
+                Map* destMap = target->GetMap();
 
-                // check if far teleport is allowed
-                if (!targetGroupLeader || (targetGroupLeader->GetMapId() != map->GetId()) || (targetGroupLeader->GetInstanceId() != map->GetInstanceId()))
-                    if ((targetMap->GetId() != map->GetId()) || (targetMap->GetInstanceId() != map->GetInstanceId()))
-                    {
-                        handler->PSendSysMessage(LANG_CANNOT_SUMMON_TO_INST);
-                        handler->SetSentErrorMessage(true);
-                        return false;
-                    }
+                if (destMap->Instanceable() && destMap->GetInstanceId() != map->GetInstanceId())
+                    target->UnbindInstance(map->GetInstanceId(), target->GetDungeonDifficultyID(), true);
 
-                // check if we're already in a different instance of the same map
-                if ((targetMap->GetId() == map->GetId()) && (targetMap->GetInstanceId() != map->GetInstanceId()))
+                // we are in an instance, and can only summon players in our group with us as leader
+                if (!handler->GetSession()->GetPlayer()->GetGroup() || !target->GetGroup() ||
+                    (target->GetGroup()->GetLeaderGUID() != handler->GetSession()->GetPlayer()->GetGUID()) ||
+                    (handler->GetSession()->GetPlayer()->GetGroup()->GetLeaderGUID() != handler->GetSession()->GetPlayer()->GetGUID()))
+                    // the last check is a bit excessive, but let it be, just in case
                 {
-                    handler->PSendSysMessage(LANG_CANNOT_SUMMON_INST_INST, nameLink.c_str());
+                    handler->PSendSysMessage(LANG_CANNOT_SUMMON_TO_INST, nameLink.c_str());
                     handler->SetSentErrorMessage(true);
                     return false;
                 }
@@ -605,15 +601,15 @@ public:
 
             // before GM
             float x, y, z;
-            _player->GetClosePoint(x, y, z, target->GetCombatReach());
-            target->TeleportTo(_player->GetMapId(), x, y, z, target->GetOrientation());
-            PhasingHandler::InheritPhaseShift(target, _player);
+            handler->GetSession()->GetPlayer()->GetClosePoint(x, y, z, target->GetObjectSize());
+            target->TeleportTo(handler->GetSession()->GetPlayer()->GetMapId(), x, y, z, target->GetOrientation());
+            PhasingHandler::InheritPhaseShift(target, handler->GetSession()->GetPlayer());
             target->UpdateObjectVisibility();
         }
         else
         {
             // check offline security
-            if (handler->HasLowerSecurity(nullptr, targetGuid))
+            if (handler->HasLowerSecurity(NULL, targetGuid))
                 return false;
 
             std::string nameLink = handler->playerLink(targetName);
@@ -622,12 +618,12 @@ public:
 
             // in point where GM stay
             CharacterDatabaseTransaction dummy;
-            Player::SavePositionInDB(WorldLocation(_player->GetMapId(),
-                _player->GetPositionX(),
-                _player->GetPositionY(),
-                _player->GetPositionZ(),
-                _player->GetOrientation()),
-                _player->GetZoneId(),
+            Player::SavePositionInDB(WorldLocation(handler->GetSession()->GetPlayer()->GetMapId(),
+                handler->GetSession()->GetPlayer()->GetPositionX(),
+                handler->GetSession()->GetPlayer()->GetPositionY(),
+                handler->GetSession()->GetPlayer()->GetPositionZ(),
+                handler->GetSession()->GetPlayer()->GetOrientation()),
+                handler->GetSession()->GetPlayer()->GetZoneId(),
                 targetGuid, dummy);
         }
 
@@ -660,7 +656,7 @@ public:
             if (sWorld->getBoolConfig(CONFIG_DIE_COMMAND_MODE))
                 handler->GetSession()->GetPlayer()->Kill(target);
             else
-                handler->GetSession()->GetPlayer()->DealDamage(target, target->GetHealth(), nullptr, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, nullptr, false);
+                handler->GetSession()->GetPlayer()->DealDamage(target, target->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
         }
 
         return true;
@@ -753,7 +749,7 @@ public:
         if (!param1)
             return false;
 
-        char const* param2 = strtok(nullptr, " ");
+        char const* param2 = strtok(NULL, " ");
         if (!param2)
             return false;
 
@@ -809,7 +805,7 @@ public:
             if (!spellIid)
                 return false;
 
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellIid, target->GetMap()->GetDifficultyID());
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellIid);
             if (!spellInfo)
             {
                 handler->PSendSysMessage(LANG_UNKNOWN_SPELL, owner == handler->GetSession()->GetPlayer() ? handler->GetTrinityString(LANG_YOU) : nameLink.c_str());
@@ -948,9 +944,9 @@ public:
     // kick player
     static bool HandleKickPlayerCommand(ChatHandler* handler, char const* args)
     {
-        Player* target = nullptr;
+        Player* target = NULL;
         std::string playerName;
-        if (!handler->extractPlayerTarget((char*)args, &target, nullptr, &playerName))
+        if (!handler->extractPlayerTarget((char*)args, &target, NULL, &playerName))
             return false;
 
         if (handler->GetSession() && target == handler->GetSession()->GetPlayer())
@@ -967,8 +963,8 @@ public:
         std::string kickReasonStr = handler->GetTrinityString(LANG_NO_REASON);
         if (*args != '\0')
         {
-            char const* kickReason = strtok(nullptr, "\r");
-            if (kickReason != nullptr)
+            char const* kickReason = strtok(NULL, "\r");
+            if (kickReason != NULL)
                 kickReasonStr = kickReason;
         }
 
@@ -1004,7 +1000,7 @@ public:
             return false;
 
         std::string location_str = "inn";
-        if (char const* loc = strtok(nullptr, " "))
+        if (char const* loc = strtok(NULL, " "))
             location_str = loc;
 
         Player* player = nullptr;
@@ -1031,7 +1027,7 @@ public:
 
         if (player->IsInFlight() || player->IsInCombat())
         {
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(SPELL_UNSTUCK_ID, DIFFICULTY_NONE);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(SPELL_UNSTUCK_ID);
             if (!spellInfo)
                 return false;
 
@@ -1080,7 +1076,7 @@ public:
 
         uint32 team;
 
-        char* px2 = strtok(nullptr, " ");
+        char* px2 = strtok(NULL, " ");
 
         if (!px2)
             team = 0;
@@ -1285,8 +1281,8 @@ public:
                 std::string itemName = itemNameStr+1;
                 auto itr = std::find_if(sItemSparseStore.begin(), sItemSparseStore.end(), [&itemName](ItemSparseEntry const* sparse)
                 {
-                    for (LocaleConstant i = LOCALE_enUS; i < TOTAL_LOCALES; i = LocaleConstant(i + 1))
-                        if (itemName == sparse->Display[i])
+                    for (uint32 i = 0; i < TOTAL_LOCALES; ++i)
+                        if (itemName == sparse->Display->Str[i])
                             return true;
                     return false;
                 });
@@ -1311,18 +1307,18 @@ public:
             itemId = atoul(id);
         }
 
-        char const* ccount = strtok(nullptr, " ");
+        char const* ccount = strtok(NULL, " ");
 
         int32 count = 1;
 
         if (ccount)
-            count = strtol(ccount, nullptr, 10);
+            count = strtol(ccount, NULL, 10);
 
         if (count == 0)
             count = 1;
 
         std::vector<int32> bonusListIDs;
-        char const* bonuses = strtok(nullptr, " ");
+        char const* bonuses = strtok(NULL, " ");
 
         // semicolon separated bonuslist ids (parse them after all arguments are extracted by strtok!)
         if (bonuses)
@@ -1420,7 +1416,7 @@ public:
         }
 
         std::vector<int32> bonusListIDs;
-        char const* bonuses = strtok(nullptr, " ");
+        char const* bonuses = strtok(NULL, " ");
 
         // semicolon separated bonuslist ids (parse them after all arguments are extracted by strtok!)
         if (bonuses)
@@ -1460,7 +1456,7 @@ public:
                 }
                 else
                 {
-                    player->SendEquipError(msg, nullptr, nullptr, itr->second.GetId());
+                    player->SendEquipError(msg, NULL, NULL, itr->second.GetId());
                     handler->PSendSysMessage(LANG_ITEM_CANNOT_CREATE, itr->second.GetId(), 1);
                 }
             }
@@ -1507,7 +1503,7 @@ public:
 
         // *Change the weather of a cell
         char const* px = strtok((char*)args, " ");
-        char const* py = strtok(nullptr, " ");
+        char const* py = strtok(NULL, " ");
 
         if (!px || !py)
             return false;
@@ -1531,6 +1527,22 @@ public:
         return true;
     }
 
+
+    static bool HandleMaxSkillCommand(ChatHandler* handler, char const* /*args*/)
+    {
+        Player* player = handler->getSelectedPlayerOrSelf();
+        if (!player)
+        {
+            handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        // each skills that have max skill value dependent from level seted to current level max skill value
+        player->UpdateSkillsToMaxSkillsForLevel();
+        return true;
+    }
+
     static bool HandleSetSkillCommand(ChatHandler* handler, char const* args)
     {
         // number or [name] Shift-click form |color|Hskill:skill_id|h[name]|h|r
@@ -1538,11 +1550,11 @@ public:
         if (!skillStr)
             return false;
 
-        char const* levelStr = strtok(nullptr, " ");
+        char const* levelStr = strtok(NULL, " ");
         if (!levelStr)
             return false;
 
-        char const* maxPureSkill = strtok(nullptr, " ");
+        char const* maxPureSkill = strtok(NULL, " ");
 
         uint32 skill = atoul(skillStr);
         if (skill == 0)
@@ -1583,7 +1595,7 @@ public:
         // add the skill to the player's book with step 1 (which is the first rank, in most cases something
         // like 'Apprentice <skill>'.
         target->SetSkill(skill, targetHasSkill ? target->GetSkillStep(skill) : 1, level, max);
-        handler->PSendSysMessage(LANG_SET_SKILL, skill, skillLine->DisplayName[handler->GetSessionDbcLocale()], handler->GetNameLink(target).c_str(), level, max);
+        handler->PSendSysMessage(LANG_SET_SKILL, skill, skillLine->DisplayName->Str[handler->GetSessionDbcLocale()], handler->GetNameLink(target).c_str(), level, max);
         return true;
     }
 
@@ -1611,7 +1623,7 @@ public:
         Player* target;
         ObjectGuid targetGuid;
         std::string targetName;
-        CharacterDatabasePreparedStatement* stmt = nullptr;
+        CharacterDatabasePreparedStatement* stmt = NULL;
 
         // To make sure we get a target, we convert our guid to an omniversal...
         ObjectGuid parseGUID = ObjectGuid::Create<HighGuid::Player>(strtoull(args, nullptr, 10));
@@ -1734,7 +1746,7 @@ public:
         else
         {
             // check offline security
-            if (handler->HasLowerSecurity(nullptr, targetGuid))
+            if (handler->HasLowerSecurity(NULL, targetGuid))
                 return false;
 
             // Query informations from the DB
@@ -1871,7 +1883,7 @@ public:
 
         // Output III. LANG_PINFO_BANNED if ban exists and is applied
         if (banTime >= 0)
-            handler->PSendSysMessage(LANG_PINFO_BANNED, banType.c_str(), banReason.c_str(), banTime > 0 ? secsToTimeString(banTime - time(nullptr), true).c_str() : handler->GetTrinityString(LANG_PERMANENTLY), bannedBy.c_str());
+            handler->PSendSysMessage(LANG_PINFO_BANNED, banType.c_str(), banReason.c_str(), banTime > 0 ? secsToTimeString(banTime - time(NULL), true).c_str() : handler->GetTrinityString(LANG_PERMANENTLY), bannedBy.c_str());
 
         // Output IV. LANG_PINFO_MUTED if mute is applied
         if (muteTime > 0)
@@ -1921,15 +1933,15 @@ public:
         AreaTableEntry const* area = sAreaTableStore.LookupEntry(areaId);
         if (area)
         {
-            areaName = area->AreaName[handler->GetSessionDbcLocale()];
+            areaName = area->AreaName->Str[handler->GetSessionDbcLocale()];
 
             AreaTableEntry const* zone = sAreaTableStore.LookupEntry(area->ParentAreaID);
             if (zone)
-                zoneName = zone->AreaName[handler->GetSessionDbcLocale()];
+                zoneName = zone->AreaName->Str[handler->GetSessionDbcLocale()];
         }
 
         if (target)
-            handler->PSendSysMessage(LANG_PINFO_CHR_MAP, map->MapName[handler->GetSessionDbcLocale()],
+            handler->PSendSysMessage(LANG_PINFO_CHR_MAP, map->MapName->Str[handler->GetSessionDbcLocale()],
                 (!zoneName.empty() ? zoneName.c_str() : handler->GetTrinityString(LANG_UNKNOWN)),
                 (!areaName.empty() ? areaName.c_str() : handler->GetTrinityString(LANG_UNKNOWN)));
 
@@ -2002,9 +2014,9 @@ public:
         if (!delayStr)
             return false;
 
-        char const* muteReason = strtok(nullptr, "\r");
+        char const* muteReason = strtok(NULL, "\r");
         std::string muteReasonStr = handler->GetTrinityString(LANG_NO_REASON);
-        if (muteReason != nullptr)
+        if (muteReason != NULL)
             muteReasonStr = muteReason;
 
         Player* target;
@@ -2036,7 +2048,7 @@ public:
         if (target)
         {
             // Target is online, mute will be in effect right away.
-            int64 muteTime = time(nullptr) + notSpeakTime * MINUTE;
+            int64 muteTime = time(NULL) + notSpeakTime * MINUTE;
             target->GetSession()->m_muteTime = muteTime;
             stmt->setInt64(0, muteTime);
             std::string nameLink = handler->playerLink(targetName);
@@ -2218,12 +2230,15 @@ public:
                 case WAYPOINT_MOTION_TYPE:
                     handler->SendSysMessage(LANG_MOVEGENS_WAYPOINT);
                     break;
+                case ANIMAL_RANDOM_MOTION_TYPE:
+                    handler->SendSysMessage(LANG_MOVEGENS_ANIMAL_RANDOM);
+                    break;
                 case CONFUSED_MOTION_TYPE:
                     handler->SendSysMessage(LANG_MOVEGENS_CONFUSED);
                     break;
                 case CHASE_MOTION_TYPE:
                 {
-                    Unit* target = nullptr;
+                    Unit* target = NULL;
                     if (unit->GetTypeId() == TYPEID_PLAYER)
                         target = static_cast<ChaseMovementGenerator<Player> const*>(movementGenerator)->GetTarget();
                     else
@@ -2239,7 +2254,7 @@ public:
                 }
                 case FOLLOW_MOTION_TYPE:
                 {
-                    Unit* target = nullptr;
+                    Unit* target = NULL;
                     if (unit->GetTypeId() == TYPEID_PLAYER)
                         target = static_cast<FollowMovementGenerator<Player> const*>(movementGenerator)->GetTarget();
                     else
@@ -2299,7 +2314,7 @@ public:
         Player* player = handler->GetSession()->GetPlayer();
 
         if (CreatureGroup* formation = caster->GetFormation())
-            formation->MoveGroupTo(player->GetPosition());
+            formation->MoveGroupTo(player->GetPositionX(), player->GetPositionY(), player->GetPositionZ());
         else
             caster->GetMotionMaster()->MovePoint(0, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ());
 
@@ -2315,7 +2330,7 @@ public:
 
         if (strcmp(str, "go") == 0)
         {
-            char* guidStr = strtok(nullptr, " ");
+            char* guidStr = strtok(NULL, " ");
             if (!guidStr)
             {
                 handler->SendSysMessage(LANG_BAD_VALUE);
@@ -2331,7 +2346,7 @@ public:
                 return false;
             }
 
-            char* damageStr = strtok(nullptr, " ");
+            char* damageStr = strtok(NULL, " ");
             if (!damageStr)
             {
                 handler->SendSysMessage(LANG_BAD_VALUE);
@@ -2396,12 +2411,12 @@ public:
 
         uint32 damage = damage_int;
 
-        char* schoolStr = strtok((char*)nullptr, " ");
+        char* schoolStr = strtok((char*)NULL, " ");
 
         // flat melee damage without resistence/etc reduction
         if (!schoolStr)
         {
-            handler->GetSession()->GetPlayer()->DealDamage(target, damage, nullptr, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, nullptr, false);
+            handler->GetSession()->GetPlayer()->DealDamage(target, damage, NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
             if (target != handler->GetSession()->GetPlayer())
                 handler->GetSession()->GetPlayer()->SendAttackStateUpdate (HITINFO_AFFECTS_VICTIM, target, 1, SPELL_SCHOOL_MASK_NORMAL, damage, 0, 0, VICTIMSTATE_HIT, 0);
             return true;
@@ -2414,9 +2429,9 @@ public:
         SpellSchoolMask schoolmask = SpellSchoolMask(1 << school);
 
         if (handler->GetSession()->GetPlayer()->IsDamageReducedByArmor(schoolmask))
-            damage = handler->GetSession()->GetPlayer()->CalcArmorReducedDamage(handler->GetSession()->GetPlayer(), target, damage, nullptr, BASE_ATTACK);
+            damage = handler->GetSession()->GetPlayer()->CalcArmorReducedDamage(handler->GetSession()->GetPlayer(), target, damage, NULL, BASE_ATTACK);
 
-        char* spellStr = strtok((char*)nullptr, " ");
+        char* spellStr = strtok((char*)NULL, " ");
 
         Player* attacker = handler->GetSession()->GetPlayer();
 
@@ -2446,11 +2461,11 @@ public:
         if (!spellid)
             return false;
 
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellid, attacker->GetMap()->GetDifficultyID());
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellid);
         if (!spellInfo)
             return false;
 
-        SpellNonMeleeDamage damageInfo(attacker, target, spellInfo, spellInfo->GetSpellXSpellVisualId(handler->GetSession()->GetPlayer()), spellInfo->SchoolMask);
+        SpellNonMeleeDamage damageInfo(attacker, target, spellid, spellInfo->GetSpellXSpellVisualId(handler->GetSession()->GetPlayer()), spellInfo->SchoolMask);
         damageInfo.damage = damage;
         attacker->DealDamageMods(damageInfo.target, damageInfo.damage, &damageInfo.absorb, SPELL_DIRECT_DAMAGE);
         target->DealSpellDamage(&damageInfo, true);
@@ -2460,7 +2475,7 @@ public:
 
     static bool HandleCombatStopCommand(ChatHandler* handler, char const* args)
     {
-        Player* target = nullptr;
+        Player* target = NULL;
 
         if (args && args[0] != '\0')
         {
@@ -2534,7 +2549,7 @@ public:
         {
             // Get the args that we might have (up to 2)
             char const* arg1 = strtok((char*)args, " ");
-            char const* arg2 = strtok(nullptr, " ");
+            char const* arg2 = strtok(NULL, " ");
 
             // Analyze them to see if we got either a playerName or duration or both
             if (arg1)

@@ -49,14 +49,14 @@ public:
         };
         static std::vector<ChatCommand> commandTable =
         {
-            { "cast",   rbac::RBAC_PERM_COMMAND_CAST,        false, nullptr,                    "", castCommandTable },
+            { "cast",   rbac::RBAC_PERM_COMMAND_CAST,        false, NULL,                    "", castCommandTable },
         };
         return commandTable;
     }
 
     static bool CheckSpellExistsAndIsValid(ChatHandler* handler, uint32 spellId)
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
         if (!spellInfo)
         {
             handler->PSendSysMessage(LANG_COMMAND_NOSPELLFOUND);
@@ -94,7 +94,7 @@ public:
         if (!CheckSpellExistsAndIsValid(handler, spellId))
             return false;
 
-        char* triggeredStr = strtok(nullptr, " ");
+        char* triggeredStr = strtok(NULL, " ");
         if (triggeredStr)
         {
             int l = strlen(triggeredStr);
@@ -102,7 +102,7 @@ public:
                 return false;
         }
 
-        TriggerCastFlags triggered = (triggeredStr != nullptr) ? TRIGGERED_FULL_DEBUG_MASK : TRIGGERED_NONE;
+        TriggerCastFlags triggered = (triggeredStr != NULL) ? TRIGGERED_FULL_DEBUG_MASK : TRIGGERED_NONE;
         handler->GetSession()->GetPlayer()->CastSpell(target, spellId, triggered);
 
         return true;
@@ -126,7 +126,7 @@ public:
         if (!CheckSpellExistsAndIsValid(handler, spellId))
             return false;
 
-        char* triggeredStr = strtok(nullptr, " ");
+        char* triggeredStr = strtok(NULL, " ");
         if (triggeredStr)
         {
             int l = strlen(triggeredStr);
@@ -134,7 +134,7 @@ public:
                 return false;
         }
 
-        TriggerCastFlags triggered = (triggeredStr != nullptr) ? TRIGGERED_FULL_DEBUG_MASK : TRIGGERED_NONE;
+        TriggerCastFlags triggered = (triggeredStr != NULL) ? TRIGGERED_FULL_DEBUG_MASK : TRIGGERED_NONE;
         caster->ToUnit()->CastSpell(handler->GetSession()->GetPlayer(), spellId, triggered);
 
         return true;
@@ -153,14 +153,14 @@ public:
         if (!CheckSpellExistsAndIsValid(handler, spellId))
             return false;
 
-        char* distStr = strtok(nullptr, " ");
+        char* distStr = strtok(NULL, " ");
 
         float dist = 0;
 
         if (distStr)
             sscanf(distStr, "%f", &dist);
 
-        char* triggeredStr = strtok(nullptr, " ");
+        char* triggeredStr = strtok(NULL, " ");
         if (triggeredStr)
         {
             int l = strlen(triggeredStr);
@@ -168,7 +168,7 @@ public:
                 return false;
         }
 
-        TriggerCastFlags triggered = (triggeredStr != nullptr) ? TRIGGERED_FULL_DEBUG_MASK : TRIGGERED_NONE;
+        TriggerCastFlags triggered = (triggeredStr != NULL) ? TRIGGERED_FULL_DEBUG_MASK : TRIGGERED_NONE;
         float x, y, z;
         handler->GetSession()->GetPlayer()->GetClosePoint(x, y, z, dist);
 
@@ -222,7 +222,7 @@ public:
         if (!CheckSpellExistsAndIsValid(handler, spellId))
             return false;
 
-        char* triggeredStr = strtok(nullptr, " ");
+        char* triggeredStr = strtok(NULL, " ");
         if (triggeredStr)
         {
             int l = strlen(triggeredStr);
@@ -230,7 +230,7 @@ public:
                 return false;
         }
 
-        TriggerCastFlags triggered = (triggeredStr != nullptr) ? TRIGGERED_FULL_DEBUG_MASK : TRIGGERED_NONE;
+        TriggerCastFlags triggered = (triggeredStr != NULL) ? TRIGGERED_FULL_DEBUG_MASK : TRIGGERED_NONE;
         caster->CastSpell(caster->GetVictim(), spellId, triggered);
 
         return true;
@@ -254,9 +254,9 @@ public:
         if (!CheckSpellExistsAndIsValid(handler, spellId))
             return false;
 
-        char* posX = strtok(nullptr, " ");
-        char* posY = strtok(nullptr, " ");
-        char* posZ = strtok(nullptr, " ");
+        char* posX = strtok(NULL, " ");
+        char* posY = strtok(NULL, " ");
+        char* posZ = strtok(NULL, " ");
 
         if (!posX || !posY || !posZ)
             return false;
@@ -265,7 +265,7 @@ public:
         float y = float(atof(posY));
         float z = float(atof(posZ));
 
-        char* triggeredStr = strtok(nullptr, " ");
+        char* triggeredStr = strtok(NULL, " ");
         if (triggeredStr)
         {
             int l = strlen(triggeredStr);
@@ -273,7 +273,7 @@ public:
                 return false;
         }
 
-        TriggerCastFlags triggered = (triggeredStr != nullptr) ? TRIGGERED_FULL_DEBUG_MASK : TRIGGERED_NONE;
+        TriggerCastFlags triggered = (triggeredStr != NULL) ? TRIGGERED_FULL_DEBUG_MASK : TRIGGERED_NONE;
         caster->CastSpell(x, y, z, spellId, triggered);
 
         return true;

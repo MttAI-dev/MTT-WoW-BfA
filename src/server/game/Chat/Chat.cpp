@@ -327,10 +327,10 @@ bool ChatHandler::ExecuteCommandInTable(std::vector<ChatCommand> const& table, c
                 std::string zoneName = "Unknown";
                 if (AreaTableEntry const* area = sAreaTableStore.LookupEntry(areaId))
                 {
-                    LocaleConstant locale = GetSessionDbcLocale();
-                    areaName = area->AreaName[locale];
+                    int32 locale = GetSessionDbcLocale();
+                    areaName = area->AreaName->Str[locale];
                     if (AreaTableEntry const* zone = sAreaTableStore.LookupEntry(area->ParentAreaID))
-                        zoneName = zone->AreaName[locale];
+                        zoneName = zone->AreaName->Str[locale];
                 }
 
                 Unit* target = player->GetSelectedUnit();
@@ -916,7 +916,7 @@ GameTele const* ChatHandler::extractGameTeleFromLink(char* text)
         return nullptr;
 
     // id case (explicit or from shift link)
-    if (cId[0] >= '0' && cId[0] <= '9')
+    if (cId[0] >= '0' || cId[0] >= '9')
         if (uint32 id = atoi(cId))
             return sObjectMgr->GetGameTele(id);
 

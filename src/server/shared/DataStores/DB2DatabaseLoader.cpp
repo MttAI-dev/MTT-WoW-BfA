@@ -22,6 +22,10 @@
 #include "Errors.h"
 #include "Log.h"
 
+DB2LoadInfo::DB2LoadInfo() : DB2FileLoadInfo(), Statement(MAX_HOTFIXDATABASE_STATEMENTS)
+{
+}
+
 DB2LoadInfo::DB2LoadInfo(DB2FieldMeta const* fields, std::size_t fieldCount, DB2Meta const* meta, HotfixDatabaseStatements statement)
     : DB2FileLoadInfo(fields, fieldCount, meta), Statement(statement)
 {
@@ -29,12 +33,10 @@ DB2LoadInfo::DB2LoadInfo(DB2FieldMeta const* fields, std::size_t fieldCount, DB2
 
 static char const* nullStr = "";
 
-char* DB2DatabaseLoader::Load(bool custom, uint32& records, char**& indexTable, char*& stringHolders, std::vector<char*>& stringPool)
+char* DB2DatabaseLoader::Load(uint32& records, char**& indexTable, char*& stringHolders, std::vector<char*>& stringPool)
 {
     // Even though this query is executed only once, prepared statement is used to send data from mysql server in binary format
-    HotfixDatabasePreparedStatement* stmt = HotfixDatabase.GetPreparedStatement(_loadInfo->Statement);
-    stmt->setBool(0, !custom);
-    PreparedQueryResult result = HotfixDatabase.Query(stmt);
+    PreparedQueryResult result = HotfixDatabase.Query(HotfixDatabase.GetPreparedStatement(_loadInfo->Statement));
     if (!result)
         return nullptr;
 
@@ -65,10 +67,10 @@ char* DB2DatabaseLoader::Load(bool custom, uint32& records, char**& indexTable, 
         stringHolders = nullptr;
 
     // Resize index table
-    uint32 indexTableSize = records;
-    if (PreparedQueryResult maxIdResult = HotfixDatabase.Query(HotfixDatabase.GetPreparedStatement(HotfixDatabaseStatements(_loadInfo->Statement + HOTFIX_MAX_ID_STMT_OFFSET))))
-        if (uint32((*maxIdResult)[0].GetUInt64()) > records)
-            indexTableSize = uint32((*maxIdResult)[0].GetUInt64());
+    // database query *MUST* contain ORDER BY `index_field` DESC clause
+    uint32 indexTableSize = (*result)[indexField].GetUInt32() + 1;
+    if (indexTableSize < records)
+        indexTableSize = records;
 
     if (indexTableSize > records)
     {
@@ -80,11 +82,7 @@ char* DB2DatabaseLoader::Load(bool custom, uint32& records, char**& indexTable, 
     }
 
     char* tempDataTable = new char[result->GetRowCount() * recordSize];
-    memset(tempDataTable, 0, result->GetRowCount() * recordSize);
     uint32* newIndexes = new uint32[result->GetRowCount()];
-    if (stringFields)
-        stringPool.reserve(std::max(stringPool.capacity(), stringPool.size() + stringFields * result->GetRowCount() + 1));
-
     uint32 rec = 0;
     uint32 newRecords = 0;
 
@@ -92,9 +90,9 @@ char* DB2DatabaseLoader::Load(bool custom, uint32& records, char**& indexTable, 
     {
         Field* fields = result->Fetch();
         uint32 offset = 0;
+        uint32 stringFieldOffset = 0;
 
         uint32 indexValue = fields[indexField].GetUInt32();
-        bool isNew = false;
 
         // Attempt to overwrite existing data
         char* dataValue = indexTable[indexValue];
@@ -102,7 +100,6 @@ char* DB2DatabaseLoader::Load(bool custom, uint32& records, char**& indexTable, 
         {
             newIndexes[newRecords] = indexValue;
             dataValue = &tempDataTable[newRecords++ * recordSize];
-            isNew = true;
         }
 
         uint32 f = 0;
@@ -141,28 +138,29 @@ char* DB2DatabaseLoader::Load(bool custom, uint32& records, char**& indexTable, 
                         break;
                     case FT_STRING:
                     {
-                        LocalizedString* slot = (LocalizedString*)(&dataValue[offset]);
-                        if (isNew)
-                            for (char const*& localeStr : slot->Str)
-                                localeStr = nullStr;
+                        LocalizedString** slot = (LocalizedString**)(&dataValue[offset]);
+                        *slot = (LocalizedString*)(&stringHolders[stringHoldersRecordPoolSize * rec + stringFieldOffset]);
+                        ASSERT(*slot);
 
                         // Value in database in main table field must be for enUS locale
-                        if (char* str = AddString(&slot->Str[LOCALE_enUS], fields[f].GetString()))
+                        if (char* str = AddString(&(*slot)->Str[LOCALE_enUS], fields[f].GetString()))
                             stringPool.push_back(str);
 
-                        offset += sizeof(LocalizedString);
+                        stringFieldOffset += sizeof(LocalizedString);
+                        offset += sizeof(char*);
                         break;
                     }
                     case FT_STRING_NOT_LOCALIZED:
                     {
                         char const** slot = (char const**)(&dataValue[offset]);
+                        *slot = (char*)(&stringHolders[stringHoldersRecordPoolSize * rec + stringFieldOffset]);
+                        ASSERT(*slot);
 
                         // Value in database in main table field must be for enUS locale
                         if (char* str = AddString(slot, fields[f].GetString()))
                             stringPool.push_back(str);
-                        else
-                            *slot = nullStr;
 
+                        stringFieldOffset += sizeof(char*);
                         offset += sizeof(char*);
                         break;
                     }
@@ -202,11 +200,10 @@ char* DB2DatabaseLoader::Load(bool custom, uint32& records, char**& indexTable, 
     return dataTable;
 }
 
-void DB2DatabaseLoader::LoadStrings(bool custom, LocaleConstant locale, uint32 records, char** indexTable, std::vector<char*>& stringPool)
+void DB2DatabaseLoader::LoadStrings(uint32 locale, uint32 records, char** indexTable, std::vector<char*>& stringPool)
 {
-    HotfixDatabasePreparedStatement* stmt = HotfixDatabase.GetPreparedStatement(HotfixDatabaseStatements(_loadInfo->Statement + HOTFIX_LOCALE_STMT_OFFSET));
-    stmt->setBool(0, !custom);
-    stmt->setString(1, localeNames[locale]);
+    HotfixDatabasePreparedStatement* stmt = HotfixDatabase.GetPreparedStatement(HotfixDatabaseStatements(_loadInfo->Statement + 1));
+    stmt->setString(0, localeNames[locale]);
     PreparedQueryResult result = HotfixDatabase.Query(stmt);
     if (!result)
         return;
@@ -217,8 +214,6 @@ void DB2DatabaseLoader::LoadStrings(bool custom, LocaleConstant locale, uint32 r
 
     uint32 fieldCount = _loadInfo->Meta->FieldCount;
     uint32 recordSize = _loadInfo->Meta->GetRecordSize();
-
-    stringPool.reserve(std::max(stringPool.capacity(), stringPool.size() + stringFields * result->GetRowCount() + 1));
 
     do
     {
@@ -262,12 +257,13 @@ void DB2DatabaseLoader::LoadStrings(bool custom, LocaleConstant locale, uint32 r
                         case FT_STRING:
                         {
                             // fill only not filled entries
-                            LocalizedString* db2str = (LocalizedString*)(&dataValue[offset]);
-                            if (char* str = AddString(&db2str->Str[locale], fields[1 + stringFieldNumInRecord].GetString()))
-                                stringPool.push_back(str);
+                            LocalizedString* db2str = *(LocalizedString**)(&dataValue[offset]);
+                            if (db2str->Str[locale] == nullStr)
+                                if (char* str = AddString(&db2str->Str[locale], fields[1 + stringFieldNumInRecord].GetString()))
+                                    stringPool.push_back(str);
 
                             ++stringFieldNumInRecord;
-                            offset += sizeof(LocalizedString);
+                            offset += sizeof(LocalizedString*);
                             break;
                         }
                         case FT_STRING_NOT_LOCALIZED:
@@ -288,12 +284,24 @@ void DB2DatabaseLoader::LoadStrings(bool custom, LocaleConstant locale, uint32 r
             TC_LOG_ERROR("sql.sql", "Hotfix locale table for storage %s references row that does not exist %u locale %s!", _storageName.c_str(), indexValue, localeNames[locale]);
 
     } while (result->NextRow());
+
+    return;
 }
 
 char* DB2DatabaseLoader::AddString(char const** holder, std::string const& value)
 {
     if (!value.empty())
     {
+        std::size_t existingLength = strlen(*holder);
+        if (existingLength >= value.length())
+        {
+            // Reuse existing storage if there is enough space
+            char* str = const_cast<char*>(*holder);
+            memcpy(str, value.c_str(), value.length());
+            str[value.length()] = '\0';
+            return nullptr;
+        }
+
         char* str = new char[value.length() + 1];
         memcpy(str, value.c_str(), value.length());
         str[value.length()] = '\0';

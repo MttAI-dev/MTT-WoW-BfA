@@ -18,7 +18,7 @@ EndScriptData */
 #include "PhasingHandler.h"
 #include "Creature.h"
 #include "World.h"
-#include <Windows.h>
+
 class CommadExportHelper
 {
     //friend class ObjectMgr;
@@ -302,7 +302,7 @@ public:
         std::string name;
         LocaleConstant defaultLocale = sWorld->GetDefaultDbcLocale();
         if ( SkillLineEntry const* skillInfo = sSkillLineStore.LookupEntry(skillID) )
-            return name = skillInfo->DisplayName.Str [defaultLocale];
+            return name = skillInfo->DisplayName->Str [defaultLocale];
         else
             return "THIS SKILL DONT EXIST";
     }
@@ -389,7 +389,7 @@ public:
                 else
                     this->fCacheStream << ", \n";
                 //
-                // Insertar los parámetros.
+                // Insertar los parÃ¡metros.
                 this->fCacheStream
                     << "('" << QuestID << "',"
                     << " '" << BlobIndex << "',"
@@ -442,7 +442,7 @@ public:
                 Field* _Fields = _Result->Fetch();		// Materializar la fila en un objeto
 
                                                         //
-                                                        // Obtener cada uno de los parámetros de la tabla de la bd según sus indices
+                                                        // Obtener cada uno de los parÃ¡metros de la tabla de la bd segÃºn sus indices
                 uint32 QuestID = _Fields [_Index++].GetUInt32();
                 uint32 Idx1 = _Fields [_Index++].GetUInt32();
                 uint32 Idx2 = _Fields [_Index++].GetUInt32();
@@ -467,7 +467,7 @@ public:
                 else
                     this->fCacheStream << ", \n";
                 //
-                // Insertar los parámetros.
+                // Insertar los parÃ¡metros.
                 this->fCacheStream
                     << "('" << QuestID << "',"
                     << " '" << Idx1 << "',"
@@ -1186,7 +1186,7 @@ public:
                 Field* _Fields = _Result->Fetch();		// Materializar la fila en un objeto
 
                                                         //
-                                                        // Obtener cada uno de los parámetros de la tabla de la bd según sus indices
+                                                        // Obtener cada uno de los parÃ¡metros de la tabla de la bd segÃºn sus indices
                 uint32 id = _Fields [_Index++].GetUInt32();
                 uint32 point = _Fields [_Index++].GetUInt32();
                 float position_x = _Fields [_Index++].GetFloat();
@@ -1221,7 +1221,7 @@ public:
                 else
                     this->fCacheStream << ", \n";
                 //
-                // Insertar los parámetros.
+                // Insertar los parÃ¡metros.
                 this->fCacheStream
                     << "(" << "@GUID" << ","
                     << " '" << point << "',"
@@ -1770,7 +1770,7 @@ public:
             Field* _Fields = _Result->Fetch();		// Materializar la fila en un objeto
 
                                                     //
-                                                    // Obtener cada uno de los parámetros de la tabla de la bd según sus indices
+                                                    // Obtener cada uno de los parÃ¡metros de la tabla de la bd segÃºn sus indices
             uint32 _Menu_id = uint32(_Fields [_Index++].GetUInt16());
             uint32 OptionIndex = uint32(_Fields [_Index++].GetUInt16());
             uint32 _Option_icon = _Fields [_Index++].GetUInt32();
@@ -1794,7 +1794,7 @@ public:
                 << "`OptionNpcFlag`, "
                 << "`VerifiedBuild`) VALUES \n";
             //
-            // Insertar los parámetros.
+            // Insertar los parÃ¡metros.
             this->fCacheStream
                 << "('" << _Menu_id << "',"
                 << " '" << OptionIndex << "',"
@@ -1849,7 +1849,7 @@ public:
                     << "`OptionIndex`,"
                     << "`ActionMenuId`,"
                     << "`ActionPoiId`) VALUES \n";
-                // Insertar los parámetros.
+                // Insertar los parÃ¡metros.
                 this->fCacheStream
                     << "('" << MenuId << "',"
                     << " '" << OptionIndex << "',"
@@ -1909,7 +1909,7 @@ public:
                     << "`Importance`,"
                     << "`Name`,"
                     << "`VerifiedBuild`) VALUES \n";
-                // Insertar los parámetros.
+                // Insertar los parÃ¡metros.
                 this->fCacheStream
                     << "('" << ID << "',"
                     << "'" << PositionX << "',"
@@ -4279,7 +4279,7 @@ public:
                 _Index = 0;
                 _Fields = _Result->Fetch();// Materializar la fila en un objeto
 
-                                           // Obtener cada uno de los parámetros de la tabla de la bd según sus indices
+                                           // Obtener cada uno de los parÃ¡metros de la tabla de la bd segÃºn sus indices
                 CreatureId = _Fields [_Index++].GetUInt32();
                 TrainerId = _Fields [_Index++].GetUInt32();
 
@@ -4294,7 +4294,7 @@ public:
                 else
                     this->fCacheStream << ", \n";
                 //
-                // Insertar los parámetros.
+                // Insertar los parÃ¡metros.
                 this->fCacheStream
                     << "(" << CreatureId << ","
                     << " '" << TrainerId << "')";
@@ -4343,7 +4343,7 @@ public:
                 _Fields = _Result->Fetch();		// Materializar la fila en un objeto
 
                                                 //
-                                                // Obtener cada uno de los parámetros de la tabla de la bd según sus indices
+                                                // Obtener cada uno de los parÃ¡metros de la tabla de la bd segÃºn sus indices
                 summonerId = _Fields [_Index++].GetUInt32();
                 summonerType = _Fields [_Index++].GetUInt8();
                 groupId = _Fields [_Index++].GetUInt8();
@@ -4377,7 +4377,7 @@ public:
                     this->fCacheStream << ", \n";
 
                 //
-                // Insertar los parámetros.
+                // Insertar los parÃ¡metros.
                 this->fCacheStream
                     //<< "('" << summonerId << "',"
                     << "(" << "@ENTRY" << ","
@@ -4570,7 +4570,7 @@ public:
                 _Fields = _Result->Fetch();		// Materializar la fila en un objeto
 
                                                 //
-                                                // Obtener cada uno de los parámetros de la tabla de la bd según sus indices
+                                                // Obtener cada uno de los parÃ¡metros de la tabla de la bd segÃºn sus indices
                 npc_entry = _Fields [_Index++].GetUInt32();
                 spell_id = _Fields [_Index++].GetUInt32();
                 cast_flags = _Fields [_Index++].GetUInt8();
@@ -4592,7 +4592,7 @@ public:
                     this->fCacheStream << ", " << " /*" << " Spell(" << spell_id << "): " << "*/" "\n";
 
                 //
-                // Insertar los parámetros.
+                // Insertar los parÃ¡metros.
                 this->fCacheStream
                     //<< "('" << npc_entry << "',"
                     << "(" << "@ENTRY" << ","
@@ -4645,7 +4645,7 @@ public:
                 _Fields = _Result->Fetch();		// Materializar la fila en un objeto
 
                                                 //
-                                                // Obtener cada uno de los parámetros de la tabla de la bd según sus indices
+                                                // Obtener cada uno de los parÃ¡metros de la tabla de la bd segÃºn sus indices
                 entry = _Fields [_Index++].GetUInt32();
                 pointid = _Fields [_Index++].GetUInt32();
                 position_x = _Fields [_Index++].GetFloat();
@@ -4671,7 +4671,7 @@ public:
                     this->fCacheStream << ", \n";
 
                 //
-                // Insertar los parámetros.
+                // Insertar los parÃ¡metros.
                 this->fCacheStream
                     //<< "('" << entry << "',"
                     << "(" << "@ENTRY" << ","
@@ -4719,7 +4719,7 @@ public:
                 Field* _Fields = _Result->Fetch();		// Materializar la fila en un objeto
 
                                                         //
-                                                        // Obtener cada uno de los parámetros de la tabla de la bd según sus indices
+                                                        // Obtener cada uno de los parÃ¡metros de la tabla de la bd segÃºn sus indices
                 uint32 entry = _Fields [_Index++].GetUInt32();
                 uint32 TextId = _Fields [_Index++].GetUInt32();
                 uint32 VerifiedBuild = _Fields [_Index++].GetUInt32();
@@ -4739,7 +4739,7 @@ public:
                     this->fCacheStream << ", \n";
 
                 //
-                // Insertar los parámetros.
+                // Insertar los parÃ¡metros.
                 this->fCacheStream
                     << "(" << entry << ","
                     << "" << TextId << ","
@@ -4802,7 +4802,7 @@ public:
                     << "`LevelScalingDeltaMin`,"
                     << "`LevelScalingDeltaMax`,"
                     << "`VerifiedBuild`) VALUES \n";
-                // Insertar los parámetros.
+                // Insertar los parÃ¡metros.
                 this->fCacheStream
                     << "('" << Entry << "',"
                     << " '" << LevelScalingMin << "',"
@@ -4910,7 +4910,7 @@ public:
                 }
                 else
                     this->fCacheStream << ", \n";
-                // Insertar los parámetros.
+                // Insertar los parÃ¡metros.
                 this->fCacheStream
                     << "('" << ID << "',"
                     << " '" << MaxLevel << "',"
@@ -5007,7 +5007,7 @@ public:
                 }
                 else
                     this->fCacheStream << ", \n";
-                // Insertar los parámetros.
+                // Insertar los parÃ¡metros.
                 this->fCacheStream
                     << "(" << ID << ","
                     //<< " '" << "@ENTRY" << "',"

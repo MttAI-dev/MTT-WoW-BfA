@@ -159,7 +159,7 @@ public:
     // The array MUST be terminated by {0, 0, 0}
     DialogueHelper(DialogueEntry const* dialogueArray) :
       _dialogueArray(dialogueArray),
-          _currentEntry(nullptr),
+          _currentEntry(NULL),
           _actionTimer(0)
       { }
       // The array MUST be terminated by {0, 0, 0, 0, 0}
@@ -203,7 +203,7 @@ protected:
     /// Will be called when a dialogue step was done
     virtual void JustDidDialogueStep(int32 /*entry*/) { }
     /// Will be called to get a speaker, MUST be implemented if not used in instances
-    virtual Creature* GetSpeakerByEntry(int32 /*entry*/) { return nullptr; }
+    virtual Creature* GetSpeakerByEntry(int32 /*entry*/) { return NULL; }
 
 private:
     void DoNextDialogueStep()
@@ -299,7 +299,7 @@ public:
         if (quest->GetQuestId() == QUEST_GUARDIANS_ALTAR)
         {
             creature->AI()->Talk(SAY_QUEST_START);
-            creature->SetFaction(FACTION_ESCORTEE_A_NEUTRAL_PASSIVE);
+            creature->setFaction(FACTION_ESCORT_A_NEUTRAL_PASSIVE);
 
             if (npc_ranshallaAI* escortAI = dynamic_cast<npc_ranshallaAI*>(creature->AI()))
                 escortAI->Start(false, false, player->GetGUID(), quest);
@@ -565,7 +565,7 @@ public:
                 case NPC_PRIESTESS_DATA_2:
                     return ObjectAccessor::GetCreature(*me, _secondPriestessGUID);
                 default:
-                    return nullptr;
+                    return NULL;
             }
 
         }

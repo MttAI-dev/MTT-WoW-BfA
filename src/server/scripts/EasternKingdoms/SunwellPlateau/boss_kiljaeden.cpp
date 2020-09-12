@@ -285,7 +285,7 @@ public:
                     return ObjectAccessor::GetGameObject(*me, instance->GetGuidData(DATA_ORB_OF_THE_BLUE_DRAGONFLIGHT_4));
             }
 
-            return nullptr;
+            return NULL;
         }
 
         void ResetOrbs()
@@ -458,7 +458,7 @@ public:
                     break;
                 case NPC_KILJAEDEN:
                     summoned->CastSpell(summoned, SPELL_REBIRTH, false);
-                    AddThreat(me->GetVictim(), 1.0f, summoned);
+                    summoned->AddThreat(me->GetVictim(), 1.0f);
                     break;
             }
             summons.Summon(summoned);
@@ -610,7 +610,7 @@ public:
             else
                 summoned->SetLevel(me->getLevel());
 
-            summoned->SetFaction(me->GetFaction());
+            summoned->setFaction(me->getFaction());
             summons.Summon(summoned);
         }
 
@@ -659,7 +659,7 @@ public:
             Talk(SAY_KJ_REFLECTION);
             for (uint8 i = 0; i < 4; ++i)
             {
-                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true, true, -SPELL_VENGEANCE_OF_THE_BLUE_FLIGHT))
+                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true, -SPELL_VENGEANCE_OF_THE_BLUE_FLIGHT))
                 {
                     float x, y, z;
                     target->GetPosition(x, y, z);
@@ -738,7 +738,7 @@ public:
                         case TIMER_LEGION_LIGHTNING:
                             if (!me->IsNonMeleeSpellCast(false))
                             {
-                                Unit* pRandomPlayer = nullptr;
+                                Unit* pRandomPlayer = NULL;
 
                                 me->RemoveAurasDueToSpell(SPELL_SOUL_FLAY);
                                 for (uint8 z = 0; z < 6; ++z)
@@ -833,7 +833,7 @@ public:
                             TimerIsDeactivated[TIMER_ORBS_EMPOWER] = true;
                             break;
                         case TIMER_ARMAGEDDON: //Phase 4
-                            Unit* target = nullptr;
+                            Unit* target = NULL;
                             for (uint8 z = 0; z < 6; ++z)
                             {
                                 target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true);
@@ -936,15 +936,15 @@ public:
 
         void JustSummoned(Creature* summoned) override
         {
-            summoned->SetFaction(me->GetFaction());
+            summoned->setFaction(me->getFaction());
             summoned->SetLevel(me->getLevel());
         }
 
         void EnterCombat(Unit* who) override
         {
             instance->SetBossState(DATA_KILJAEDEN, IN_PROGRESS);
-            if (Creature* pControl = instance->GetCreature(DATA_KILJAEDEN_CONTROLLER))
-                AddThreat(who, 1.0f, pControl);
+            if (Creature* pControl = ObjectAccessor::GetCreature(*me, instance->GetGuidData(DATA_KILJAEDEN_CONTROLLER)))
+                pControl->AddThreat(who, 1.0f);
 
             me->InterruptNonMeleeSpells(true);
         }
@@ -980,8 +980,15 @@ public:
             if (FelfirePortalTimer <= diff)
             {
                 if (Creature* pPortal = DoSpawnCreature(NPC_FELFIRE_PORTAL, 0, 0, 0, 0, TEMPSUMMON_TIMED_DESPAWN, 20000))
-                    for (ThreatReference* ref : me->GetThreatManager().GetUnsortedThreatList())
-                        AddThreat(ref->GetVictim(), 1.0f, pPortal);
+                {
+                    ThreatContainer::StorageType const &threatlist = me->getThreatManager().getThreatList();
+                    for (ThreatContainer::StorageType::const_iterator itr = threatlist.begin(); itr != threatlist.end(); ++itr)
+                    {
+                        Unit* unit = ObjectAccessor::GetUnit(*me, (*itr)->getUnitGuid());
+                        if (unit)
+                            pPortal->AddThreat(unit, 1.0f);
+                    }
+                }
                 FelfirePortalTimer = 20000;
             } else FelfirePortalTimer -= diff;
 
@@ -1029,7 +1036,7 @@ public:
 
         void JustSummoned(Creature* summoned) override
         {
-            summoned->SetFaction(me->GetFaction());
+            summoned->setFaction(me->getFaction());
             summoned->SetLevel(me->getLevel());
         }
 
@@ -1041,7 +1048,7 @@ public:
             if (uiSpawnFiendTimer <= diff)
             {
                 if (Creature* pFiend = DoSpawnCreature(NPC_VOLATILE_FELFIRE_FIEND, 0, 0, 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 20000))
-                    AddThreat(SelectTarget(SELECT_TARGET_RANDOM, 0), 100000.0f, pFiend);
+                    pFiend->AddThreat(SelectTarget(SELECT_TARGET_RANDOM, 0), 100000.0f);
                 uiSpawnFiendTimer = urand(4000, 8000);
             } else uiSpawnFiendTimer -= diff;
         }
@@ -1094,7 +1101,7 @@ public:
 
             if (!bLockedTarget)
             {
-                AddThreat(me->GetVictim(), 10000000.0f);
+                me->AddThreat(me->GetVictim(), 10000000.0f);
                 bLockedTarget = true;
             }
 

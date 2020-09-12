@@ -257,7 +257,7 @@ public:
         mob_crystall_stalker_AI(Creature* creature) : ScriptedAI(creature)
         {
             me->SetReactState(REACT_PASSIVE);
-            me->SetFaction(35);
+            me->setFaction(35);
         }
     };
 };

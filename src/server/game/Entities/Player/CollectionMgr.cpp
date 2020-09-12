@@ -72,9 +72,9 @@ void CollectionMgr::LoadMountDefinitions()
 
 namespace
 {
-    EnumFlag<ToyFlags> GetToyFlags(bool isFavourite, bool hasFanfare)
+    EnumClassFlag<ToyFlags> GetToyFlags(bool isFavourite, bool hasFanfare)
     {
-        ToyFlags flags = ToyFlags::None;
+        EnumClassFlag<ToyFlags> flags(ToyFlags::None);
         if (isFavourite)
             flags |= ToyFlags::Favorite;
 
@@ -85,7 +85,7 @@ namespace
     }
 }
 
-CollectionMgr::CollectionMgr(WorldSession* owner) : _owner(owner), _appearances(std::make_unique<boost::dynamic_bitset<uint32>>())
+CollectionMgr::CollectionMgr(WorldSession* owner) : _owner(owner), _appearances(Trinity::make_unique<boost::dynamic_bitset<uint32>>())
 {
 }
 
@@ -151,7 +151,7 @@ void CollectionMgr::ToySetFavorite(uint32 itemId, bool favorite)
     if (favorite)
         itr->second |= ToyFlags::Favorite;
     else
-        itr->second &= ~ToyFlags::Favorite;
+        itr->second.RemoveFlag(ToyFlags::Favorite);
 }
 
 void CollectionMgr::ToyClearFanfare(uint32 itemId)
@@ -160,7 +160,7 @@ void CollectionMgr::ToyClearFanfare(uint32 itemId)
     if (itr == _toys.end())
         return;
 
-    itr->second &= ~ ToyFlags::HasFanfare;
+    itr->second.RemoveFlag(ToyFlags::HasFanfare);
 }
 
 void CollectionMgr::OnItemAdded(Item* item, Player* owner)

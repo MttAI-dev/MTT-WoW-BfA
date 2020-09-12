@@ -282,11 +282,11 @@ void ProcessCastaction(Player* player, Creature* creature, uint32 spellId, uint3
 
 bool EquippedOk(Player* player, uint32 spellId)
 {
-    SpellInfo const* spell = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NONE);
+    SpellInfo const* spell = sSpellMgr->GetSpellInfo(spellId);
     if (!spell)
         return false;
 
-    for (SpellEffectInfo const* effect : spell->GetEffects())
+    for (SpellEffectInfo const* effect : spell->GetEffectsForDifficulty(DIFFICULTY_NONE))
     {
         if (!effect)
             continue;
@@ -295,7 +295,7 @@ bool EquippedOk(Player* player, uint32 spellId)
         if (!reqSpell)
             continue;
 
-        Item* item = nullptr;
+        Item* item = NULL;
         for (uint8 j = EQUIPMENT_SLOT_START; j < EQUIPMENT_SLOT_END; ++j)
         {
             item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, j);
@@ -419,7 +419,7 @@ void ProcessUnlearnAction(Player* player, Creature* creature, uint32 spellId, ui
             player->SendBuyError(BUY_ERR_NOT_ENOUGHT_MONEY, creature, 0, 0);
     }
     else
-        player->SendEquipError(EQUIP_ERR_CLIENT_LOCKED_OUT, nullptr, nullptr);
+        player->SendEquipError(EQUIP_ERR_CLIENT_LOCKED_OUT, NULL, NULL);
     CloseGossipMenuFor(player);
 }
 

@@ -26,6 +26,8 @@
 
 GameTable<GtArtifactKnowledgeMultiplierEntry>   sArtifactKnowledgeMultiplierGameTable;
 GameTable<GtArtifactLevelXPEntry>               sArtifactLevelXPGameTable;
+GameTable<GtAzeriteBaseExperiencePerLevelEntry> sAzeriteBaseExperiencePerLevelTable;
+GameTable<GtAzeriteLevelToItemLevelEntry>       sAzeriteLevelToItemLevelGameTable;
 GameTable<GtBarberShopCostBaseEntry>            sBarberShopCostBaseGameTable;
 GameTable<GtBaseMPEntry>                        sBaseMPGameTable;
 GameTable<GtChallengeModeDamage>                sChallengeModeDamage;
@@ -113,6 +115,8 @@ void LoadGameTables(std::string const& dataPath)
 
     LOAD_GT(sArtifactKnowledgeMultiplierGameTable, "ArtifactKnowledgeMultiplier.txt");
     LOAD_GT(sArtifactLevelXPGameTable, "ArtifactLevelXP.txt");
+    LOAD_GT(sAzeriteBaseExperiencePerLevelTable, "AzeriteBaseExperiencePerLevel.txt");
+    LOAD_GT(sAzeriteLevelToItemLevelGameTable, "AzeriteLevelToItemLevel.txt");
     LOAD_GT(sBarberShopCostBaseGameTable, "BarberShopCostBase.txt");
     LOAD_GT(sBaseMPGameTable, "BaseMp.txt");
     LOAD_GT(sChallengeModeDamage, "ChallengeModeDamage.txt");
@@ -120,6 +124,7 @@ void LoadGameTables(std::string const& dataPath)
     LOAD_GT(sCombatRatingsGameTable, "CombatRatings.txt");
     LOAD_GT(sCombatRatingsMultByILvlGameTable, "CombatRatingsMultByILvl.txt");
     LOAD_GT(sHpPerStaGameTable, "HpPerSta.txt");
+    LOAD_GT(sItemSocketCostPerLevelGameTable, "ItemSocketCostPerLevel.txt");
     LOAD_GT(sNpcManaCostScalerGameTable, "NPCManaCostScaler.txt");
     LOAD_GT(sSpellScalingGameTable, "SpellScaling.txt");
     LOAD_GT(sStaminaMultByILvlGameTable, "StaminaMultByILvl.txt");

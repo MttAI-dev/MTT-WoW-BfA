@@ -116,7 +116,7 @@ public:
                 me->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_ATTACK_ME, true);
                 DoCast(SPELL_SNARE_SELF);
             }
-            ResetThreatList();
+            DoResetThreat();
             DoZoneInCombat();
             events.ScheduleEvent(EVENT_SWITCH_PHASE, Seconds(60));
         }
@@ -126,10 +126,11 @@ public:
             uint64 health = 0;
             Unit* target = nullptr;
 
-            for (auto* ref : me->GetThreatManager().GetUnsortedThreatList())
+            ThreatContainer::StorageType threatList = me->getThreatManager().getThreatList();
+            for (ThreatContainer::StorageType::const_iterator itr = threatList.begin(); itr != threatList.end(); ++itr)
             {
-                Unit* unit = ref->GetVictim();
-                if (me->IsWithinMeleeRange(unit))
+                Unit* unit = ObjectAccessor::GetUnit(*me, (*itr)->getUnitGuid());
+                if (unit && me->IsWithinMeleeRange(unit))
                 {
                     if (unit->GetHealth() > health)
                     {
@@ -161,8 +162,8 @@ public:
                 case EVENT_SWITCH_TARGET:
                     if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 100.0f, true))
                     {
-                        ResetThreatList();
-                        AddThreat(target, 1000000.0f);
+                        DoResetThreat();
+                        me->AddThreat(target, 1000000.0f);
                         DoCast(target, SPELL_CHARGE);
                         Talk(EMOTE_NEW_TARGET);
                     }

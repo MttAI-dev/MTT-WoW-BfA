@@ -39,7 +39,7 @@ enum BattlegroundRLGameObjects
 class BattlegroundRL : public Arena
 {
     public:
-        BattlegroundRL(BattlegroundTemplate const* battlegroundTemplate);
+        BattlegroundRL();
 
         /* inherited from BattlegroundClass */
         void FillInitialWorldStates(WorldPackets::WorldState::InitWorldStates& packet) override;

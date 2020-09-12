@@ -85,13 +85,13 @@ class instance_vault_of_archavon : public InstanceMapScript
                 switch (type)
                 {
                     case DATA_ARCHAVON:
-                        ArchavonDeath = time(nullptr);
+                        ArchavonDeath = time(NULL);
                         break;
                     case DATA_EMALON:
-                        EmalonDeath = time(nullptr);
+                        EmalonDeath = time(NULL);
                         break;
                     case DATA_KORALON:
-                        KoralonDeath = time(nullptr);
+                        KoralonDeath = time(NULL);
                         break;
                     default:
                         return true;

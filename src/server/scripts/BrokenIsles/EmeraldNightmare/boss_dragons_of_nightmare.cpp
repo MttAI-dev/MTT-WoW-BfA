@@ -220,7 +220,7 @@ struct boss_dragons_of_nightmare : public BossAI
         case NPC_SEEPING_FOG:
         case NPC_SHADE_OF_TAERAR:
         {
-            summon->SetFaction(me->GetFaction());
+            summon->setFaction(me->getFaction());
             break;
         }
         }
@@ -259,7 +259,7 @@ struct npc_taerar_102681 : public ScriptedAI
         {
         case NPC_SHADE_OF_TAERAR:
         {
-            summon->SetFaction(me->GetFaction());
+            summon->setFaction(me->getFaction());
             break;
         }
         }

@@ -238,7 +238,7 @@ public:
             waitTimer = 1000;
 
             std::list<Player*> playerList;
-            me->GetPlayerListInGrid(playerList, 10.0f);
+            go->GetPlayerListInGrid(playerList, 10.0f);
 
             for (Player* player : playerList)
             {
@@ -286,7 +286,7 @@ class npc_groog : public CreatureScript
 
             void Reset() override
             {
-                me->SetFaction(14);
+                me->setFaction(14);
             }
 
             void EnterCombat(Unit* /*p_Victim*/) override
