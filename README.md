@@ -120,3 +120,4 @@ Read file [THANKS](THANKS).
 
 * [Wiki](https://www.trinitycore.info)
 * [MTT - WoW](http://mttwow.sytes.net/)
+* [Discord] (https://discord.com/invite/QXahfUP)
