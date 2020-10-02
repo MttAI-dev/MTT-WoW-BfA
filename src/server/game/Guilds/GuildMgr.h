@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,8 +23,17 @@
 #include <unordered_map>
 #include <vector>
 
-class Guild;
+//class Guild;
 struct GuildReward;
+struct GuildChallengeReward
+{
+    uint32 Gold;
+    uint32 ChallengeCount;
+    uint32 Gold2;
+};
+typedef std::vector<GuildChallengeReward> GuildChallengeRewardData;
+
+
 
 class TC_GAME_API GuildMgr
 {
@@ -57,13 +66,14 @@ public:
     void SetNextGuildId(ObjectGuid::LowType Id) { NextGuildId = Id; }
 
     std::vector<GuildReward> const& GetGuildRewards() const { return GuildRewards; }
-
+    GuildChallengeRewardData const& GetGuildChallengeRewardData() const;
     void ResetTimes(bool week);
 protected:
     typedef std::unordered_map<ObjectGuid::LowType, Guild*> GuildContainer;
     ObjectGuid::LowType NextGuildId;
     GuildContainer GuildStore;
     std::vector<GuildReward> GuildRewards;
+    GuildChallengeRewardData _challengeRewardData;
 };
 
 #define sGuildMgr GuildMgr::instance()

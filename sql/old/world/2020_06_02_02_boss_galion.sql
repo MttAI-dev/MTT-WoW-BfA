@@ -1,0 +1,1 @@
+UPDATE `creature_template` SET `ScriptName`='npc_chief_salyis' WHERE `entry`=62352;

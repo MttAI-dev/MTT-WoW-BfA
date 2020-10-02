@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -185,7 +185,7 @@ struct RaidMarker
 class TC_GAME_API Group
 {
     public:
-        Ashamane::AnyData Variables;
+        LatinCore::AnyData Variables;
 
         struct MemberSlot
         {
@@ -370,6 +370,14 @@ class TC_GAME_API Group
 
         // FG: evil hacks
         void BroadcastGroupUpdate(void);
+        bool InChallenge();
+        bool GetMaxCountOfRolesForArenaQueue(uint8 role);
+        ObjectGuid m_challengeOwner;
+        ObjectGuid m_challengeItem;
+        MapChallengeModeEntry const* m_challengeEntry;
+        uint32 m_challengeLevel;
+        uint32 m_challengeInstanceID;
+        std::array<uint32, 3> m_affixes{};
 
     protected:
         bool _setMembersGroup(ObjectGuid guid, uint8 group);

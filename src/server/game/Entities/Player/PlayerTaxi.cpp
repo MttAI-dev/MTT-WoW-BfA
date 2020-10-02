@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -51,6 +51,7 @@ void PlayerTaxi::InitTaxiNodesForLevel(uint32 race, uint32 chrClass, uint8 level
         case RACE_LIGHTFORGED_DRAENEI:
         case RACE_KUL_TIRAN:
         case RACE_DARK_IRON_DWARF:
+        case RACE_MECHAGNOME:
             SetTaximaskNode(2);     // Stormwind, Elwynn
             SetTaximaskNode(6);     // Ironforge, Dun Morogh
             SetTaximaskNode(26);    // Lor'danel, Darkshore
@@ -76,6 +77,7 @@ void PlayerTaxi::InitTaxiNodesForLevel(uint32 race, uint32 chrClass, uint8 level
         case RACE_HIGHMOUNTAIN_TAUREN:
         case RACE_ZANDALARI_TROLL:
         case RACE_MAGHAR_ORC:
+        case RACE_VULPERA:
             SetTaximaskNode(11);    // Undercity, Tirisfal
             SetTaximaskNode(22);    // Thunder Bluff, Mulgore
             SetTaximaskNode(23);    // Orgrimmar, Durotar

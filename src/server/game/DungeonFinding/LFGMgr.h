@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -443,6 +443,8 @@ class TC_GAME_API LFGMgr
         void ToggleTesting();
         /// Check if debug mode
         bool IsTesting() const { return m_isTesting; }
+        /// Personal LFG
+        void JoinPersonalLfg(Player* player, uint32 dungeonId);
 
         // LfgQueue
         /// Get last lfg state (NONE, DUNGEON or FINISHED_DUNGEON)

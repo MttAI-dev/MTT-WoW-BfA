@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -36,6 +36,7 @@ class TC_DATABASE_API ResultSet
         Field const& operator[](std::size_t index) const;
 
     protected:
+        std::vector<QueryResultFieldMetadata> _fieldMetadata;
         uint64 _rowCount;
         Field* _currentRow;
         uint32 _fieldCount;
@@ -63,6 +64,7 @@ class TC_DATABASE_API PreparedResultSet
         Field const& operator[](std::size_t index) const;
 
     protected:
+        std::vector<QueryResultFieldMetadata> m_fieldMetadata;
         std::vector<Field> m_rows;
         uint64 m_rowCount;
         uint64 m_rowPosition;

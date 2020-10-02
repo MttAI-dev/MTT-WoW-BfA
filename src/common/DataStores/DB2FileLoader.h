@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -90,6 +90,12 @@ struct TC_COMMON_API DB2FileLoadInfo
     std::string TypesString;
 };
 
+enum class DB2EncryptedSectionHandling
+{
+    Skip,
+    Process
+};
+
 struct TC_COMMON_API DB2FileSource
 {
     virtual ~DB2FileSource();
@@ -109,6 +115,8 @@ struct TC_COMMON_API DB2FileSource
     virtual int64 GetFileSize() const = 0;
 
     virtual char const* GetFileName() const = 0;
+
+    virtual DB2EncryptedSectionHandling HandleEncryptedSection(DB2SectionHeader const& sectionHeader) const = 0;
 };
 
 class TC_COMMON_API DB2Record

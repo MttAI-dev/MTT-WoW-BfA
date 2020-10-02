@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -267,6 +267,8 @@ namespace WorldPackets
             uint32 DifficultyID     = 0;
             uint8 IsTournamentRealm = 0;
             bool XRealmPvpAlert     = false;
+            bool BlockExitingLoadingScreen = false;     // when set to true, sending SMSG_UPDATE_OBJECT with CreateObject Self bit = true will not hide loading screen
+                                                        // instead it will be done after this packet is sent again with false in this bit and SMSG_UPDATE_OBJECT Values for player
             Optional<uint32> RestrictedAccountMaxLevel;
             Optional<uint32> RestrictedAccountMaxMoney;
             Optional<uint32> InstanceGroupSize;
@@ -830,6 +832,16 @@ namespace WorldPackets
             uint32 count = 0;
         };
 
+        class StopElapsedTimer final : public ServerPacket
+        {
+        public:
+            StopElapsedTimer() : ServerPacket(SMSG_STOP_ELAPSED_TIMER, 5) { }
+
+            WorldPacket const* Write() override;
+
+            int32 TimerID = 0;
+            bool KeepTimer = false;
+        };
         class ResearchHistory final : public ClientPacket
         {
         public:
@@ -1038,6 +1050,14 @@ namespace WorldPackets
 
             ObjectGuid Guid;
             uint32 RaceId;
+        };
+
+        class ResetChallengeModeCheat final : public ClientPacket
+        {
+        public:
+            ResetChallengeModeCheat(WorldPacket&& packet) : ClientPacket(CMSG_RESET_CHALLENGE_MODE_CHEAT, std::move(packet)) { }
+
+            void Read() override { }
         };
 
         class SetWarMode final : public ClientPacket

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) LatinCore Team 
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,13 +19,13 @@
 #include "world_bosses_zuldazar.h"
 
 enum Events {
-    EVENT_STORM_WING = 1,
+    EVENT_STORM_WING      = 1,
     EVENT_HURRICANE_CRASH = 2,
     EVENT_MATRIARCHS_CALL = 3,
 };
 
 enum Spells {
-    SPELL_STORM_WING = 260908,
+    SPELL_STORM_WING      = 260908,
     SPELL_HURRICANE_CRASH = 261088,
     SPELL_MATRIARCHS_CALL = 261467,
 };

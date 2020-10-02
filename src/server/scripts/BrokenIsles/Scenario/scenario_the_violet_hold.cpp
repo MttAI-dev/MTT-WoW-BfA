@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -162,7 +162,7 @@ struct scenario_the_violet_hold : public InstanceScript
                 }
             }
             */
-            DoDelayedConversation(4000, 1359);
+           // DoDelayedConversation(4000, 1359);
             ///player 203458 clear buff
             DoCastSpellOnPlayers(203458);
             DoCastSpellOnPlayers(203461);

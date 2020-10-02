@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2020 LatinCoreTeam
+ * Copyright (C) Thordekk
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,6 +22,7 @@
 #include "GarrisonMgr.h"
 #include "Log.h"
 #include "MapManager.h"
+#include "MotionMaster.h"
 #include "PhasingHandler.h"
 #include "ObjectMgr.h"
 #include "VehicleDefines.h"
@@ -242,7 +243,17 @@ void WodGarrison::Enter()
 
     if (MapEntry const* map = sMapStore.LookupEntry(_siteLevel->MapID))
         if (int32(_owner->GetMapId()) == map->ParentMapID)
-            _owner->SeamlessTeleportToMap(_siteLevel->MapID);
+        {
+            if (_owner->GetMotionMaster()->GetCurrentMovementGeneratorType() == FLIGHT_MOTION_TYPE)
+            {
+                _owner->GetScheduler().Schedule(Milliseconds(10000), [this](TaskContext context)
+                    {
+                        _owner->SeamlessTeleportToMap(_siteLevel->MapID);
+                    });
+            }
+            else
+                _owner->SeamlessTeleportToMap(_siteLevel->MapID);
+        }
 }
 
 void WodGarrison::Leave()
@@ -254,35 +265,38 @@ void WodGarrison::Leave()
             uint32 futureAreaId = sMapMgr->GetAreaId(_owner->GetPhaseShift(), map->ParentMapID, _owner->GetPositionX(), _owner->GetPositionY(), _owner->GetPositionZ());
 
             // This check prevent infinite teleport if new map don't exactly overlap current map area
-            if (AreaTableEntry const* futureArea = sAreaTableStore.LookupEntry(futureAreaId))
+            /*if (AreaTableEntry const* futureArea = sAreaTableStore.LookupEntry(futureAreaId))
                 if (IsAllowedArea(futureArea))
-                    return;
+                    return;*/
 
             Garrison::Leave();
-            _owner->SeamlessTeleportToMap(map->ParentMapID);
+            if (_owner->GetMotionMaster()->GetCurrentMovementGeneratorType() != FLIGHT_MOTION_TYPE)
+                _owner->SeamlessTeleportToMap(map->ParentMapID);
         }
         else // We already have been teleported
             Garrison::Leave();
     }
 }
 
-bool WodGarrison::IsAllowedArea(AreaTableEntry const* area) const
+bool WodGarrison::IsAllowedArea(uint32 areaID) const
 {
-    if (!area)
-        return false;
-
-    switch (area->ID)
+    if (AreaTableEntry const* area = sAreaTableStore.LookupEntry(areaID))
     {
+        switch (areaID)
+        {
         case 7004: // Horde Garrison
-        //case 7765: // Horde Shipyard
+        case 7765: // Horde Shipyard
         case 7078: // Alliance Garrison
-        //case 7760: // Alliance Shipyard
+        case 7760: // Alliance Shipyard
             return true;
         default:
             break;
+        }
+
+        return area->Flags[1] & AREA_FLAG_GARRISON && area->ContinentID == MAP_DRAENOR;
     }
 
-    return area->Flags[1] & AREA_FLAG_GARRISON && area->ContinentID == MAP_DRAENOR;
+    return true;
 }
 
 std::vector<WodGarrison::Plot*> WodGarrison::GetPlots()
@@ -322,7 +336,7 @@ void WodGarrison::LearnBlueprint(uint32 garrBuildingId)
 
     if (!sGarrBuildingStore.LookupEntry(garrBuildingId))
         learnBlueprintResult.Result = GARRISON_ERROR_INVALID_BUILDINGID;
-    else if (_knownBuildings.count(garrBuildingId))
+    else if (HasBlueprint(garrBuildingId))
         learnBlueprintResult.Result = GARRISON_ERROR_BLUEPRINT_EXISTS;
     else
         _knownBuildings.insert(garrBuildingId);
@@ -339,7 +353,7 @@ void WodGarrison::UnlearnBlueprint(uint32 garrBuildingId)
 
     if (!sGarrBuildingStore.LookupEntry(garrBuildingId))
         unlearnBlueprintResult.Result = GARRISON_ERROR_INVALID_BUILDINGID;
-    else if (!_knownBuildings.count(garrBuildingId))
+    else if (!HasBlueprint(garrBuildingId))
         unlearnBlueprintResult.Result = GARRISON_ERROR_REQUIRES_BLUEPRINT;
     else
         _knownBuildings.erase(garrBuildingId);
@@ -369,7 +383,7 @@ void WodGarrison::PlaceBuilding(uint32 garrPlotInstanceId, uint32 garrBuildingId
         {
             oldBuildingId = plot->BuildingInfo.PacketInfo->GarrBuildingID;
             if (sGarrBuildingStore.AssertEntry(oldBuildingId)->BuildingType != building->BuildingType)
-                plot->ClearBuildingInfo(_owner);
+                plot->ClearBuildingInfo(_garrisonType, _owner);
         }
 
         plot->SetBuildingInfo(placeBuildingResult.BuildingInfo, _owner);
@@ -412,7 +426,7 @@ void WodGarrison::CancelBuildingConstruction(uint32 garrPlotInstanceId)
         if (map)
             plot->DeleteGameObject(map);
 
-        plot->ClearBuildingInfo(_owner);
+        plot->ClearBuildingInfo(_garrisonType, _owner);
         _owner->SendDirectMessage(buildingRemoved.Write());
 
         GarrBuildingEntry const* constructing = sGarrBuildingStore.AssertEntry(buildingRemoved.GarrBuildingID);
@@ -508,7 +522,7 @@ GarrisonError WodGarrison::CheckBuildingPlacement(uint32 garrPlotInstanceId, uin
 
     if (building->Flags & GARRISON_BUILDING_FLAG_NEEDS_PLAN)
     {
-        if (!_knownBuildings.count(garrBuildingId))
+        if (!HasBlueprint(garrBuildingId))
             return GARRISON_ERROR_REQUIRES_BLUEPRINT;
     }
     else // Building is built as a quest reward
@@ -680,10 +694,10 @@ void WodGarrison::Plot::DeleteGameObject(Map* map)
     BuildingInfo.Guid.Clear();
 }
 
-void WodGarrison::Plot::ClearBuildingInfo(Player* owner)
+void WodGarrison::Plot::ClearBuildingInfo(GarrisonType _garrisonType, Player* owner)
 {
     WorldPackets::Garrison::GarrisonPlotPlaced plotPlaced;
-    plotPlaced.GarrTypeID = GARRISON_TYPE_GARRISON;
+    plotPlaced.GarrTypeID = _garrisonType;
     plotPlaced.PlotInfo = &PacketInfo;
     owner->SendDirectMessage(plotPlaced.Write());
 

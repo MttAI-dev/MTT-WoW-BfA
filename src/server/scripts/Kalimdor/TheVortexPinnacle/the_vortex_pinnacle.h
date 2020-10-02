@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  * Copyright (C) 2010-2011 Trinity <http://www.projecttrinity.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -61,7 +61,7 @@ enum CreatureIds
     NPC_YOUNG_STORM_DRAGON      = 45919,
     NPC_WILD_VORTEX             = 45912,
     NPC_SLIPSTREAM              = 45455,
-    NPC_SLIPSTREAM_TWO          = 45457,
+    NPC_SLIPSTREAM_TWO          = 45457, // creature id is wrong!
     NPC_SKYFALL                 = 52019,
 
     // Boss' encounter related NPCs

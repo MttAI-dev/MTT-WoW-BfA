@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -685,6 +685,56 @@ public:
     };
 };
 
+#define QUEST_TARGET        22459
+//#define SPELL_FREE_WEBBED   38950
+
+const uint32 netherwebVictims[6] =
+{
+    18470, 16805, 21242, 18452, 22482, 21285
+};
+class mob_netherweb_victim : public CreatureScript
+{
+public:
+    mob_netherweb_victim() : CreatureScript("mob_netherweb_victim") {}
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new mob_netherweb_victimAI(creature);
+    }
+
+    struct mob_netherweb_victimAI : public ScriptedAI
+    {
+        mob_netherweb_victimAI(Creature* creature) : ScriptedAI(creature) {}
+
+        void Reset() override {}
+        void EnterCombat(Unit* /*who*/) override {}
+        void MoveInLineOfSight(Unit* /*who*/) override {}
+
+        void JustDied(Unit* killer) override
+        {
+            Player* player = killer->ToPlayer();
+            if (!player)
+                return;
+
+            if (player->GetQuestStatus(10873) == QUEST_STATUS_INCOMPLETE)
+            {
+                if (rand() % 100 < 25)
+                {
+                    me->SummonCreature(QUEST_TARGET, 0.0f, 0.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
+                    player->KilledMonsterCredit(QUEST_TARGET, ObjectGuid::Empty);
+                }
+                else
+                    me->SummonCreature(netherwebVictims[rand() % 6], 0.0f, 0.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
+
+                if (rand() % 100 < 75)
+                    me->SummonCreature(netherwebVictims[rand() % 6], 0.0f, 0.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
+
+                me->SummonCreature(netherwebVictims[rand() % 6], 0.0f, 0.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
+            }
+        }
+    };
+};
+
 void AddSC_terokkar_forest()
 {
     new npc_unkor_the_ruthless();
@@ -696,4 +746,5 @@ void AddSC_terokkar_forest()
     new npc_skywing();
     new npc_slim();
     new npc_akuno();
+    new mob_netherweb_victim();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,6 +19,12 @@
 #include "the_underrot.h"
 #include "AreaTrigger.h"
 #include "AreaTriggerAI.h"
+#include "ScriptMgr.h"
+#include "ScriptedCreature.h"
+#include "SpellAuraEffects.h"
+#include "SpellHistory.h"
+#include "SpellMgr.h"
+#include "SpellScript.h"
 
 enum Spells
 {
@@ -413,6 +419,60 @@ public:
     }
 };
 
+// 260685 Taint of G'huun
+class spell_Taint_Of_Ghunn : public SpellScriptLoader
+{
+public:
+    spell_Taint_Of_Ghunn() : SpellScriptLoader("spell_Taint_Of_Ghunn") { }
+
+    class spell_Taint_Of_Ghunn_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(spell_Taint_Of_Ghunn_AuraScript);
+
+        void HandleAbsorb(AuraEffect* aurEff, HealInfo& healInfo, uint32& absorbAmount)
+        {
+            uint32 heal = healInfo.GetHeal();
+            int32 maxPct = GetAura()->GetEffect(EFFECT_0)->GetAmount();
+            uint64 maxHp = GetTarget()->GetMaxHealth() * maxPct / 100;
+            uint64 hp = GetTarget()->GetHealth();
+            uint64 maxHeal = maxHp - hp;
+
+            if (hp >= maxHp)
+                absorbAmount = heal;
+            else if (heal >= maxHeal)
+                absorbAmount = heal - maxHeal;
+            else
+                absorbAmount = 0;
+        }
+
+
+        void OnTick(AuraEffect const* /*aurEff*/)
+        {
+            if (Unit* caster = GetTarget())
+            {
+                if (AuraEffect* aurEff = GetAura()->GetEffect(EFFECT_1))
+                    if (AuraEffect* aurEff = GetAura()->GetEffect(EFFECT_1))
+                        aurEff->SetDamage(caster->SpellDamageBonusDone(GetTarget(), GetSpellInfo(), 0, DOT, aurEff->GetSpellEffectInfo(), GetStackAmount()) * aurEff->GetDonePct());
+            }
+        }
+
+
+        void Register() override
+        {
+            OnEffectHealAbsorb += AuraEffectHealAbsorbFn(spell_Taint_Of_Ghunn_AuraScript::HandleAbsorb, EFFECT_0);
+            OnEffectPeriodic += AuraEffectPeriodicFn(spell_Taint_Of_Ghunn_AuraScript::OnTick, EFFECT_1, SPELL_AURA_PERIODIC_DAMAGE);
+        }
+    };
+
+    AuraScript* GetAuraScript() const override
+    {
+        return new spell_Taint_Of_Ghunn_AuraScript();
+    }
+};
+
+
+
+
 void AddSC_boss_elder_leaxa()
 {
     RegisterCreatureAI(boss_elder_leaxa);
@@ -425,4 +485,5 @@ void AddSC_boss_elder_leaxa()
     new spell_blood_mirror();
     new spell_blood_bolt();
     new spell_creeping_rot();
+    new spell_Taint_Of_Ghunn();
 }

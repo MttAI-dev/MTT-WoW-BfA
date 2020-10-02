@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,6 +26,7 @@ Quest support: 3628.
 #include "SpellScript.h"
 #include "Player.h"
 #include "Group.h"
+#include "PhasingHandler.h"
 
 enum DeathlyUsher
 {
@@ -104,7 +104,7 @@ public:
     }
 };
 
-// PNJ Permettant un passage entre nouveau/anciennes terres foudroyées
+// PNJ Permettant un passage entre nouveau/anciennes terres foudroyes
 class npc_zidormi : public CreatureScript
 {
 public:
@@ -157,7 +157,7 @@ class npc_archmage_khadgar_gossip : public CreatureScript
         enum TanaanQuests
         {
             QuestStartDraenor                     = 34398,
-            //QuestStartDraenor                   = 36881,
+            QuestStartDraenorII                   = 36881,
             QuestDarkPortal                       = 34398,
             QuestAzerothsLastStand                = 35933,
             QuestOnslaughtEnd                     = 34392,
@@ -191,8 +191,10 @@ class npc_archmage_khadgar_gossip : public CreatureScript
 
         bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 /*action*/) override
         {
-            if (player->GetQuestStatus(QuestStartDraenor) == QUEST_STATUS_NONE)
+            if (player->GetQuestStatus(QuestStartDraenor) == QUEST_STATUS_NONE || player->GetQuestStatus(QuestStartDraenorII) == QUEST_STATUS_NONE)
+            {
                 return true;
+            }
 
             if (player->GetQuestStatus(TanaanQuests::QuestTheHomeStretchHorde) == QUEST_STATUS_REWARDED)
             {
@@ -205,14 +207,21 @@ class npc_archmage_khadgar_gossip : public CreatureScript
                 return true;
             }
 
-            if (player->GetQuestStatus(QuestStartDraenor) == QUEST_STATUS_INCOMPLETE)
+            if (player->GetQuestStatus(QuestStartDraenor) == QUEST_STATUS_INCOMPLETE || player->GetQuestStatus(QuestStartDraenorII) == QUEST_STATUS_INCOMPLETE)
             {
                 player->AddMovieDelayedAction(199, [player]
                 {
                     player->TeleportTo(1265, 4066.7370f, -2381.9917f, 94.858f, 2.90f);
                 });
                 player->SendMovieStart(199);
-                player->KilledMonsterCredit(78419);
+                if (player->HasQuest(QuestStartDraenor))
+                {
+                    player->ForceCompleteQuest(QuestStartDraenor);
+                }
+                else if (player->HasQuest(QuestStartDraenorII))
+                {
+                    player->ForceCompleteQuest(QuestStartDraenorII);
+                }
                 return true;
             }
 

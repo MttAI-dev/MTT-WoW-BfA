@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,7 +21,7 @@
 #include "Item.h"
 
 constexpr uint32 ITEM_ID_HEART_OF_AZEROTH = 158075;
-constexpr uint32 MAX_AZERITE_ITEM_LEVEL = 70;
+constexpr uint32 MAX_AZERITE_ITEM_LEVEL = 129;
 constexpr uint32 MAX_AZERITE_ITEM_KNOWLEDGE_LEVEL = 30;
 constexpr uint32 PLAYER_CONDITION_ID_UNLOCKED_AZERITE_ESSENCES = 69048;
 constexpr uint32 SPELL_ID_HEART_ESSENCE_ACTION_BAR_OVERRIDE = 298554;

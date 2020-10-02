@@ -1,0 +1,2 @@
+REPLACE INTO `creature_loot_template` (`Entry`, `Item`, `Reference`, `Chance`, `QuestRequired`, `LootMode`, `GroupId`, `MinCount`, `MaxCount`, `Comment`) VALUES ('114', '732', '0', '36', '0', '1', '0', '1', '1', '');
+DELETE FROM spell_script_names WHERE ScriptName = 'aura_dru_ysera_gift';

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -47,7 +47,17 @@ void AddSC_boss_meathook();
 void AddSC_culling_of_stratholme();
 void AddSC_instance_culling_of_stratholme();
 void AddSC_instance_dire_maul();                    //Dire Maul
+
 void AddSC_instance_ragefire_chasm();               //Ragefire Chasm
+void AddSC_boss_adarogg();
+void AddSC_boss_bazzalan();
+void AddSC_boss_gordoth();
+void AddSC_boss_jergosh_the_invoker();
+void AddSC_boss_koranthal();
+void AddSC_boss_oggleflint();
+void AddSC_boss_slagmaw();
+void AddSC_boss_taragaman_the_hungerer();
+
 void AddSC_boss_celebras_the_cursed();              //Maraudon
 void AddSC_boss_landslide();
 void AddSC_boss_noxxion();

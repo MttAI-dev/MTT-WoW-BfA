@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  * Copyright (C) 2010 - 2012 ProjectSkyfire <http://www.projectskyfire.org/>
  *
  * Copyright (C) 2011 - 2012 ArkCORE <http://www.arkania.net/>
@@ -70,7 +70,7 @@ public:
                 uiEncounter[i] = NOT_STARTED;
         }
 
-        bool IsEncounterInProgress() const override
+        bool IsEncounterInProgress() const override 
         {
             for (uint8 i = 0; i < ENCOUNTERS; ++i)
             {

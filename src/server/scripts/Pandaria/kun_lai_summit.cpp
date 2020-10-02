@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2016 Firestorm Servers <https://firestorm-servers.com>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -3006,8 +3005,10 @@ class mob_hackiss : public CreatureScript
         }
 };
 
+
 void AddSC_kun_lai_summit()
 {
+    //NPC
     new mob_nessos_the_oracle();
     new mob_ski_thik();
     new mob_havak();
@@ -3033,4 +3034,7 @@ void AddSC_kun_lai_summit()
     new mob_tankiss();
     new mob_healiss();
     new mob_hackiss();
+
+    //spells
+
 }

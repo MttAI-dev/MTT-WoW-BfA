@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -86,7 +86,9 @@ void WorldSession::HandleRepopRequest(WorldPackets::Misc::RepopRequest& /*packet
             {
                 Position resurectPosition;
 
-                if (WorldSafeLocsEntry const* entranceLocation = sObjectMgr->GetWorldSafeLoc(instanceScript->GetEntranceLocation()))
+                if (instanceScript->GetCheckPoint().is_initialized())
+                    resurectPosition = *instanceScript->GetCheckPoint();
+                else if (WorldSafeLocsEntry const* entranceLocation = sObjectMgr->GetWorldSafeLoc(instanceScript->GetEntranceLocation()))
                     resurectPosition.Relocate(entranceLocation->Loc);
                 else if (AreaTriggerTeleportStruct const* areaTrigger = sObjectMgr->GetMapEntranceTrigger(GetPlayer()->GetMapId()))
                     resurectPosition.Relocate(areaTrigger->target_X, areaTrigger->target_Y, areaTrigger->target_Z, areaTrigger->target_Orientation);
@@ -161,6 +163,7 @@ void WorldSession::HandleWhoOpcode(WorldPackets::Who::WhoRequestPkt& whoRequest)
     uint32 gmLevelInWhoList  = sWorld->getIntConfig(CONFIG_GM_LEVEL_IN_WHO_LIST);
 
     WorldPackets::Who::WhoResponsePkt response;
+     response.RequestID = whoRequest.RequestID;
 
     WhoListInfoVector const& whoList = sWhoListStorageMgr->GetWhoList();
     for (WhoListPlayerInfo const& target : whoList)
@@ -1189,7 +1192,7 @@ void WorldSession::HandleSelectFactionOpcode(WorldPackets::Misc::FactionSelect& 
 
 void WorldSession::HandleSetWarModeOpcode(WorldPackets::Misc::SetWarMode& warMode)
 {
-    uint32 const warModeSpellId = 282559; // Enlisted
+    uint32 const warModeSpellId = 269083; // Enlisted
 
     if (_player->GetZoneId() != ZONE_STORMWIND_CITY && _player->GetZoneId() != ZONE_ORGRIMMAR)
         return;
@@ -1199,3 +1202,7 @@ void WorldSession::HandleSetWarModeOpcode(WorldPackets::Misc::SetWarMode& warMod
     else
         _player->RemoveAurasDueToSpell(warModeSpellId);
 }
+
+void WorldSession::HandleGetRemainingGameTime(WorldPackets::ClientConfig::GetRemainingGameTime& /*packet*/)
+{ }
+

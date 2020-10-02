@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+* Copyright (C) 2020 LatinCoreTeam
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -32,37 +32,37 @@
 
 enum SpellIds
 {
-    SPELL_DH_FURY_OF_THE_ILLIDARI_AT                = 202796,
-    SPELL_DH_FURY_OF_THE_ILLIDARI_MH                = 201628,
-    SPELL_DH_FURY_OF_THE_ILLIDARI_OH                = 201789,
-    SPELL_DRUID_ASHAMANE_FRENZY                     = 210722,
-    SPELL_DRUID_ASHAMANE_FRENZY_DAMAGE              = 210723,
-    SPELL_DRUID_NEW_MOON                            = 202767,
-    SPELL_DRUID_NEW_MOON_OVERRIDE                   = 202787,
-    SPELL_DRUID_HALF_MOON                           = 202768,
-    SPELL_DRUID_HALF_MOON_OVERRIDE                  = 202788,
-    SPELL_DRUID_FULL_MOON                           = 202771,
-    SPELL_DRUID_FULL_MOON_OVERRIDE                  = 202789,
-    SPELL_MAGE_BRAIN_FREEZE_AURA                    = 190446,
-    SPELL_MAGE_IMMOLATION                           = 211918,
-    SPELL_MAGE_PHOENIX_FLAMES                       = 194466,
-    SPELL_MAGE_PHOENIX_FLAMES_TRIGGER               = 224637,
-    SPELL_PRIEST_CALL_OF_THE_VOID                   = 193371,
-    SPELL_PRIEST_CALL_OF_THE_VOID_SUMMON            = 193470,
-    SPELL_PRIEST_MIND_FLAY                          = 193473,
-    SPELL_SHAMAN_CARESS_OF_THE_TIDEMOTHER           = 207354,
-    SPELL_SHAMAN_HEALING_STREAM_TOTEM               = 5394,
-    SPELL_SHAMAN_REINCARNATION                      = 20608,
-    SPELL_SHAMAN_SERVANT_OF_THE_QUEEN               = 207357,
-    SPELL_SHAMAN_FURY_OF_THE_STORMS                 = 191717,
-    SPELL_SHAMAN_SUMMON_LIGHTHING_ELEMENTAL         = 191716,
-    SPELL_WARLOCK_DEADWIND_HARVERST                 = 216708,
-    SPELL_WARLOCK_TORMENTED_SOULS                   = 216695,
-    SPELL_WARLOCK_THALKIELS_CONSUMPTION_DAMAGE      = 211715,
-    SPELL_WARLOCK_TEAR_CHAOS_BARRAGE                = 187394,
-    SPELL_WARLOCK_TEAR_CHAOS_BOLT                   = 215279,
-    SPELL_WARLOCK_TEAR_SHADOW_BOLT                  = 196657,
-    SPELL_PALADIN_TYR_DELIVERANCE_HEAL              = 200654,
+    SPELL_DH_FURY_OF_THE_ILLIDARI_AT = 202796,
+    SPELL_DH_FURY_OF_THE_ILLIDARI_MH = 201628,
+    SPELL_DH_FURY_OF_THE_ILLIDARI_OH = 201789,
+    SPELL_DRUID_ASHAMANE_FRENZY = 210722,
+    SPELL_DRUID_ASHAMANE_FRENZY_DAMAGE = 210723,
+    SPELL_DRUID_NEW_MOON = 202767,
+    SPELL_DRUID_NEW_MOON_OVERRIDE = 202787,
+    SPELL_DRUID_HALF_MOON = 202768,
+    SPELL_DRUID_HALF_MOON_OVERRIDE = 202788,
+    SPELL_DRUID_FULL_MOON = 202771,
+    SPELL_DRUID_FULL_MOON_OVERRIDE = 202789,
+    SPELL_MAGE_BRAIN_FREEZE_AURA = 190446,
+    SPELL_MAGE_IMMOLATION = 211918,
+    SPELL_MAGE_PHOENIX_FLAMES = 194466,
+    SPELL_MAGE_PHOENIX_FLAMES_TRIGGER = 224637,
+    SPELL_PRIEST_CALL_OF_THE_VOID = 193371,
+    SPELL_PRIEST_CALL_OF_THE_VOID_SUMMON = 193470,
+    SPELL_PRIEST_MIND_FLAY = 193473,
+    SPELL_SHAMAN_CARESS_OF_THE_TIDEMOTHER = 207354,
+    SPELL_SHAMAN_HEALING_STREAM_TOTEM = 5394,
+    SPELL_SHAMAN_REINCARNATION = 20608,
+    SPELL_SHAMAN_SERVANT_OF_THE_QUEEN = 207357,
+    SPELL_SHAMAN_FURY_OF_THE_STORMS = 191717,
+    SPELL_SHAMAN_SUMMON_LIGHTHING_ELEMENTAL = 191716,
+    SPELL_WARLOCK_DEADWIND_HARVERST = 216708,
+    SPELL_WARLOCK_TORMENTED_SOULS = 216695,
+    SPELL_WARLOCK_THALKIELS_CONSUMPTION_DAMAGE = 211715,
+    SPELL_WARLOCK_TEAR_CHAOS_BARRAGE = 187394,
+    SPELL_WARLOCK_TEAR_CHAOS_BOLT = 215279,
+    SPELL_WARLOCK_TEAR_SHADOW_BOLT = 196657,
+    SPELL_PALADIN_TYR_DELIVERANCE_HEAL = 200654,
 };
 
 // Ebonbolt - 214634
@@ -290,7 +290,7 @@ class spell_arti_sha_servant_of_the_queen : public AuraScript
         if (!eventInfo.GetSpellInfo())
             return false;
 
-        if(eventInfo.GetSpellInfo()->Id == SPELL_SHAMAN_REINCARNATION)
+        if (eventInfo.GetSpellInfo()->Id == SPELL_SHAMAN_REINCARNATION)
             return true;
         else
             return false;
@@ -309,10 +309,10 @@ class spell_arti_sha_caress_of_the_tidemother : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        if(!eventInfo.GetSpellInfo())
+        if (!eventInfo.GetSpellInfo())
             return false;
 
-        if(eventInfo.GetSpellInfo()->Id == SPELL_SHAMAN_HEALING_STREAM_TOTEM)
+        if (eventInfo.GetSpellInfo()->Id == SPELL_SHAMAN_HEALING_STREAM_TOTEM)
             return true;
         else
             return false;
@@ -336,9 +336,9 @@ class spell_arti_warl_dimensional_rift : public SpellScript
         if (!caster || !target)
             return;
 
-                                                //green //green //purple
+        //green //green //purple
         std::vector<uint32> spellVisualIds = { 219117, 219117, 219107 };
-                                        // Chaos Tear  //Chaos Portal  //Shadowy Tear
+        // Chaos Tear  //Chaos Portal  //Shadowy Tear
         std::vector<uint32> summonIds = { 108493,        108493,          99887 };
         // Durations must be longer, because if the npc gets destroyed before the last projectile hits
         // it won't deal any damage.
@@ -352,7 +352,7 @@ class spell_arti_warl_dimensional_rift : public SpellScript
             rift->SetOwnerGUID(caster->GetGUID());
             rift->SetTarget(target->GetGUID());
             // We use same ID and script for Chaos Portal and Chaos Tear as there are no more NPCs for this spell
-            rift->SetArmor(id, 0);
+            //rift->SetArmor(id);
         }
     }
 
@@ -402,7 +402,7 @@ class spell_arti_warl_thalkiels_consumption : public SpellScript
     void Register() override
     {
         OnEffectHitTarget += SpellEffectFn(spell_arti_warl_thalkiels_consumption::HandleHit, EFFECT_0, SPELL_EFFECT_DUMMY);
-        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_arti_warl_thalkiels_consumption::SaveDamage, EFFECT_1, TARGET_UNIT_CASTER_PET);
+        OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_arti_warl_thalkiels_consumption::SaveDamage, EFFECT_1, TARGET_UNIT_CASTER_AND_SUMMONS);
     }
 };
 

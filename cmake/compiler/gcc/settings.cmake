@@ -6,7 +6,7 @@ target_compile_definitions(trinity-compile-option-interface
 set(GCC_EXPECTED_VERSION 6.3.0)
 
 if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS GCC_EXPECTED_VERSION)
-  message(FATAL_ERROR "GCC: TrinityCore requires version ${GCC_EXPECTED_VERSION} to build but found ${CMAKE_CXX_COMPILER_VERSION}")
+  message(FATAL_ERROR "GCC: LatinCore requires version ${GCC_EXPECTED_VERSION} to build but found ${CMAKE_CXX_COMPILER_VERSION}")
 endif()
 
 if(PLATFORM EQUAL 32)
@@ -32,6 +32,10 @@ if( WITH_WARNINGS )
       -Winvalid-pch
       -Wfatal-errors
       -Woverloaded-virtual)
+
+  target_compile_options(trinity-warning-interface
+    INTERFACE
+      -Wno-deprecated-copy) # warning in g3d
 
   message(STATUS "GCC: All warnings enabled")
 endif()

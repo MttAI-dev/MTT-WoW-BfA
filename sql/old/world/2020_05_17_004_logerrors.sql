@@ -1,0 +1,11 @@
+DELETE FROM `creature` WHERE `spawndifficulties`=38 AND `map`=1105;
+DELETE FROM `creature` WHERE `spawndifficulties`=38 AND `map`=1750;
+DELETE FROM `creature` WHERE `spawndifficulties`=38 AND `map`=0;
+DELETE FROM `creature` WHERE `spawndifficulties`=38 AND `map`=1220;
+DELETE FROM `creature` WHERE `spawndifficulties`=38 AND `map`=1637;
+DELETE FROM `creature` WHERE `spawndifficulties`=38 AND `map`=1;
+DELETE FROM `creature` WHERE `spawndifficulties`=38 AND `map`=571;
+DELETE FROM `creature` WHERE `spawndifficulties`=38 AND `map`=601;
+DELETE FROM `creature` WHERE `spawndifficulties`=38 AND `map`=619;
+DELETE FROM `creature` WHERE `spawndifficulties`=38 AND `map`=600;
+DELETE FROM `creature` WHERE `spawndifficulties`=38 AND `map`=604;

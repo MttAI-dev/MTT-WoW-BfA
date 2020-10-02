@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -628,6 +628,32 @@ namespace WorldPackets
             void Read() override { }
         };
 
+class GuildChallengeUpdated final : public ServerPacket
+        {
+        public:
+            GuildChallengeUpdated() : ServerPacket(SMSG_GUILD_CHALLENGE_UPDATE, 4 * 4 * 6) { }
+
+            WorldPacket const* Write() override;
+
+            int32 CurrentCount[6] = { };
+            int32 MaxCount[6] = { };
+            int32 Gold[6] = { };
+            int32 MaxLevelGold[6] = { };
+        };
+
+        class GuildChallengeCompleted final : public ServerPacket
+        {
+        public:
+            GuildChallengeCompleted() : ServerPacket(SMSG_GUILD_CHALLENGE_COMPLETED, 4 * 4) { }
+
+            WorldPacket const* Write() override;
+
+            int32 ChallengeType = 0;
+            int32 CurrentCount = 0;
+            int32 MaxCount = 0;
+            int32 GoldAwarded = 0;
+        };
+
         class GuildChangeNameRequest final : public ClientPacket
         {
         public:
@@ -977,7 +1003,7 @@ namespace WorldPackets
             uint32 CompletedDate = 0;
             int32 Type = 0;
             int32 Flags = 0;
-            std::array<int32, 2> Data;
+            std::array<int32, 2> Data = { };
             ObjectGuid MemberGuid;
             std::vector<ObjectGuid> MemberList;
             Optional<Item::ItemInstance> Item;

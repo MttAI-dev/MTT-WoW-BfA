@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -68,20 +68,4 @@ WorldPacket const* WorldPackets::Artifact::ArtifactXpGain::Write()
     _worldPacket << uint64(Amount);
 
     return &_worldPacket;
-}
-
-WorldPacket const * WorldPackets::Artifact::AzeriteXpGain::Write()
-{
-    _worldPacket << Item;
-    _worldPacket << AzeriteXPGained;
-
-    return &_worldPacket;
-}
-
-void WorldPackets::Artifact::AzeriteEmpoweredItemSelectPower::Read()
-{
-    _worldPacket >> Tier;
-    _worldPacket >> PowerID;
-    _worldPacket >> ContainerSlot;
-    _worldPacket >> Slot;
 }

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1112,7 +1112,7 @@ struct BattlePetAbilityStateMeta
         {
             { FT_INT, 1, false },
             { FT_INT, 1, true },
-            { FT_INT, 1, false },
+            { FT_SHORT, 1, false },
         };
         static DB2Meta instance(801576, -1, 3, 2, 0x04907E4D, fields, 2);
         return &instance;
@@ -1241,7 +1241,7 @@ struct BattlePetSpeciesStateMeta
         {
             { FT_SHORT, 1, false },
             { FT_INT, 1, true },
-            { FT_INT, 1, false },
+            { FT_SHORT, 1, false },
         };
         static DB2Meta instance(801581, -1, 3, 2, 0x6ED307C3, fields, 2);
         return &instance;
@@ -1257,7 +1257,7 @@ struct BattlePetSpeciesXAbilityMeta
             { FT_SHORT, 1, false },
             { FT_BYTE, 1, false },
             { FT_BYTE, 1, true },
-            { FT_INT, 1, false },
+            { FT_SHORT, 1, false },
         };
         static DB2Meta instance(801582, -1, 4, 3, 0xE27BBDC8, fields, 3);
         return &instance;

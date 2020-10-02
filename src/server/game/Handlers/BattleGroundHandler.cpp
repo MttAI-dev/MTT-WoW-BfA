@@ -1,5 +1,6 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
+ * Copyright (C) Thordekk
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,6 +17,7 @@
  */
 
 #include "WorldSession.h"
+#include "WowTime.h"
 #include "Battlefield.h"
 #include "BattlefieldMgr.h"
 #include "Battleground.h"
@@ -734,12 +736,12 @@ void WorldSession::HandleRequestRatedBattlefieldInfo(WorldPackets::Battleground:
 void WorldSession::HandleGetPVPOptionsEnabled(WorldPackets::Battleground::GetPVPOptionsEnabled& /*getPvPOptionsEnabled*/)
 {
     WorldPackets::Battleground::PVPOptionsEnabled pvpOptionsEnabled;
-    pvpOptionsEnabled.WargameArenas = false;
+    pvpOptionsEnabled.WargameArenas = true;
     pvpOptionsEnabled.RatedArenas = true;
-    pvpOptionsEnabled.WargameBattlegrounds = false;
+    pvpOptionsEnabled.WargameBattlegrounds = true;
     pvpOptionsEnabled.ArenaSkirmish = true;
     pvpOptionsEnabled.PugBattlegrounds = true;
-    pvpOptionsEnabled.RatedBattlegrounds = false;
+    pvpOptionsEnabled.RatedBattlegrounds = true;
     SendPacket(pvpOptionsEnabled.Write());
 }
 
@@ -798,4 +800,63 @@ void WorldSession::HandleHearthAndResurrect(WorldPackets::Battleground::HearthAn
     _player->BuildPlayerRepop();
     _player->ResurrectPlayer(1.0f);
     _player->TeleportTo(_player->m_homebindMapId, _player->m_homebindX, _player->m_homebindY, _player->m_homebindZ, _player->GetOrientation());
+}
+
+void WorldSession::HandleRequestPvpBrawlInfo(WorldPackets::Battleground::RequestPvpBrawlInfo& /*pvpBrawlInfo*/)
+{
+    WorldPackets::Battleground::SendPvpBrawlInfo packet;
+    SendPacket(packet.Write());
+}
+
+void WorldSession::HandleRequestConquestFormulaConstants(WorldPackets::Battleground::RequestConquestFormulaConstants& /*requestConquestFormulaConstants*/)
+{
+    WorldPackets::Battleground::ConquestFormulaConstants packet;
+    packet.PvpMinCPPerWeek = uint32(ArenaHelper::g_PvpMinCPPerWeek);
+    packet.PvpMaxCPPerWeek = uint32(ArenaHelper::g_PvpMaxCPPerWeek);
+    packet.PvpCPBaseCoefficient = float(ArenaHelper::g_PvpCPNumerator);
+    packet.PvpCPExpCoefficient = float(ArenaHelper::g_PvpCPBaseCoefficient);
+    packet.PvpCPNumerator = float(ArenaHelper::g_PvpCPExpCoefficient);
+    SendPacket(packet.Write());
+}
+
+void WorldSession::HandleAcceptWargameInvite(WorldPackets::Battleground::AcceptWargameInvite& packet)
+{
+}
+
+void WorldSession::HandleStartWarGame(WorldPackets::Battleground::StartWargame& packet)
+{
+    if (!_player->GetGroup())
+        return;
+
+    if (_player->GetGroup()->GetLeaderGUID() != _player->GetGUID())
+        return;
+
+    Player* opposingPartyLeader = ObjectAccessor::FindPlayer(packet.OpposingPartyMember);
+    if (!opposingPartyLeader)
+        return;
+
+    if (!opposingPartyLeader->GetGroup())
+        return;
+
+    if (opposingPartyLeader->GetGroup()->GetLeaderGUID() != opposingPartyLeader->GetGUID())
+        return;
+
+    if (_player->HasWargameRequest())
+        return;
+
+    auto request = new WargameRequest();
+    request->OpposingPartyMemberGUID = packet.OpposingPartyMember;
+    request->TournamentRules = packet.TournamentRules;
+    request->CreationDate = time(nullptr);
+    request->QueueID = packet.QueueID;
+
+    _player->SetWargameRequest(request);
+
+  //  WorldPackets::Battleground::CheckWargameEntry response;
+  //  response.OpposingPartyBnetAccountID = _player->GetSession()->GetBattlenetAccountGUID();
+   // response.OpposingPartyMember = _player->GetGUID();
+   /// response.QueueID = packet.QueueID;
+   // response.TimeoutSeconds = 60;
+  //  response.TournamentRules = packet.TournamentRules;
+  //  opposingPartyLeader->SendDirectMessage(response.Write());
 }

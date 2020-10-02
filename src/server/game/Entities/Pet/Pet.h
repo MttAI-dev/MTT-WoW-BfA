@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -51,7 +51,6 @@ typedef std::unordered_map<uint32, PetSpell> PetSpellMap;
 typedef std::vector<uint32> AutoSpellList;
 
 class Player;
-class PetAura;
 
 class TC_GAME_API Pet : public Guardian
 {
@@ -167,6 +166,7 @@ class TC_GAME_API Pet : public Guardian
         void SetActive(bool active) { m_petActive = active; }
 
     protected:
+        Player* m_owner;
         PetType m_petType;
         int32   m_duration;                                 // time until unsummon (used mostly for summoned guardians and not used for controlled pets)
         bool    m_loading;

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -83,6 +83,7 @@ class TC_GAME_API Scenario : public CriteriaHandler
         void SendBootPlayer(Player* player);
 
         void SendScenarioEvent(Player* player, uint32 eventId);
+        void SendScenarioEventToPlayers(uint32 eventId);
 
         inline bool IsInstanceScenarioo() const { return _scenarioType == SCENARIO_INSTANCE_TYPE_INSTANCE_SCENARIO; }
         InstanceScenario* ToInstanceScenario() { if (IsInstanceScenarioo()) return reinterpret_cast<InstanceScenario*>(this); else return nullptr; }
@@ -110,7 +111,7 @@ class TC_GAME_API Scenario : public CriteriaHandler
 
         CriteriaList const& GetCriteriaByType(CriteriaTypes type) const override;
         ScenarioData const* _data;
-        Ashamane::AnyData Variables;
+        LatinCore::AnyData Variables;
 
         ScenarioInstanceType _scenarioType;
 

@@ -1,6 +1,6 @@
-################################################
-# Trinity Core World Server configuration file #
-################################################
+#############################################
+# LatinCore World Server configuration file #
+#############################################
 [worldserver]
 
 ###################################################################################################
@@ -29,7 +29,6 @@
 #    NETWORK CONFIG
 #    CONSOLE AND REMOTE ACCESS
 #    REST SERVICE
-#    WORLD TO DISCORD
 #    CHARACTER DELETE OPTIONS
 #    CUSTOM SERVER OPTIONS
 #    AUCTION HOUSE BOT SETTINGS
@@ -290,14 +289,6 @@ Compression = 1
 PlayerLimit = 0
 
 #
-#    SaveRespawnTimeImmediately
-#        Description: Save respawn time for creatures at death and gameobjects at use/open.
-#        Default:     1 - (Enabled, Save respawn time immediately)
-#                     0 - (Disabled, Save respawn time at grid unloading)
-
-SaveRespawnTimeImmediately = 1
-
-#
 #    MaxOverspeedPings
 #        Description: Maximum overspeed ping count before character is disconnected.
 #        Default:     2  - (Enabled, Minimum value)
@@ -376,7 +367,7 @@ ChangeWeatherInterval = 600000
 #        Description: Time (in milliseconds) for player save interval.
 #        Default:     90000 - (90 seconds)
 
-PlayerSaveInterval = 90000
+PlayerSaveInterval = 180000
 
 #
 #    PlayerSave.Stats.MinLevel
@@ -392,7 +383,7 @@ PlayerSave.Stats.MinLevel = 0
 #        Default:     1 - (Enabled, Only save on logout)
 #                     0 - (Disabled, Save on every player save)
 
-PlayerSave.Stats.SaveOnlyOnLogout = 1
+PlayerSave.Stats.SaveOnlyOnLogout = 0
 
 #
 #    DisconnectToleranceInterval
@@ -407,7 +398,7 @@ DisconnectToleranceInterval = 0
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-mmap.enablePathFinding = 0
+mmap.enablePathFinding = 1
 
 #
 #    vmap.enableLOS
@@ -479,7 +470,7 @@ LogDB.Opt.ClearTime = 1209600
 #        Default:     0   - (Disabled)
 #                     10+ - (Enabled, Recommended 10+)
 
-MaxCoreStuckTime = 0
+MaxCoreStuckTime = 300
 
 #
 #    AddonChannel
@@ -690,7 +681,8 @@ DeclinedNames = 0
 #    Expansion
 #        Description: Allow server to use content from expansions. Checks for expansion-related
 #                     map files, client compatibility and class/race character creation.
-#        Default:     7 - (Expansion 7)
+#        Default:     8 - (Expansion 8)
+#                     7 - (Expansion 7)
 #                     6 - (Expansion 6)
 #                     5 - (Expansion 5)
 #                     4 - (Expansion 4)
@@ -699,7 +691,7 @@ DeclinedNames = 0
 #                     1 - (Expansion 1)
 #                     0 - (Disabled, Ignore and disable expansion content (maps, races, classes)
 
-Expansion = 7
+Expansion = 8
 
 #
 #    MinPlayerName
@@ -891,7 +883,7 @@ StartDemonHunterPlayerLevel = 98
 #        Default:     0
 #                     100 - (1 Silver)
 
-StartPlayerMoney = 0
+StartPlayerMoney = 5000
 
 #
 #    RecruitAFriend.MaxLevel
@@ -935,7 +927,7 @@ AllFlightPaths = 0
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-InstantFlightPaths = 0
+InstantFlightPaths = 1
 
 #
 #    ActivateWeather
@@ -1153,7 +1145,7 @@ MailDeliveryDelay = 3600
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-SkillChance.Prospecting = 0
+SkillChance.Prospecting = 1
 
 #
 #    SkillChance.Milling
@@ -1161,7 +1153,7 @@ SkillChance.Prospecting = 0
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-SkillChance.Milling = 0
+SkillChance.Milling = 1
 
 #
 #    OffhandCheckAtSpellUnlearn
@@ -1170,7 +1162,7 @@ SkillChance.Milling = 0
 #        Default:     1 - (Recheck offhand slot weapon at unlearning a spell)
 #                     0 - (Recheck offhand slot weapon only at zone update)
 
-OffhandCheckAtSpellUnlearn = 1
+OffhandCheckAtSpellUnlearn = 0
 
 #
 #    ClientCacheVersion
@@ -1210,7 +1202,7 @@ BeepAtStart = 1
 #        Example:     "Welcome to John's Server!@This server is proud to be powered by Trinity Core."
 #        Default:     "Welcome to a Trinity Core server."
 
-Motd = "Welcome to a Trinity Core server."
+Motd = "Welcome to Black Empire server."
 
 #
 #    Server.LoginInfo
@@ -1279,15 +1271,7 @@ BirthdayTime = 1222964635
 #
 #
 
- CacheDataQueries = 1
-
-#
-#   FeatureSystem.BpayStore.Enabled
-#        Description: Not yet implemented
-#        Default:     0 - (Disabled)
-#                     1 - (Enabled)
-
-FeatureSystem.BpayStore.Enabled = 0
+CacheDataQueries = 1
 
 #
 #   FeatureSystem.CharacterUndelete.Enabled
@@ -1529,7 +1513,7 @@ Warden.BanDuration = 86400
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-AllowTwoSide.Interaction.Calendar = 0
+AllowTwoSide.Interaction.Calendar = 1
 
 #
 #    AllowTwoSide.Interaction.Channel
@@ -1537,7 +1521,7 @@ AllowTwoSide.Interaction.Calendar = 0
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-AllowTwoSide.Interaction.Channel = 0
+AllowTwoSide.Interaction.Channel = 1
 
 #
 #    AllowTwoSide.Interaction.Group
@@ -1545,7 +1529,7 @@ AllowTwoSide.Interaction.Channel = 0
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-AllowTwoSide.Interaction.Group = 0
+AllowTwoSide.Interaction.Group = 1
 
 #
 #    AllowTwoSide.Interaction.Guild
@@ -1553,7 +1537,7 @@ AllowTwoSide.Interaction.Group = 0
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-AllowTwoSide.Interaction.Guild = 0
+AllowTwoSide.Interaction.Guild = 1
 
 #
 #    AllowTwoSide.Interaction.Auction
@@ -1569,7 +1553,7 @@ AllowTwoSide.Interaction.Auction = 1
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-AllowTwoSide.Trade = 0
+AllowTwoSide.Trade = 1
 
 #
 #    TalentsInspecting
@@ -1934,7 +1918,7 @@ GM.Chat = 2
 #                     0 - (Disable)
 #                     1 - (Enable)
 
-GM.WhisperingTo = 2
+GM.WhisperingTo = 1
 
 #
 # GM.FreezeAuraDuration
@@ -2018,7 +2002,7 @@ Support.Enabled = 1
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled, Experimental)
 
-Support.TicketsEnabled = 0
+Support.TicketsEnabled = 1
 
 #
 #    Support.BugsEnabled
@@ -2026,7 +2010,7 @@ Support.TicketsEnabled = 0
 #        Default:    0 - (Disabled)
 #                    1 - (Enabled, Experimental)
 
-Support.BugsEnabled = 0
+Support.BugsEnabled = 1
 
 #
 #    Support.ComplaintsEnabled
@@ -2132,7 +2116,7 @@ Rate.Pain.Loss         = 1
 #        Description: Multiplier for skill discovery.
 #        Default:     1
 
-Rate.Skill.Discovery = 1
+Rate.Skill.Discovery = 3
 
 #
 #    Rate.Drop.Item.Poor
@@ -2181,9 +2165,9 @@ Rate.Drop.Item.ReferencedAmount = 1
 #                     1 - (Rate.XP.Quest)
 #                     1 - (Rate.XP.Explore)
 
-Rate.XP.Kill    = 1
-Rate.XP.Quest   = 1
-Rate.XP.Explore = 1
+Rate.XP.Kill    = 3
+Rate.XP.Quest   = 3
+Rate.XP.Explore = 3
 
 #
 #    Rate.XP.BattlegroundKill
@@ -2262,21 +2246,21 @@ Rate.Talent = 1
 #        Description: Reputation gain rate.
 #        Default:     1
 
-Rate.Reputation.Gain = 1
+Rate.Reputation.Gain = 3
 
 #
 #    Rate.Reputation.LowLevel.Kill
 #        Description: Reputation gain from killing low level (grey) creatures.
 #        Default:     1
 
-Rate.Reputation.LowLevel.Kill = 1
+Rate.Reputation.LowLevel.Kill = 3
 
 #
 #    Rate.Reputation.LowLevel.Quest
 #        Description: Reputation gain rate.
 #        Default:     1
 
-Rate.Reputation.LowLevel.Quest = 1
+Rate.Reputation.LowLevel.Quest = 3
 
 #
 #    Rate.Reputation.RecruitAFriendBonus
@@ -2309,8 +2293,8 @@ Rate.InstanceResetTime = 1
 #        Default:     1 - (SkillGain.Crafting)
 #                     1 - (SkillGain.Gathering)
 
-SkillGain.Crafting  = 1
-SkillGain.Gathering = 1
+SkillGain.Crafting  = 3
+SkillGain.Gathering = 3
 
 #
 #    SkillChance.Orange
@@ -2496,7 +2480,7 @@ Battleground.CastDeserter = 1
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-Battleground.QueueAnnouncer.Enable = 0
+Battleground.QueueAnnouncer.Enable = 1
 
 #
 #    Battleground.QueueAnnouncer.PlayerOnly
@@ -2740,7 +2724,7 @@ Arena.RatedUpdateTimer = 5000
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-Arena.AutoDistributePoints = 0
+Arena.AutoDistributePoints = 1
 
 #
 #    Arena.AutoDistributeInterval
@@ -2756,14 +2740,15 @@ Arena.AutoDistributeInterval = 7
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-Arena.QueueAnnouncer.Enable = 0
+Arena.QueueAnnouncer.Enable = 1
 
 #
 #    Arena.ArenaSeason.ID
 #        Description: Current arena season id shown in clients.
-#        Default:     15
+#                     Seasons are in world db table game_event_arena_seasons.
+#        Default:     3
 
-Arena.ArenaSeason.ID = 15
+Arena.ArenaSeason.ID = 3
 
 #
 #    Arena.ArenaSeason.InProgress
@@ -2919,7 +2904,7 @@ Ra.MinLevel = 3
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-SOAP.Enabled = 0
+SOAP.Enabled = 1
 
 #
 #    SOAP.IP
@@ -2970,28 +2955,6 @@ WorldREST.Port = 8082
 #        Default:     ""
 
 WorldREST.AuthToken = ""
-
-#
-###################################################################################################
-
-###################################################################################################
-# WORLD TO DISCORD
-#
-#
-#    WorldREST.Enabled
-#        Description: Enable World to Discord service.
-#        Default:     0 - (Disabled)
-#                     1 - (Enabled)
-
-WorldToDiscord.Enabled = 0
-
-#
-#    WorldREST.RelayURL
-#        Description: Relay http server that will handle the http call
-#                     every 2 seconds with world channel player chats
-#        Default:     "http://127.0.0.1:8083"
-
-WorldToDiscord.RelayURL = "http://127.0.0.1:8083"
 
 #
 ###################################################################################################
@@ -3241,6 +3204,40 @@ LevelReq.Auction = 1
 LevelReq.Mail = 1
 
 #
+#     Anticheat.Enable
+#        Description: Enables or disables the Anticheat System functionality
+#        Default:     1 - (Enabled)
+#                     0 - (Disabled)
+
+Anticheat.Enable = 1
+
+#     Anticheat.ReportsForIngameWarnings
+#        Description: How many reports the player must have to notify to GameMasters ingame when he generates a new report.
+#        Default:     70
+
+Anticheat.ReportsForIngameWarnings = 70
+
+#     Anticheat.DetectionsEnabled
+#        Description: It represents which detections are enabled.
+#
+#        SPEED_HACK_DETECTION            = 1
+#        FLY_HACK_DETECTION              = 2
+#        WALK_WATER_HACK_DETECTION       = 4
+#        JUMP_HACK_DETECTION             = 8
+#        TELEPORT_PLANE_HACK_DETECTION   = 16
+#        CLIMB_HACK_DETECTION            = 32
+#
+#        Default:     31
+
+Anticheat.DetectionsEnabled = 31
+
+#     Anticheat.MaxReportsForDailyReport
+#        Description: How many reports must the player have to make a report that it is in DB for a day (not only during the player's session).
+#        Default:     70
+
+Anticheat.MaxReportsForDailyReport = 70
+
+#
 #     PlayerDump.DisallowPaths
 #        Description: Disallow using paths in PlayerDump output files
 #        Default:     1
@@ -3261,6 +3258,20 @@ PlayerDump.DisallowOverwrite = 1
 #        Default:     0  - (Do not show)
 
 UI.ShowQuestLevelsInDialogs = 0
+
+#
+#     Calculate.Creature.Zone.Area.Data
+#        Description: Calculate at loading creature zoneId / areaId and save in creature table (WARNING: SLOW WORLD SERVER STARTUP)
+#        Default:     0  - (Do not show)
+
+Calculate.Creature.Zone.Area.Data = 0
+
+#
+#     Calculate.Gameoject.Zone.Area.Data
+#        Description: Calculate at loading gameobject zoneId / areaId and save in gameobject table (WARNING: SLOW WORLD SERVER STARTUP)
+#        Default:     0  - (Do not show)
+
+Calculate.Gameoject.Zone.Area.Data = 0
 
 #
 #     NoGrayAggro
@@ -3903,8 +3914,8 @@ BlackMarket.UpdatePeriod = 24
 Appender.Console=1,3,0
 Appender.Server=2,2,0,Server.log,w
 Appender.GM=2,2,15,gm/gm_%s.log
-Appender.DBErrors=2,2,0,DBErrors.log
-#Appender.SQLUpdateLog=2,1,16,SQLUpdate.log,w
+Appender.DBErrors=2,2,0,DBErrors.log,w
+#Appender.SQLUpdateLog=2,1,16,SQLUpdate.log
 #Appender.GrayLog=4,3,0,"http://0.0.0.0:12201/gelf"
 
 #  Logger config values: Given a logger "name"
@@ -4138,3 +4149,87 @@ Metric.OverallStatusInterval = 1
 
 #
 ###################################################################################################
+
+###################################################################################################
+# BattlePayStore
+#
+#   FeatureSystem.BpayStore.Enabled
+#        Description: Not yet implemented
+#        Default:     0 - (Disabled)
+#                     1 - (Enabled)
+
+FeatureSystem.BpayStore.Enabled = 1
+Purchase.Shop.Enabled = 1
+
+#
+###################################################################################################
+
+###################################################################################################
+# BattlePets
+#
+#   PetBattles
+#        Description: Not yet implemented
+#        Default:     0 - (Disabled)
+#                     1 - (Enabled)
+
+PetBattles = 1
+
+#
+###################################################################################################
+
+###################################################################################################
+# Dungeon
+#
+#  Dungeon
+#        Description: Not yet implemented
+#        Default:     0 - (Disabled)
+#                     1 - (Enabled)
+
+ArgusWowEnable = 1
+
+#  Dungeon
+#        Description: Not yet implemented
+#        Default:     0 - (Disabled)
+#                     5 - (Enabled BfA)
+
+
+Dungeon.ActiveStep = 5
+
+#
+###################################################################################################
+
+
+
+
+###################################################################################################
+# WorldChat
+#
+#   WorldChat.Enable
+#        Description: Enable/disable world chat
+#        Default:     1 - (Enabled)
+#                     0 - (Disabled)
+
+WorldChat.Enable = 1
+
+#
+###################################################################################################
+
+###################################################################################################
+# Developer options (ONLY FOR DEVELOPING!)
+#
+#     DungeonFinder.DebugJoin
+#        Description: Allow DungeonFinder usage with 1 player.
+#                     You can also use ".debug lfg on" in game.
+#        Default:     0 - (Disabled)
+#                     1 - (Enabled)
+
+DungeonFinder.DebugJoin = 0
+
+#
+###################################################################################################
+
+Challenge.LevelLimit = 30
+Challenge.LevelMax = 15
+Challenge.LevelStep = 2
+Dungeon.WeightedMythicKeystone.Enabled = 1
+

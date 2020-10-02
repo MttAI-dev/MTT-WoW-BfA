@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -208,8 +208,10 @@ void GameObject::AddToWorld()
     if (!IsInWorld())
     {
         if (m_zoneScript)
+        {
             m_zoneScript->OnGameObjectCreate(this);
-
+            m_zoneScript->OnGameObjectCreateForScript(this);
+        }
         GetMap()->GetObjectsStore().Insert<GameObject>(GetGUID(), this);
         if (m_spawnId)
             GetMap()->GetGameObjectBySpawnIdStore().insert(std::make_pair(m_spawnId, this));
@@ -235,7 +237,10 @@ void GameObject::RemoveFromWorld()
     if (IsInWorld())
     {
         if (m_zoneScript)
+            {
             m_zoneScript->OnGameObjectRemove(this);
+            m_zoneScript->OnGameObjectRemoveForScript(this);
+            }
 
         RemoveFromOwner();
         if (m_model)
@@ -263,7 +268,6 @@ bool GameObject::Create(uint32 entry, Map* map, Position const& pos, QuaternionD
         return false;
     }
 
-    m_area = sAreaMgr->GetArea(GetAreaIdFromPosition());
     SetZoneScript();
     if (m_zoneScript)
     {
@@ -2433,6 +2437,19 @@ void GameObject::SetGoState(GOState state)
     }
 }
 
+void GameObject::SetInstanceLootMode()
+{
+    if (GetMap()->IsDungeon())
+    {
+        if (GetMap()->IsTimeWalking())
+            SetLootMode(LOOT_MODE_MYTHIC_RAID);
+        else if (GetMap()->IsHeroic())
+            SetLootMode(LOOT_MODE_HEROIC);
+        else
+            SetLootMode(LOOT_MODE_DEFAULT);
+    }
+}
+
 uint32 GameObject::GetTransportPeriod() const
 {
     ASSERT(GetGOInfo()->type == GAMEOBJECT_TYPE_TRANSPORT);
@@ -2751,5 +2768,5 @@ private:
 
 GameObjectModel* GameObject::CreateModel()
 {
-    return GameObjectModel::Create(Trinity::make_unique<GameObjectModelOwnerImpl>(this), sWorld->GetDataPath());
+    return GameObjectModel::Create(std::make_unique<GameObjectModelOwnerImpl>(this), sWorld->GetDataPath());
 }

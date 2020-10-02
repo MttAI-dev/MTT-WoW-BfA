@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -64,6 +64,18 @@ InstanceScenario* ScenarioMgr::CreateInstanceScenario(Map* map, TeamId team) con
     }
 
     return new InstanceScenario(map, &itr->second);
+}
+
+InstanceScenario* ScenarioMgr::CreateInstanceScenarioByID(Map const* map, uint32 scenarioID)
+{
+    auto itr = _scenarioData.find(scenarioID);
+    if (itr == _scenarioData.end())
+    {
+        TC_LOG_ERROR("scenario", "Table `scenarios` contained data linking scenario (Id: %u) to map (Id: %u), difficulty (Id: %u) but no scenario data was found related to that scenario Id.", scenarioID, map->GetId(), map->GetDifficultyID());
+        return nullptr;
+    }
+
+   // return new InstanceScenario(map, &itr->second);
 }
 
 void ScenarioMgr::LoadDBData()

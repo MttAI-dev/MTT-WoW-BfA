@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,10 +21,11 @@
 #include "Common.h"
 #include "ObjectGuid.h"
 #include <vector>
+#include "WorldSession.h"
+#include "SpellMgr.h"
 #include <boost/property_tree/ptree.hpp>
 
 class AccountMgr;
-class Area;
 class AreaTrigger;
 class AreaTriggerAI;
 class AuctionHouseObject;
@@ -314,6 +315,22 @@ class TC_GAME_API FormulaScript : public ScriptObject
         virtual void OnGroupRateCalculation(float& /*rate*/, uint32 /*count*/, bool /*isRaid*/) { }
 };
 
+namespace Battlepay
+{
+    struct Product;
+}
+
+class BattlePayProductScript : public ScriptObject
+{
+protected:
+    explicit BattlePayProductScript(const char* name);
+public:
+    virtual void OnProductDelivery(WorldSession* /*session*/, Battlepay::Product const& /*product*/) { }
+    virtual bool CanShow(WorldSession* /*session*/, Battlepay::Product const& /*product*/) { return true; }
+    virtual bool CanBuy(WorldSession* /*session*/, Battlepay::Product const& /*product*/, std::string& /*reason*/) { return true; }
+    virtual std::string GetCustomData(Battlepay::Product const& /*product*/) { return ""; }
+};
+
 template<class TMap>
 class MapScript : public UpdatableScript<TMap>
 {
@@ -382,6 +399,9 @@ class TC_GAME_API ItemScript : public ScriptObject
 
     public:
 
+        // Called when a dummy spell effect is triggered on the item.
+        virtual bool OnDummyEffect(Unit* /*caster*/, uint32 /*spellId*/, SpellEffIndex /*effIndex*/, Item* /*target*/) { return false; }
+
         // Called when a player accepts a quest from the item.
         virtual bool OnQuestAccept(Player* /*player*/, Item* /*item*/, Quest const* /*quest*/) { return false; }
 
@@ -393,6 +413,9 @@ class TC_GAME_API ItemScript : public ScriptObject
 
         // Called when the item is destroyed.
         virtual bool OnRemove(Player* /*player*/, Item* /*item*/) { return false; }
+
+        // Called when the item gossip menu select.
+        virtual bool OnGossipSelect(Player* /*player*/, Item* /*item*/, uint32 /*uiSender*/, uint32 /*action*/) { return false; }
 
         // Called before casting a combat spell from this item (chance on hit spells of item template, can be used to prevent cast if returning false)
         virtual bool OnCastItemCombatSpell(Player* /*player*/, Unit* /*victim*/, SpellInfo const* /*spellInfo*/, Item* /*item*/) { return true; }
@@ -429,6 +452,8 @@ class TC_GAME_API CreatureScript : public UnitScript, public UpdatableScript<Cre
 
     public:
 
+        // Called when a dummy spell effect is triggered on the creature.
+        virtual bool OnDummyEffect(Unit* /*caster*/, uint32 /*spellId*/, SpellEffIndex /*effIndex*/, Creature* /*target*/) { return false; }
 
         // Called when a player opens a gossip dialog with the creature.
         virtual bool OnGossipHello(Player* /*player*/, Creature* /*creature*/) { return false; }
@@ -465,6 +490,9 @@ class TC_GAME_API GameObjectScript : public ScriptObject, public UpdatableScript
         GameObjectScript(const char* name);
 
     public:
+
+        // Called when a dummy spell effect is triggered on the gameobject.
+        virtual bool OnDummyEffect(Unit* /*caster*/, uint32 /*spellId*/, SpellEffIndex /*effIndex*/, GameObject* /*target*/) { return false; }
 
         // Called when a player opens a gossip dialog with the gameobject.
         virtual bool OnGossipHello(Player* /*player*/, GameObject* /*go*/) { return false; }
@@ -760,10 +788,10 @@ class TC_GAME_API PlayerScript : public UnitScript
         virtual void OnBindToInstance(Player* /*player*/, Difficulty /*difficulty*/, uint32 /*mapId*/, bool /*permanent*/, uint8 /*extendState*/) { }
 
         // Called when a player switches to a new zone
-        virtual void OnUpdateZone(Player* /*player*/, Area* /*newArea*/, Area* /*oldArea*/) { }
+        virtual void OnUpdateZone(Player* /*player*/, uint32 /*newZone*/, uint32 /*oldZone*/, uint32 /*newArea*/) { }
 
         // Called when a player switches to a new area
-        virtual void OnUpdateArea(Player* /*player*/, Area* /*newArea*/, Area* /*oldArea*/) { }
+        virtual void OnUpdateArea(Player* /*player*/, uint32 /*newArea*/, uint32 /*oldArea*/) { }
 
         // Called when a player changes to a new map (after moving to new map)
         virtual void OnMapChanged(Player* /*player*/) { }
@@ -809,6 +837,9 @@ class TC_GAME_API PlayerScript : public UnitScript
 
         // Called when a player completes a movie
         virtual void OnMovieComplete(Player* /*player*/, uint32 /*movieId*/) { }
+
+        //Called when a player Start ChallengeMode
+        virtual void OnStartChallengeMode(Player* /*player*/, uint8 /*level*/, uint8 /*affix1*/, uint8 /*affix2*/, uint8 /*affix3*/) { }
 
         // Called when a player choose a response from a PlayerChoice
         virtual void OnPlayerChoiceResponse(Player* /*player*/, uint32 /*choiceId*/, uint32 /*responseId*/) { }
@@ -1112,14 +1143,17 @@ class TC_GAME_API ScriptMgr
 
     public: /* ItemScript */
 
+        bool OnDummyEffect(Unit* caster, uint32 spellId, SpellEffIndex effIndex, Item* target);
         bool OnQuestAccept(Player* player, Item* item, Quest const* quest);
         bool OnItemUse(Player* player, Item* item, SpellCastTargets const& targets, ObjectGuid castId);
         bool OnItemExpire(Player* player, ItemTemplate const* proto);
         bool OnItemRemove(Player* player, Item* item);
         bool OnCastItemCombatSpell(Player* player, Unit* victim, SpellInfo const* spellInfo, Item* item);
+        bool OnGossipSelect(Player* player, Item* item, uint32 uiSender, uint32 action);
 
     public: /* CreatureScript */
 
+        bool OnDummyEffect(Unit* caster, uint32 spellId, SpellEffIndex effIndex, Creature* target);
         bool OnGossipHello(Player* player, Creature* creature);
         bool OnGossipSelect(Player* player, Creature* creature, uint32 sender, uint32 action);
         bool OnGossipSelectCode(Player* player, Creature* creature, uint32 sender, uint32 action, const char* code);
@@ -1133,6 +1167,7 @@ class TC_GAME_API ScriptMgr
 
     public: /* GameObjectScript */
 
+        bool OnDummyEffect(Unit* caster, uint32 spellId, SpellEffIndex effIndex, GameObject* target);
         bool OnGossipHello(Player* player, GameObject* go);
         bool OnGossipSelect(Player* player, GameObject* go, uint32 sender, uint32 action);
         bool OnGossipSelectCode(Player* player, GameObject* go, uint32 sender, uint32 action, const char* code);
@@ -1236,8 +1271,8 @@ class TC_GAME_API ScriptMgr
         void OnPlayerFailedDelete(ObjectGuid guid, uint32 accountId);
         void OnPlayerSave(Player* player);
         void OnPlayerBindToInstance(Player* player, Difficulty difficulty, uint32 mapid, bool permanent, uint8 extendState);
-        void OnPlayerUpdateZone(Player* player, Area* newArea, Area* oldArea);
-        void OnPlayerUpdateArea(Player* player, Area* newArea, Area* oldArea);
+        void OnPlayerUpdateZone(Player* player, uint32 newZone, uint32 oldZone, uint32 newArea);
+        void OnPlayerUpdateArea(Player* player, uint32 newArea, uint32 oldArea);
         void OnQuestAccept(Player* player, const Quest* quest);
         void OnQuestReward(Player* player, const Quest* quest);
         void OnObjectiveValidate(Player* player, uint32 questID, uint32 objectiveID);
@@ -1253,6 +1288,7 @@ class TC_GAME_API ScriptMgr
         void OnPlayerRepop(Player* player);
         void OnMovieComplete(Player* player, uint32 movieId);
         void OnPlayerChoiceResponse(Player* player, uint32 choiceId, uint32 responseId);
+        void OnPlayerStartChallengeMode(Player* player, uint8 level, uint8 affix1, uint8 affix2, uint8 affix3);
         void OnCooldownStart(Player* player, SpellInfo const* spellInfo, uint32 itemId, int32& cooldown, uint32& categoryId, int32& categoryCooldown);
         void OnChargeRecoveryTimeStart(Player* player, uint32 chargeCategoryId, int32& chargeRecoveryTime);
 
@@ -1329,10 +1365,17 @@ class TC_GAME_API ScriptMgr
     public: /* ZoneScript */
         ZoneScript* GetZoneScript(uint32 scriptId);
 
+        void RegisterBattlePayProductScript(std::string scriptName, BattlePayProductScript* script);
+        void OnBattlePayProductDelivery(WorldSession* session, Battlepay::Product const& product);
+        bool BattlePayCanBuy(WorldSession* session, Battlepay::Product const& product, std::string& reason);
+        std::string BattlePayGetCustomData(Battlepay::Product const& product);
+
     private:
         uint32 _scriptCount;
 
         ScriptLoaderCallbackType _script_loader_callback;
+
+        std::map<std::string, BattlePayProductScript*> _battlePayProductScripts;
 
         std::string _currentContext;
 };

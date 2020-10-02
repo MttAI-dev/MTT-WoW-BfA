@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -82,7 +82,7 @@ public:
             uidrakonidCount = 0;
         }
 
-        bool IsEncounterInProgress() const override
+        bool IsEncounterInProgress() const override 
         {
             for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
                 if (uiEncounter[i] == IN_PROGRESS)
@@ -291,7 +291,7 @@ public:
             }
         }
 
-        uint32 GetData(uint32 type) const override
+        uint32 GetData(uint32 type) const override 
         {
             return Encounter[type];
         }

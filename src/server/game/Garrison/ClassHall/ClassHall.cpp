@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -60,9 +59,11 @@ void ClassHall::Delete()
     Garrison::Delete();
 }
 
-bool ClassHall::IsAllowedArea(AreaTableEntry const* area) const
+bool ClassHall::IsAllowedArea(uint32 areaID) const
 {
-    if (!area)
+    AreaTableEntry const* area = sAreaTableStore.LookupEntry(areaID);
+
+    if(!area)
         return false;
 
     // TODO : Find a better way to handle this

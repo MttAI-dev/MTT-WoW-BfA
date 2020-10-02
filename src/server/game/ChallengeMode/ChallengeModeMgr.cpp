@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,6 +21,8 @@
 #include "GameTables.h"
 #include "Item.h"
 #include "LootPackets.h"
+#include "InstanceScript.h"
+#include "ChallengeModePackets.h"
 
 ChallengeModeMgr* ChallengeModeMgr::instance()
 {
@@ -38,6 +40,228 @@ MapChallengeModeEntry const* ChallengeModeMgr::GetMapChallengeModeEntry(uint32 m
     return nullptr;
 }
 
+bool ChallengeMember::operator<(const ChallengeMember& i) const
+{
+    return guid.GetCounter() > i.guid.GetCounter();
+}
+
+uint32 ChallengeModeMgr::GetChallengeLevel() const
+{
+    return std::min(_challengeLevel, sWorld->getIntConfig(CONFIG_CHALLENGE_LEVEL_LIMIT));
+}
+
+bool ChallengeModeMgr::HasOploteLoot(ObjectGuid const& guid)
+{
+    return Trinity::Containers::MapGetValuePtr(_oploteWeekLoot, guid);
+}
+
+OploteLoot* ChallengeModeMgr::GetOploteLoot(ObjectGuid const& guid)
+{
+    return Trinity::Containers::MapGetValuePtr(_oploteWeekLoot, guid);
+}
+
+uint32 ChallengeModeMgr::GetCAForLoot(ChallengeModeMgr* const challenge, uint32 goEntry)
+{
+    if (!challenge)
+        return 0;
+
+    switch (challenge->_mapID)
+    {
+    case 1754: //freehold 
+    {
+        // Lesser Dungeons
+        switch (challenge->GetChallengeLevel())
+        {
+        case 0:
+        case 1:
+            return 0;
+        case 2:
+        case 3:
+            return 147398;
+        case 4:
+        case 5:
+        case 6:
+            return 147399;
+        case 7:
+        case 8:
+        case 9:
+            return 147400;
+        case 10:
+        case 11:
+        case 12:
+        case 13:
+        case 14:
+            return 147401;
+        case 15:
+        default:
+            return 147719;
+        }
+    }
+    case 1771: //tol dagor             
+    case 1841: //underrot              
+    case 1762: //king´s rest             
+    case 2097: //op mechagon           
+    case 1822: //siege of boralus  
+    case 1862: //waycrest manor     
+    case 1864: //shrine of the storm   
+    {
+        // Regular Dungeons
+        switch (challenge->GetChallengeLevel())
+        {
+        case 0:
+        case 1:
+            return 0;
+        case 2:
+        case 3:
+            return 147402;
+        case 4:
+        case 5:
+        case 6:
+            return 147403;
+        case 7:
+        case 8:
+        case 9:
+            return 147404;
+        case 10:
+        case 11:
+        case 12:
+        case 13:
+        case 14:
+            return 147405;
+        case 15:
+        default:
+            return 147718;
+        }
+    }
+    case 1877: //temple of serthraliss 
+    case 1594: //the motherlode!!      
+    {
+        // Greater Dungeons
+        switch (challenge->GetChallengeLevel())
+        {
+        case 0:
+        case 1:
+            return 0;
+        case 2:
+        case 3:
+            return 147406;
+        case 4:
+        case 5:
+        case 6:
+            return 147407;
+        case 7:
+        case 8:
+        case 9:
+            return 147408;
+        case 10:
+        case 11:
+        case 12:
+        case 13:
+        case 14:
+            return 147409;
+        case 15:
+        default:
+            return 147720;
+        }
+    }
+    default:
+        break;
+    }
+
+    return 0;
+}
+
+uint32 ChallengeModeMgr::GetBigCAForLoot(ChallengeModeMgr* const challenge, uint32 goEntry, uint32& count)
+{
+    if (!challenge || challenge->GetChallengeLevel() <= 10)
+        return 0;
+
+    if (challenge->GetChallengeLevel() >= 15)
+        count = challenge->GetChallengeLevel() - 15;
+    else
+        count = challenge->GetChallengeLevel() - 10;
+
+    switch (challenge->_mapID)
+    {
+    case 1754: //freehold 
+    {
+        // Lesser Dungeons
+        return 147808; // Lesser Adept's Spoils
+    }
+    case 1771: //tol dagor            
+    case 1841: //underrot             
+    case 1762: //king´s rest          
+    case 2097: //op mechagon          
+    case 1864: //shrine of the storm  
+    case 1822: //siege of boralus  
+    case 1862: //waycrest manor     
+    {
+        // Regular Dungeons
+        return 147809; // Adept's Spoils
+    }
+    case 1877: //temple of serthraliss 
+    case 1594: //the motherlode!!      
+    {
+        // Greater Dungeons
+        return 147810; // Greater Adept's Spoils
+    }
+    default:
+        break;
+    }
+
+    return 0;
+}
+
+uint32 ChallengeModeMgr::GetCAForOplote(uint32 challengeLevel)
+{
+    switch (challengeLevel)
+    {
+        // Is bug???
+    case 0:
+    case 1:
+        return 0;
+    case 2:
+    case 3:
+        return 147551;
+    case 4:
+    case 5:
+    case 6:
+        return 147550;
+    case 7:
+    case 8:
+    case 9:
+        return 147549;
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+        return 147548;
+    default: // 15+
+        return 147721;
+    }
+}
+
+
+uint32 ChallengeModeMgr::GetBigCAForOplote(uint32 challengeLevel, uint32& count)
+{
+    if (challengeLevel <= 10)
+        return 0;
+
+    if (challengeLevel >= 15)
+        count = challengeLevel - 15;
+    else
+        count = challengeLevel - 10;
+
+    return 147819;
+}
+
+bool ChallengeMember::operator==(const ChallengeMember& i) const
+{
+    return guid.GetCounter() == i.guid.GetCounter();
+}
+
+
 uint32 ChallengeModeMgr::GetDamageMultiplier(uint8 challengeLevel)
 {
     if (GtChallengeModeDamage const* challengeDamage = sChallengeModeDamage.GetRow(challengeLevel))
@@ -54,6 +278,299 @@ uint32 ChallengeModeMgr::GetHealthMultiplier(uint8 challengeLevel)
     return 1;
 }
 
+ChallengeData* ChallengeModeMgr::BestServerChallenge(uint16 ChallengeID)
+{
+   return Trinity::Containers::MapGetValuePtr(_bestForMap, ChallengeID);
+}
+
+InstanceScript* ChallengeModeMgr::GetInstanceScript() const
+{
+    return _instanceScript;
+}
+
+float ChallengeModeMgr::GetChanceItem(uint8 mode, uint32 challengeLevel)
+{
+    float base_chance = 200.0f;
+    float add_chance = 0.0f;
+
+    if (challengeLevel > 10)
+        add_chance += (challengeLevel - 10) * 40.0f;
+
+    switch (mode)
+    {
+    case CHALLENGE_TIMER_LEVEL_3: /// 3 chests + 3 levels
+    case CHALLENGE_TIMER_LEVEL_2: /// 2 chests + 2 levels
+    case CHALLENGE_TIMER_LEVEL_1: /// 1 chest + 1 level
+        base_chance += 100.0f; // 300% is 3 items
+        break;
+    case CHALLENGE_NOT_IN_TIMER:  /// 0 chest
+        base_chance += 0.0f; // 200% is 2 items
+        break;
+    default:
+        break;
+    }
+
+    base_chance += add_chance;
+
+    return base_chance;
+}
+
+bool ChallengeModeMgr::IsChest(uint32 goEntry)
+{
+    switch (goEntry)  
+    {
+    case 282736: // Tol Dagor
+    case 282737: // Atal'Dazar
+    case 288642: // King's Rest
+    case 288644: // Siege of Boralus
+    case 290544: // The MOTHERLODE!!
+    case 290621: // Waycrest Manor
+    case 290758: // Temple of Sertraliss
+    case 290759: // The Underrot
+    case 290761: // Shrine of the Storm
+    case 282735: // Freehold
+         return true;
+    default:
+        break;
+    }
+
+    return false;
+}
+
+uint32 ChallengeModeMgr::GetChallengeTimer()
+{
+    if (!_challengeTimer)
+        return 0;
+
+    return _challengeTimer / IN_MILLISECONDS;
+}
+
+void ChallengeModeMgr::CheckBestMapId(ChallengeData* challengeData)
+{
+    if (!challengeData)
+        return;
+
+    if (!_bestForMap[challengeData->ChallengeID] || _bestForMap[challengeData->ChallengeID]->RecordTime > challengeData->RecordTime)
+        _bestForMap[challengeData->ChallengeID] = challengeData;
+}
+
+void ChallengeModeMgr::CheckBestGuildMapId(ChallengeData* challengeData)
+{
+    if (!challengeData || !challengeData->GuildID)
+        return;
+
+    if (!m_GuildBest[challengeData->GuildID][challengeData->ChallengeID] || m_GuildBest[challengeData->GuildID][challengeData->ChallengeID]->RecordTime > challengeData->RecordTime)
+        m_GuildBest[challengeData->GuildID][challengeData->ChallengeID] = challengeData;
+}
+void ChallengeModeMgr::SetChallengeMapData(ObjectGuid::LowType const& ID, ChallengeData* data)
+{
+    _challengeMap[ID] = data;
+}
+
+typedef std::set<ChallengeMember> ChallengeMemberList;
+
+void ChallengeModeMgr::SendChallengeModeMapStatsUpdate(Player* player)
+{
+    MapChallengeModeEntry const* mapChallengeModeEntry = GetMapChallengeModeEntry(instances->GetId());
+    if (!mapChallengeModeEntry)
+        return;
+
+    ChallengeByMap* bestMap = BestForMember(player->GetGUID());
+    if (!bestMap)
+        return;
+
+    auto itr = bestMap->find(_mapID);
+    if (itr == bestMap->end())
+        return;
+
+    ChallengeData* best = itr->second;
+    if (!best)
+        return;
+
+    WorldPackets::ChallengeMode::ChallengeModeMapStatsUpdate update;
+    update.Stats.MapId = _mapID;
+    update.Stats.BestCompletionMilliseconds = best->RecordTime;
+    update.Stats.LastCompletionMilliseconds = _challengeTimer;
+    update.Stats.ChallengeID = mapChallengeModeEntry->ID;
+    update.Stats.BestMedalDate = best->Date;
+    update.Stats.Affixes = best->Affixes;
+
+    ChallengeMemberList members = best->member;
+    for (auto const& v : members)
+        update.Stats.BestSpecID.push_back(v.specId);
+
+    if (player)
+        player->SendDirectMessage(update.Write());
+}
+
+void ChallengeModeMgr::SaveChallengeToDB(ChallengeData const* challengeData)
+{
+    CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+
+    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_CHALLENGE);
+    stmt->setUInt32(0, challengeData->ID);
+    stmt->setUInt64(1, challengeData->GuildID);
+    stmt->setUInt16(2, challengeData->MapID);
+    stmt->setUInt32(3, challengeData->RecordTime);
+    stmt->setUInt32(4, challengeData->Date);
+    stmt->setUInt8(5, challengeData->ChallengeLevel);
+    stmt->setUInt8(6, challengeData->TimerLevel);
+    std::ostringstream affixesListIDs;
+    for (uint16 affixe : challengeData->Affixes)
+       if (affixe)
+          affixesListIDs << affixe << ' ';
+   stmt->setString(7, affixesListIDs.str());
+   stmt->setUInt32(8, challengeData->ChestID);
+    trans->Append(stmt);
+
+    for (auto const& v : challengeData->member)
+    {
+        stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_CHALLENGE_MEMBER);
+        stmt->setUInt32(0, challengeData->ID);
+        stmt->setUInt64(1, v.guid.GetCounter());
+        stmt->setUInt16(2, v.specId);
+        stmt->setUInt32(3, v.ChallengeLevel);
+        stmt->setUInt32(4, v.Date);
+        stmt->setUInt32(5, v.ChestID);
+        trans->Append(stmt);
+    }
+
+    CharacterDatabase.CommitTransaction(trans);
+}
+
+bool ChallengeModeMgr::CheckBestMemberMapId(ObjectGuid const& guid, ChallengeData* challengeData)
+{
+    bool isBest = false;
+    if (!_challengesOfMember[guid][challengeData->ChallengeID] || _challengesOfMember[guid][challengeData->ChallengeID]->RecordTime > challengeData->RecordTime)
+    {
+        _challengesOfMember[guid][challengeData->ChallengeID] = challengeData;
+        isBest = true;
+    }
+
+    if (!_lastForMember[guid][challengeData->ChallengeID] || _lastForMember[guid][challengeData->ChallengeID]->Date < challengeData->Date)
+        _lastForMember[guid][challengeData->ChallengeID] = challengeData;
+
+    _challengeWeekList[guid].insert(challengeData);
+
+    return isBest;
+}
+
+
+void ChallengeModeMgr::HitTimer()
+{
+    if (GetChallengeTimer() < _chestTimers[2])
+        _rewardLevel = CHALLENGE_TIMER_LEVEL_3; /// 3 chests + 3 levels
+    else if (GetChallengeTimer() < _chestTimers[1])
+        _rewardLevel = CHALLENGE_TIMER_LEVEL_2; /// 2 chests + 2 levels
+    else if (GetChallengeTimer() < _chestTimers[0])
+        _rewardLevel = CHALLENGE_TIMER_LEVEL_1; /// 1 chest + 1 level
+    else
+        _rewardLevel = CHALLENGE_NOT_IN_TIMER;
+
+    if (!_map)
+        return;
+
+    for (auto const& guid : _challengers)
+        _countItems[guid] = 0;
+
+    switch (_rewardLevel)
+    {
+        case CHALLENGE_TIMER_LEVEL_3: /// 3 chests + 3 levels
+        case CHALLENGE_TIMER_LEVEL_2: /// 2 chests + 2 levels
+        case CHALLENGE_TIMER_LEVEL_1: /// 1 chest + 1 level
+        case CHALLENGE_NOT_IN_TIMER:  /// 0 chest
+        {
+            if (InstanceScript* script = GetInstanceScript())
+            {
+                if (GameObject* chest = _map->GetGameObject(script->_challengeChest))
+                    chest->SetRespawnTime(7 * DAY);
+
+                float _chance = GetChanceItem(_rewardLevel, _challengeLevel);
+                auto countItems = int32(_chance / 100.0f);
+                _chance -= countItems * 100.0f;
+
+                if (roll_chance_f(_chance))
+                    countItems++;
+
+                while (countItems > 0)
+                {
+                    auto _tempList = _challengers;
+                    Trinity::Containers::RandomResize(_tempList, countItems);
+
+                    for (auto const& guid : _tempList)
+                    {
+                        countItems--;
+                        _countItems[guid] += 1;
+                    }
+                }
+            }
+        }
+        default:
+            break;
+    }
+}
+
+void ChallengeModeMgr::ResetGo()
+{
+   // if (InstanceScript* script = GetInstanceScript())
+     //   for (ObjectGuid guid : script->_challengeDoorGuids)
+           // if (GameObject* challengeDoor = sObjectAccessor->FindGameObject(guid))
+             //   challengeDoor->SetGoState(GO_STATE_READY);
+   //
+   //if (InstanceScript* script = GetInstanceScript())
+   //    if (GameObject* challengeOrb = _map->GetGameObject(script->_challengeOrbGuid))
+   //    {
+   //        challengeOrb->SetGoState(GO_STATE_READY);
+   //        challengeOrb->RemoveFlag(GO_FLAG_NODESPAWN);
+   //    }
+}
+
+ChallengeData* ChallengeModeMgr::BestGuildChallenge(ObjectGuid::LowType const& GuildID, uint16 ChallengeID)
+{
+    if (!GuildID)
+        return nullptr;
+
+    auto itr = m_GuildBest.find(GuildID);
+    if (itr == m_GuildBest.end())
+        return nullptr;
+
+    return Trinity::Containers::MapGetValuePtr(itr->second, ChallengeID);
+}
+ChallengeByMap* ChallengeModeMgr::BestForMember(ObjectGuid const& guid)
+{
+   return Trinity::Containers::MapGetValuePtr(_challengesOfMember, guid);
+}
+
+ChallengeByMap* ChallengeModeMgr::LastForMember(ObjectGuid const& guid)
+{
+    return Trinity::Containers::MapGetValuePtr(_lastForMember, guid);
+}
+
+ChallengeData* ChallengeModeMgr::LastForMemberMap(ObjectGuid const& guid, uint32 ChallengeID)
+{
+    if (ChallengeByMap* _lastResalt = LastForMember(guid))
+    {
+        auto itr = _lastResalt->find(ChallengeID);
+        if (itr != _lastResalt->end())
+            return itr->second;
+    }
+
+    return nullptr;
+}
+
+ChallengeData* ChallengeModeMgr::BestForMemberMap(ObjectGuid const& guid, uint32 ChallengeID)
+{
+    if (ChallengeByMap* _lastResalt = BestForMember(guid))
+    {
+        auto itr = _lastResalt->find(ChallengeID);
+        if (itr != _lastResalt->end())
+            return itr->second;
+    }
+
+    return nullptr;
+}
+
+
 uint32 ChallengeModeMgr::GetRandomChallengeId(uint32 flags/* = 4*/)
 {
     std::vector<uint32> challenges;
@@ -61,13 +578,21 @@ uint32 ChallengeModeMgr::GetRandomChallengeId(uint32 flags/* = 4*/)
     for (uint32 i = 0; i < sMapChallengeModeStore.GetNumRows(); ++i)
         if (MapChallengeModeEntry const* challengeModeEntry = sMapChallengeModeStore.LookupEntry(i))
             if (challengeModeEntry->Flags & flags &&
-                (challengeModeEntry->ID == 197 || challengeModeEntry->ID == 198 || challengeModeEntry->ID == 199)) // Temp fix, only doable dungeons here
-                challenges.push_back(challengeModeEntry->ID);
+                (challengeModeEntry->ID == 244 || 
+				 challengeModeEntry->ID == 245 || 
+				 challengeModeEntry->ID == 249 ||
+				 challengeModeEntry->ID == 252 ||
+				 challengeModeEntry->ID == 353 ||
+				 challengeModeEntry->ID == 250 ||
+				 challengeModeEntry->ID == 247 ||
+				 challengeModeEntry->ID == 248 ||
+				 challengeModeEntry->ID == 246  )) // Temp fix, only doable dungeons here
+                        challenges.push_back(challengeModeEntry->ID);
 
-    if (challenges.empty())
-        return 0;
-
-    return Trinity::Containers::SelectRandomContainerElement(challenges);
+        if (challenges.empty())
+            return 0;
+   
+        return Trinity::Containers::SelectRandomContainerElement(challenges);
 }
 
 std::vector<int32> ChallengeModeMgr::GetBonusListIdsForRewards(uint32 baseItemIlevel, uint8 challengeLevel)
@@ -147,7 +672,7 @@ void ChallengeModeMgr::Reward(Player* player, uint8 challengeLevel)
     }
 
     std::vector<int32> bonusListIds = GetBonusListIdsForRewards(randomStuffItem->GetBaseItemLevel(), challengeLevel);
-    Item* pItem = player->StoreNewItem(dest, itemId, true, GenerateItemRandomBonusListId(itemId), GuidSet(), ItemContext(0), bonusListIds);
+    Item* pItem = player->StoreNewItem(dest, itemId, true, GenerateItemRandomBonusListId(itemId), GuidSet(), ItemContext::NONE, bonusListIds);
     player->SendNewItem(pItem, 1, true, false, true);
 
     WorldPackets::Loot::DisplayToast displayToast;

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,7 +18,6 @@
 #ifndef _OBJECT_H
 #define _OBJECT_H
 
-#include "Area.h"
 #include "Common.h"
 #include "GridReference.h"
 #include "GridRefManager.h"
@@ -34,8 +33,6 @@
 #include <list>
 #include <unordered_map>
 
-class AzeriteEmpoweredItem;
-class AzeriteItem;
 class AreaTrigger;
 class Conversation;
 class Corpse;
@@ -56,6 +53,7 @@ class UpdateData;
 class WorldObject;
 class WorldPacket;
 class ZoneScript;
+struct PositionFullTerrainStatus;
 struct QuaternionData;
 
 typedef std::unordered_map<Player*, UpdateData> UpdateDataMapType;
@@ -129,7 +127,7 @@ namespace UF
 class TC_GAME_API Object
 {
     public:
-        Ashamane::AnyData Variables;
+        LatinCore::AnyData Variables;
         virtual ~Object();
 
         bool IsInWorld() const { return m_inWorld; }
@@ -208,14 +206,6 @@ class TC_GAME_API Object
         inline bool IsSceneObject() const { return GetTypeId() == TYPEID_SCENEOBJECT; }
         SceneObject* ToSceneObject() { if (IsSceneObject()) return reinterpret_cast<SceneObject*>(this); else return nullptr; }
         SceneObject const* ToSceneObject() const { if (IsSceneObject()) return reinterpret_cast<SceneObject const*>(this); else return nullptr; }
-
-        bool IsAzeriteItem() const { return GetTypeId() == TYPEID_AZERITE_ITEM; }
-        AzeriteItem* ToAzeriteItem() { if (IsAzeriteItem()) return reinterpret_cast<AzeriteItem*>(this); return nullptr; }
-        AzeriteItem const* ToAzeriteItem() const { if (IsAzeriteItem()) return reinterpret_cast<AzeriteItem const*>(this); return nullptr; }
-
-        bool IsAzeriteImpoweredItem() const { return GetTypeId() == TYPEID_AZERITE_EMPOWERED_ITEM; }
-        AzeriteEmpoweredItem* ToAzeriteImpoweredItem() { if (IsAzeriteImpoweredItem()) return reinterpret_cast<AzeriteEmpoweredItem*>(this); return nullptr; }
-        AzeriteEmpoweredItem const* ToAzeriteImpoweredItem() const { if (IsAzeriteImpoweredItem()) return reinterpret_cast<AzeriteEmpoweredItem const*>(this); return nullptr; }
 
         UF::UpdateFieldHolder m_values;
         UF::UpdateField<UF::ObjectData, 0, TYPEID_OBJECT> m_objectData;
@@ -329,11 +319,10 @@ class TC_GAME_API Object
         virtual UF::UpdateFieldFlag GetUpdateFieldFlagsFor(Player const* target) const;
         virtual void BuildValuesCreate(ByteBuffer* data, Player const* target) const = 0;
         virtual void BuildValuesUpdate(ByteBuffer* data, Player const* target) const = 0;
-
-    public:
+ public:
         virtual void BuildValuesUpdateWithFlag(ByteBuffer* data, UF::UpdateFieldFlag flags, Player const* target) const;
+protected:
 
-    protected:
         uint16 m_objectType;
 
         TypeID m_objectTypeId;
@@ -400,7 +389,8 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
 
         virtual void Update (uint32 /*time_diff*/) { }
 
-        virtual void RemoveFromWorld() override;
+        void AddToWorld() override;
+        void RemoveFromWorld() override;
 
         void GetNearPoint2D(float &x, float &y, float distance, float absAngle) const;
         void GetNearPoint(WorldObject const* searcher, float &x, float &y, float &z, float searcher_size, float distance2d, float absAngle) const;
@@ -438,13 +428,9 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         // if negative it is used as PhaseGroupId
         void SetDBPhase(int32 p) { _dbPhase = p; }
 
-        uint32 GetAreaId() const;
-        uint32 GetZoneId() const;
-
-        uint32 GetAreaIdFromPosition() const;
-        uint32 GetZoneIdFromPosition() const;
-
-        void GetZoneAndAreaId(uint32& zoneid, uint32& areaid) const;
+        uint32 GetZoneId() const { return m_zoneId; }
+        uint32 GetAreaId() const { return m_areaId; }
+        void GetZoneAndAreaId(uint32& zoneid, uint32& areaid) const { zoneid = m_zoneId, areaid = m_areaId; }
         bool IsInWorldPvpZone() const;
 
         InstanceScript* GetInstanceScript() const;
@@ -497,6 +483,7 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
 
         void PlayDistanceSound(uint32 soundId, Player* target = nullptr);
         void PlayDirectSound(uint32 soundId, Player* target = nullptr);
+        void PlayObjectSound(uint32 soundId, Unit* target = nullptr, Position* pos = nullptr);
         void PlayDirectMusic(uint32 musicId, Player* target = nullptr);
 
         virtual void SaveRespawnTime() { }
@@ -521,10 +508,6 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         Map* GetMap() const { ASSERT(m_currMap); return m_currMap; }
         Map* FindMap() const { return m_currMap; }
         //used to check all object's GetMap() calls when object is not in world!
-
-        void SetArea(Area* area) { m_area = area; }
-        Area* GetArea() const { return m_area; }
-        Area* GetZone() const { return m_area ? m_area->GetZone(): nullptr; }
 
         void SetZoneScript();
         ZoneScript* GetZoneScript() const { return m_zoneScript; }
@@ -581,6 +564,8 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
             UpdateObjectVisibility(true);
         }
 
+        void UpdatePositionData();
+
         void BuildUpdate(UpdateDataMapType&) override;
         void AddToObjectUpdate() override;
         void RemoveFromObjectUpdate() override;
@@ -622,6 +607,8 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         virtual float GetStationaryZ() const { return GetPositionZ(); }
         virtual float GetStationaryO() const { return GetOrientation(); }
 
+        float GetFloorZ() const;
+
         virtual uint16 GetAIAnimKitId() const { return 0; }
         virtual uint16 GetMovementAnimKitId() const { return 0; }
         virtual uint16 GetMeleeAnimKitId() const { return 0; }
@@ -632,11 +619,15 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         Optional<float> m_visibilityDistanceOverride;
         const bool m_isWorldObject;
 
-        Area*       m_area;
         ZoneScript* m_zoneScript;
 
         // transports
         Transport* m_transport;
+
+        virtual void ProcessPositionDataChanged(PositionFullTerrainStatus const& data);
+        uint32 m_zoneId;
+        uint32 m_areaId;
+        float m_staticFloorZ;
 
         //these functions are used mostly for Relocate() and Corpse/Player specific stuff...
         //use them ONLY in LoadFromDB()/Create() funcs and nowhere else!
@@ -650,12 +641,12 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         //difference from IsAlwaysVisibleFor: 1. after distance check; 2. use owner or charmer as seer
         virtual bool IsAlwaysDetectableFor(WorldObject const* /*seer*/) const { return false; }
     private:
-        Map* m_currMap;                                    //current object's Map location
+        Map* m_currMap;                                   // current object's Map location
 
-        //uint32 m_mapId;                                     // object at map with map_id
-        uint32 m_InstanceId;                                // in map copy with instance id
+        //uint32 m_mapId;                                 // object at map with map_id
+        uint32 m_InstanceId;                              // in map copy with instance i
         PhaseShift _phaseShift;
-        PhaseShift _suppressedPhaseShift;                   // contains phases for current area but not applied due to conditions
+        PhaseShift _suppressedPhaseShift;                 // contains phases for current area but not applied due to conditions
         int32 _dbPhase;
         bool m_visibleBySummonerOnly;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,6 +16,7 @@
  */
 
 #include "AreaTriggerAI.h"
+#include "CreatureTextMgr.h"
 #include "DB2Stores.h"
 #include "GameObject.h"
 #include "GridNotifiers.h"
@@ -24,10 +25,12 @@
 #include "Player.h"
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
+#include "ScriptedEscortAI.h"
 #include "SpellScript.h"
 #include "PhasingHandler.h"
 #include "Player.h"
 #include "Log.h"
+#include "Vehicle.h"
 
 enum CaveOfMeditationSpells
 {
@@ -360,6 +363,7 @@ public:
                 switch (areaTrigger->ID)
                 {
                     case 6986:
+
                     case 6987:
                         if (!player->HasAura(SPELL_CURSE_OF_THE_FROG))
                             player->CastSpell(player, SPELL_CURSE_OF_THE_FROG, true);
@@ -717,7 +721,7 @@ public:
                 else
                 {
                     if (GameObject* go = caster->FindNearestGameObject(209576, 8.0f))
-                        caster->GetMotionMaster()->MoveJump(go->GetPosition(), GetSpellInfo()->GetEffect(effIndex)->MiscValue, 10);
+                        caster->GetMotionMaster()->MoveJump(go->GetPosition(), GetSpellInfo()->GetEffect(effIndex)->MiscValue, 5);
                 }
             }
         }
@@ -734,34 +738,154 @@ public:
     }
 };
 
+class spell_jump_to_front_right : public SpellScriptLoader
+{
+public:
+    spell_jump_to_front_right() : SpellScriptLoader("spell_jump_to_front_right") { }
+
+    class spell_jump_to_front_right_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_jump_to_front_right_SpellScript);
+
+        void HandleDummy(SpellEffIndex /*effIndex*/)
+        {
+            if (Unit* caster = GetCaster())
+            {
+                Position const jumpPos = { 1111.13f, 2850.21f, 94.6873f };
+                caster->GetMotionMaster()->MoveJump(jumpPos, 12, 15);
+            }
+        }
+
+        void Register() override
+        {
+            OnEffectHit += SpellEffectFn(spell_jump_to_front_right_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_jump_to_front_right_SpellScript();
+    }
+};
+
+class spell_jump_to_front_left : public SpellScriptLoader
+{
+public:
+    spell_jump_to_front_left() : SpellScriptLoader("spell_jump_to_front_left") { }
+
+    class spell_jump_to_front_left_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_jump_to_front_left_SpellScript);
+
+        void HandleDummy(SpellEffIndex /*effIndex*/)
+        {
+            if (Unit* caster = GetCaster())
+            {
+                Position const jumpPos = { 1100.83f, 2881.36f, 94.0386f };
+                caster->GetMotionMaster()->MoveJump(jumpPos, 12, 15);
+            }
+        }
+
+        void Register() override
+        {
+            OnEffectHit += SpellEffectFn(spell_jump_to_front_left_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_jump_to_front_left_SpellScript();
+    }
+};
+
+class spell_jump_to_back_right : public SpellScriptLoader
+{
+public:
+    spell_jump_to_back_right() : SpellScriptLoader("spell_jump_to_back_right") { }
+
+    class spell_jump_to_back_right_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_jump_to_back_right_SpellScript);
+
+        void HandleDummy(SpellEffIndex /*effIndex*/)
+        {
+            if (Unit* caster = GetCaster())
+            {
+                Position const jumpPos = { 1127.26f, 2859.8f, 97.2817f };
+                caster->GetMotionMaster()->MoveJump(jumpPos, 12, 15);
+            }
+        }
+
+        void Register() override
+        {
+            OnEffectHit += SpellEffectFn(spell_jump_to_back_right_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_jump_to_back_right_SpellScript();
+    }
+};
+
+class spell_jump_to_back_left : public SpellScriptLoader
+{
+public:
+    spell_jump_to_back_left() : SpellScriptLoader("spell_jump_to_back_left") { }
+
+    class spell_jump_to_back_left_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_jump_to_back_left_SpellScript);
+
+        void HandleDummy(SpellEffIndex /*effIndex*/)
+        {
+            if (Unit* caster = GetCaster())
+            {
+                Position const jumpPos = { 1120.16f, 2882.66f, 96.345f };
+                caster->GetMotionMaster()->MoveJump(jumpPos, 12, 15);
+            }
+        }
+
+        void Register() override
+        {
+            OnEffectHit += SpellEffectFn(spell_jump_to_back_left_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_jump_to_back_left_SpellScript();
+    }
+};
+
 enum ShuSpells
 {
-    SPELL_JUMP_FRONT_RIGHT      = 117033,
-    SPELL_JUMP_FRONT_LEFT       = 117034,
-    SPELL_JUMP_BACK_RIGHT       = 117035,
-    SPELL_JUMP_BACK_LEFT        = 117036,
-    SPELL_SUMMON_WATER_SPOUT    = 116810,
-    SPELL_WATER_SPOUT           = 117063
+    SPELL_JUMP_FRONT_RIGHT		 = 117033,
+    SPELL_JUMP_FRONT_LEFT 		 = 117034,
+    SPELL_JUMP_BACK_RIGHT 		 = 117035,
+    SPELL_JUMP_BACK_LEFT 		 = 117036,
+    SPELL_SUMMON_WATER_SPOUT 	 = 116810,
+    SPELL_WATER_SPOUT 		 	 = 117063
 };
 
 enum ShuJumpPositions
 {
-    JUMP_POSITION_1             = 0,
-    JUMP_POSITION_2             = 1,
-    JUMP_POSITION_3             = 2,
-    JUMP_POSITION_4             = 3
+    JUMP_POSITION_1 = 0,
+    JUMP_POSITION_2 = 1,
+    JUMP_POSITION_3 = 2,
+    JUMP_POSITION_4 = 3
 };
 
 enum ShuEvents
 {
-    EVENT_JUMP_SPELL            = 1,
-    EVENT_SET_ORIENTATION       = 2,
-    EVENT_SUMMON                = 3
+    EVENT_JUMP_SPELL 		= 1,
+    EVENT_SET_ORIENTATION	= 2,
+    EVENT_SUMMON			= 3
 };
 
 enum ShuData
 {
-    DATA_JUMP_POSITION          = 1
+    DATA_JUMP_POSITION = 1
 };
 
 class npc_shu_playing : public CreatureScript
@@ -775,133 +899,100 @@ public:
 
         void Initialize()
         {
-            _positionBefore = 1;
+            jumpPosition = 1;
+            positionBefore = 1;
+            startAI = true;
         }
 
         void Reset() override
         {
-            _events.Reset();
+            events.Reset();
             Initialize();
-            _events.ScheduleEvent(EVENT_JUMP_SPELL, 1000);
         }
 
         void MovementInform(uint32 type, uint32 id) override
         {
             if (type == EFFECT_MOTION_TYPE && id == EVENT_JUMP)
-                _events.ScheduleEvent(EVENT_SET_ORIENTATION, 500);
+                events.ScheduleEvent(EVENT_SET_ORIENTATION, 500);
         }
 
         uint32 GetData(uint32 id) const override
         {
             if (id == DATA_JUMP_POSITION)
-                return _jumpPosition;
+                return jumpPosition;
 
-            return 0;
+            return false;
         }
 
         void UpdateAI(uint32 diff) override
         {
-            _events.Update(diff);
+            if (startAI)
+            {
+                events.ScheduleEvent(EVENT_JUMP_SPELL, 1000);
+                startAI = false;
+            }
 
-            while (uint32 eventId = _events.ExecuteEvent())
+            events.Update(diff);
+
+            while (uint32 eventId = events.ExecuteEvent())
             {
                 switch (eventId)
                 {
-                    case EVENT_JUMP_SPELL:
-                        _jumpPosition = urand(JUMP_POSITION_1, JUMP_POSITION_4);
+                case EVENT_JUMP_SPELL:
+                    if (urand(0, 2) != 0)
+                        jumpPosition = urand(JUMP_POSITION_1, JUMP_POSITION_4);
+                    else
+                        jumpPosition = positionBefore;
 
-                        if (_jumpPosition == _positionBefore)
-                            _events.ScheduleEvent(EVENT_SUMMON, 1500);
-                        else
-                        {
-                            DoCast(_jumpSpells[_jumpPosition]);
-                            _positionBefore = _jumpPosition;
-                        }
+                    if (jumpPosition == positionBefore)
+                    {
+                        events.CancelEvent(EVENT_SET_ORIENTATION);
+                        events.ScheduleEvent(EVENT_SUMMON, 1500);
+                    }
+                    else
+                    {
+                        DoCast(jumpSpells[jumpPosition]);
+                        positionBefore = jumpPosition;
+                    }
+                    break;
+                case EVENT_SET_ORIENTATION:
+                    switch (jumpPosition)
+                    {
+                    case JUMP_POSITION_1:
+                        me->SetFacingTo(1.32645f);
                         break;
-                    case EVENT_SET_ORIENTATION:
-                        switch (_jumpPosition)
-                        {
-                            case JUMP_POSITION_1:
-                                me->SetFacingTo(1.32645f);
-                                break;
-                            case JUMP_POSITION_2:
-                                me->SetFacingTo(5.654867f);
-                                break;
-                            case JUMP_POSITION_3:
-                                me->SetFacingTo(2.338741f);
-                                break;
-                            case JUMP_POSITION_4:
-                                me->SetFacingTo(4.34587f);
-                                break;
-                        }
-                        _events.ScheduleEvent(EVENT_SUMMON, 1500);
+                    case JUMP_POSITION_2:
+                        me->SetFacingTo(5.654867f);
                         break;
-                    case EVENT_SUMMON:
-                        DoCast(SPELL_SUMMON_WATER_SPOUT);
-                        DoCast(SPELL_WATER_SPOUT);
-                        _events.ScheduleEvent(EVENT_JUMP_SPELL, 6000);
+                    case JUMP_POSITION_3:
+                        me->SetFacingTo(2.338741f);
                         break;
+                    case JUMP_POSITION_4:
+                        me->SetFacingTo(4.34587f);
+                        break;
+                    }
+                    events.ScheduleEvent(EVENT_SUMMON, 1500);
+                    break;
+                case EVENT_SUMMON:
+                    DoCast(SPELL_SUMMON_WATER_SPOUT);
+                    DoCast(SPELL_WATER_SPOUT);
+                    events.ScheduleEvent(EVENT_JUMP_SPELL, 6000);
+                    break;
                 }
             }
         }
 
     private:
-        EventMap _events;
-        uint32 _jumpSpells[4] = { SPELL_JUMP_FRONT_RIGHT, SPELL_JUMP_FRONT_LEFT, SPELL_JUMP_BACK_RIGHT, SPELL_JUMP_BACK_LEFT };
-        uint8 _jumpPosition;
-        uint8 _positionBefore;
+        EventMap events;
+        uint32 jumpSpells[4] = { SPELL_JUMP_FRONT_RIGHT, SPELL_JUMP_FRONT_LEFT, SPELL_JUMP_BACK_RIGHT, SPELL_JUMP_BACK_LEFT };
+        uint8 jumpPosition;
+        uint8 positionBefore;
+        bool startAI;
     };
 
     CreatureAI* GetAI(Creature* creature) const override
     {
         return new npc_shu_playingAI(creature);
-    }
-};
-
-class spell_shu_jump_to_rock : public SpellScriptLoader
-{
-public:
-    spell_shu_jump_to_rock() : SpellScriptLoader("spell_shu_jump_to_rock") { }
-
-    class spell_shu_jump_to_rock_SpellScript : public SpellScript
-    {
-        PrepareSpellScript(spell_shu_jump_to_rock_SpellScript);
-
-        void HandleDummy(SpellEffIndex /*effIndex*/)
-        {
-            if (Unit* caster = GetCaster())
-            {
-                Position jumpPos;
-
-                switch (GetSpellInfo()->Id)
-                {
-                    case SPELL_JUMP_FRONT_RIGHT:
-                        jumpPos = { 1111.13f, 2850.21f, 94.6873f };
-                        break;
-                    case SPELL_JUMP_FRONT_LEFT:
-                        jumpPos = { 1100.83f, 2881.36f, 94.0386f };
-                        break;
-                    case SPELL_JUMP_BACK_RIGHT:
-                        jumpPos = { 1127.26f, 2859.8f, 97.2817f };
-                        break;
-                    case SPELL_JUMP_BACK_LEFT:
-                        jumpPos = { 1120.16f, 2882.66f, 96.345f };
-                        break;
-                }
-
-                caster->GetMotionMaster()->MoveJump(jumpPos, 12, 15);
-            }
-        }
-
-        void Register() override
-        {
-            OnEffectHit += SpellEffectFn(spell_shu_jump_to_rock_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
-        }
-    };
-
-    SpellScript* GetSpellScript() const override
-    {
-        return new spell_shu_jump_to_rock_SpellScript();
     }
 };
 
@@ -919,12 +1010,13 @@ public:
             PreventHitDefaultEffect(effIndex);
             uint32 entry = GetSpellInfo()->GetEffect(effIndex)->MiscValue;
             SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(GetSpellInfo()->GetEffect(effIndex)->MiscValueB);
-            int32 duration = GetSpellInfo()->GetDuration();
-
-            if (!entry || !properties || !duration)
+            if (!entry || !properties)
                 return;
 
-            Position const spawnPosition[4][7] =
+            int32 duration = GetSpellInfo()->GetDuration();
+            uint32 randomPos = urand(0, 6);
+
+            Position const SpawnPosition[4][7] =
             {
                 {
                     { 1117.516f, 2848.437f, 92.14017f },
@@ -966,7 +1058,7 @@ public:
 
             uint32 stone = GetCaster()->ToCreature()->AI()->GetData(DATA_JUMP_POSITION);
 
-            if (TempSummon* summon = GetCaster()->GetMap()->SummonCreature(entry, spawnPosition[stone][urand(0, 6)], properties, duration, GetCaster()))
+            if (TempSummon* summon = GetCaster()->GetMap()->SummonCreature(entry, SpawnPosition[stone][randomPos], properties, duration, GetCaster()))
                 summon->SetTempSummonType(TEMPSUMMON_MANUAL_DESPAWN);
         }
 
@@ -984,8 +1076,8 @@ public:
 
 enum WaterSpoutQuestCreditSpells
 {
-    SPELL_AYSA_CONGRATS_TIMER       = 128589,
-    SPELL_SUMMON_SPIRIT_OF_WATER    = 103538
+    SPELL_AYSA_CONGRATS_TIMER = 128589,
+    SPELL_SUMMON_SPIRIT_OF_WATER = 103538
 };
 
 class spell_water_spout_quest_credit : public SpellScriptLoader
@@ -1033,7 +1125,7 @@ public:
         void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
         {
             if (Unit* target = GetTarget())
-                if (Creature* creature = target->FindNearestCreature(54975, target->GetVisibilityRange(), true))
+                if (Creature* creature = target->FindNearestCreature(54975, 70.0f, true))
                     creature->AI()->Talk(0, target);
         }
 
@@ -1061,7 +1153,7 @@ public:
         void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
         {
             if (Unit* target = GetTarget())
-                if (Creature* creature = target->FindNearestCreature(54975, target->GetVisibilityRange(), true))
+                if (Creature* creature = target->FindNearestCreature(54975, 70.0f, true))
                     creature->AI()->Talk(1, target);
         }
 
@@ -1424,6 +1516,11 @@ enum ZhaorenMisc
     DATA_EVADE                      = 6
 };
 
+Position ZhaoPos[] =
+{
+    {699.134f, 4170.06f, 216.06f}, // Center
+};
+
 class npc_zhaoren : public CreatureScript
 {
 public:
@@ -1453,6 +1550,8 @@ public:
                 (*itr)->RemoveAura(SPELL_FIREWORK_INACTIVE);
                 (*itr)->AI()->SetData(DATA_1, DATA_1);
             }
+            me->GetMotionMaster()->Clear();
+            me->GetMotionMaster()->MovePoint(0, ZhaoPos[0].GetPositionX(), ZhaoPos[0].GetPositionY(), ZhaoPos[0].GetPositionZ());
         }
 
         void EnterCombat(Unit* /*who*/) override
@@ -2527,49 +2626,458 @@ public:
     }
 };
 
+class npc_ji_firepaw_escort : public CreatureScript
+{
+public:
+    npc_ji_firepaw_escort() : CreatureScript("npc_ji_firepaw_escort") { }
+
+    struct npc_ji_firepaw_escortAI : public ScriptedAI
+    {
+        npc_ji_firepaw_escortAI(Creature* creature) : ScriptedAI(creature)
+        {
+            playerGuid = 0;
+        }
+
+        uint64 playerGuid;
+
+        void IsSummonedBy(Unit* summoner) override
+        {
+            //playerGuid = summoner->GetGUID();
+            me->GetMotionMaster()->MoveFollow(summoner, 1.0f, 1.0f, MOTION_SLOT_ACTIVE);
+        }
+
+        void UpdateAI(const uint32 diff)
+        {
+            Player* summoner;
+            //Player* summoner = sObjectAccessor->FindPlayer(playerGuid);
+//            if (!summoner)
+                return;
+
+            if (Unit* target = summoner->GetVictim())
+            {
+                me->Attack(target, true);
+                DoMeleeAttackIfReady();
+                return;
+            }
+
+            if ((summoner->GetQuestStatus(29780) == QUEST_STATUS_COMPLETE || summoner->GetQuestStatus(29780) == QUEST_STATUS_REWARDED) && (summoner->GetQuestStatus(29779) == QUEST_STATUS_COMPLETE
+                || summoner->GetQuestStatus(29779) == QUEST_STATUS_REWARDED) && (summoner->GetQuestStatus(29781) == QUEST_STATUS_COMPLETE || summoner->GetQuestStatus(29781) == QUEST_STATUS_REWARDED))
+                me->DespawnOrUnsummon();
+        }
+    };
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_ji_firepaw_escortAI(creature);
+    }
+};
+
+class npc_ji_firepaw : public CreatureScript
+{
+public:
+    npc_ji_firepaw() : CreatureScript("npc_ji_firepaw")
+    {
+        isSummoned = false;
+    }
+
+    bool isSummoned;
+
+    void SummonHiFirepawHelper(Player* summoner, uint32 entry)
+    {
+        //uint32 phase = summoner->GetPhaseMask();
+        uint32 team = summoner->GetTeam();
+        Position pos;
+
+       // summoner->GetPosition(&pos);
+
+        Guardian* summon = new Guardian(NULL, summoner, false);
+
+      //  if (!summon->Create(sObjectMgr->GenerateLowGuid(HIGHGUID_UNIT), summoner->GetMap(), phase, entry, 0, team, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), pos.GetOrientation()))
+        {
+            delete summon;
+            return;
+        }
+
+
+
+        summon->SetHomePosition(pos);
+        summon->InitStats(0);
+        summoner->GetMap()->AddToMap(summon->ToCreature());
+        summon->InitSummon();
+        summon->InitStatsForLevel(10);
+        summon->SetFollowAngle(summoner->GetAngle(summon));
+        summon->SetReactState(REACT_AGGRESSIVE);
+
+    }
+
+    bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest)
+    {
+        std::list<Creature*> summonList;
+        GetCreatureListWithEntryInGrid(summonList, player, 59960, 6.0f);
+
+        for (auto summoned : summonList)
+            isSummoned = true;
+
+        if (isSummoned == false)
+        {
+            if (quest->GetQuestId() == 29779)
+            {
+                SummonHiFirepawHelper(player, 59960);
+                isSummoned = true;
+            }
+
+            if (quest->GetQuestId() == 29780)
+            {
+                SummonHiFirepawHelper(player, 59960);
+                isSummoned = true;
+            }
+
+            if (quest->GetQuestId() == 29781)
+            {
+                SummonHiFirepawHelper(player, 59960);
+                isSummoned = true;
+            }
+        }
+
+        return true;
+    }
+};
+
+class mob_tushui_trainee : public CreatureScript
+{
+public:
+    mob_tushui_trainee() : CreatureScript("mob_tushui_trainee") { }
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new mob_tushui_trainee_AI(creature);
+    }
+
+    struct mob_tushui_trainee_AI : public ScriptedAI
+    {
+        mob_tushui_trainee_AI(Creature* creature) : ScriptedAI(creature) {}
+
+        enum data
+        {
+            EVENT_1 = 1,
+            EVENT_2 = 2,
+            SPELL = 109080,
+        };
+
+        EventMap events;
+
+        void Reset()
+        {
+            events.Reset();
+            me->SetReactState(REACT_DEFENSIVE);
+            me->RemoveUnitFlag(UnitFlags(UNIT_FLAG_IMMUNE_TO_PC | UNIT_FLAG_IMMUNE_TO_NPC));
+            events.RescheduleEvent(EVENT_2, 5000);
+        }
+
+        void EnterCombat(Unit* unit)
+        {
+            events.RescheduleEvent(EVENT_1, 5000);
+            events.CancelEvent(EVENT_2);
+        }
+
+        void DamageTaken(Unit* attacker , uint32& damage) override
+        {
+            if (attacker && me->HealthBelowPctDamaged(5, damage))
+            {
+                if (attacker->GetTypeId() == TYPEID_PLAYER)
+                    attacker->ToPlayer()->KilledMonsterCredit(54586, ObjectGuid::Empty);
+                me->HandleEmoteCommand(EMOTE_ONESHOT_SALUTE);
+                me->CombatStop();
+                me->SetFullHealth();
+                me->AddUnitFlag(UnitFlags(UNIT_FLAG_IMMUNE_TO_PC | UNIT_FLAG_IMMUNE_TO_NPC));
+                me->DespawnOrUnsummon(4000);
+                damage = 0;
+            }
+        }
+
+        void UpdateAI(uint32 diff)
+        {
+            UpdateVictim();
+
+            events.Update(diff);
+
+            if (uint32 eventId = events.ExecuteEvent())
+            {
+                switch (eventId)
+                {
+                case EVENT_1:
+                    if (me->GetVictim())
+                        me->CastSpell(me->GetVictim(), SPELL, true);
+                    events.RescheduleEvent(EVENT_1, 5000);
+                    break;
+                case EVENT_2:
+                    me->HandleEmoteCommand(EMOTE_ONESHOT_MONKOFFENSE_ATTACKUNARMEDOFF);
+                    events.RescheduleEvent(EVENT_2, 5000);
+                    break;
+                }
+            }
+            DoMeleeAttackIfReady();
+        }
+    };
+};
+
+// Should be done by summon npc 59591
+class mob_master_shang_xi : public CreatureScript
+{
+public:
+    mob_master_shang_xi() : CreatureScript("mob_master_shang_xi") { }
+
+    bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest)
+    {
+        if (quest->GetQuestId() == 29408) // La lecon du parchemin brulant
+        {
+            creature->AddAura(114610, creature);
+            creature->RemoveUnitFlag(UnitFlags(UNIT_NPC_FLAG_GOSSIP | UNIT_NPC_FLAG_QUESTGIVER));
+            creature->AddUnitFlag(UnitFlags(UNIT_NPC_FLAG_SPELLCLICK));
+        }
+
+        return true;
+    }
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new mob_master_shang_xi_AI(creature);
+    }
+
+    struct mob_master_shang_xi_AI : public ScriptedAI
+    {
+        mob_master_shang_xi_AI(Creature* creature) : ScriptedAI(creature)
+        {
+            checkPlayersTime = 2000;
+        }
+
+        uint32 checkPlayersTime;
+
+        void SpellHit(Unit* caster, const SpellInfo* pSpell)
+        {
+            if (pSpell->Id == 114746) // Attraper la flamme
+            {
+                if (caster->GetTypeId() == TYPEID_PLAYER)
+                {
+                    if (caster->ToPlayer()->GetQuestStatus(29408) == QUEST_STATUS_INCOMPLETE)
+                    {
+                        me->CastSpell(caster, 114611, true);
+                        me->RemoveAurasDueToSpell(114610);
+                        me->AddUnitFlag(UnitFlags(UNIT_NPC_FLAG_GOSSIP | UNIT_NPC_FLAG_QUESTGIVER));
+                        me->RemoveUnitFlag(UnitFlags(UNIT_NPC_FLAG_SPELLCLICK));
+                    }
+                }
+            }
+        }
+
+        void UpdateAI(uint32 diff)
+        {
+            if (checkPlayersTime <= diff)
+            {
+                std::list<Player*> playerList;
+                GetPlayerListInGrid(playerList, me, 5.0f);
+
+                bool playerWithQuestNear = false;
+
+                for (std::list<Player*>::const_iterator itr = playerList.begin(); itr != playerList.end(); ++itr)
+                {
+                    if ((*itr)->GetQuestStatus(29408) == QUEST_STATUS_INCOMPLETE && !(*itr)->HasItemCount(80212))
+                        playerWithQuestNear = true;
+                }
+
+                if (playerWithQuestNear && !me->HasAura(114610))
+                {
+                    me->AddAura(114610, me);
+                    me->RemoveUnitFlag(UnitFlags(UNIT_NPC_FLAG_GOSSIP | UNIT_NPC_FLAG_QUESTGIVER));
+                    me->AddUnitFlag(UnitFlags(UNIT_NPC_FLAG_SPELLCLICK));
+                }
+                else if (!playerWithQuestNear && me->HasAura(114610))
+                {
+                    me->RemoveAurasDueToSpell(114610);
+                    me->AddUnitFlag(UnitFlags(UNIT_NPC_FLAG_GOSSIP | UNIT_NPC_FLAG_QUESTGIVER));
+                    me->RemoveUnitFlag(UnitFlags(UNIT_NPC_FLAG_SPELLCLICK));
+                }
+
+                checkPlayersTime = 2000;
+            }
+            else
+                checkPlayersTime -= diff;
+        }
+    };
+};
+
+// cast 88811 for check something
+class boss_jaomin_ro : public CreatureScript
+{
+public:
+    boss_jaomin_ro() : CreatureScript("boss_jaomin_ro") { }
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new boss_jaomin_roAI(creature);
+    }
+
+    struct boss_jaomin_roAI : public ScriptedAI
+    {
+        boss_jaomin_roAI(Creature* creature) : ScriptedAI(creature) {}
+
+        enum eEvents
+        {
+            EVENT_JAOMIN_JUMP = 1,
+            EVENT_HIT_CIRCLE = 2,
+            EVENT_FALCON = 3,
+            EVENT_RESET = 4,
+        };
+
+        EventMap events;
+        bool isInFalcon;
+        bool fightEnd;
+
+        void EnterCombat(Unit* unit)
+        {
+            events.RescheduleEvent(EVENT_JAOMIN_JUMP, 1000);
+            events.RescheduleEvent(EVENT_HIT_CIRCLE, 2000);
+        }
+
+        void Reset()
+        {
+            events.Reset();
+            me->SetReactState(REACT_DEFENSIVE);
+            me->SetDisplayId(39755);
+            me->RemoveUnitFlag(UnitFlags(UNIT_FLAG_IMMUNE_TO_PC | UNIT_FLAG_IMMUNE_TO_NPC | UNIT_FLAG_NOT_ATTACKABLE_1));
+            isInFalcon = false;
+            fightEnd = false;
+        }
+
+        void DamageTaken(Unit* attacker, uint32& damage) override
+        {
+            if (me->HealthBelowPctDamaged(30, damage) && !isInFalcon)
+            {
+                isInFalcon = true;
+                me->SetDisplayId(39796); //faucon
+                events.RescheduleEvent(EVENT_FALCON, 1000);
+                events.CancelEvent(EVENT_JAOMIN_JUMP);
+                events.CancelEvent(EVENT_HIT_CIRCLE);
+            }
+
+            if (me->HealthBelowPctDamaged(5, damage) && !fightEnd)
+            {
+                std::list<Player*> playerList;
+                GetPlayerListInGrid(playerList, me, 10.0f);
+                for (std::list<Player*>::const_iterator itr = playerList.begin(); itr != playerList.end(); ++itr)
+                    (*itr)->KilledMonsterCredit(me->GetEntry(), ObjectGuid::Empty);
+
+                fightEnd = true;
+                me->AttackStop();
+                me->SetFullHealth();
+                me->AddUnitFlag(UnitFlags(UNIT_FLAG_IMMUNE_TO_PC | UNIT_FLAG_IMMUNE_TO_NPC | UNIT_FLAG_NOT_ATTACKABLE_1));
+                attacker->AttackStop();
+                me->SetDisplayId(39755);
+                me->HandleEmoteCommand(EMOTE_ONESHOT_SALUTE);
+                events.Reset();
+                events.RescheduleEvent(EVENT_RESET, 9000);
+                DoCast(me, 108959, true);
+                damage = 0;
+            }
+
+            if (damage >= me->GetHealth())
+                damage = 0;
+        }
+
+        void UpdateAI(uint32 diff)
+        {
+            if (!UpdateVictim())
+                return;
+
+            events.Update(diff);
+
+            if (me->HasUnitState(UNIT_STATE_CASTING))
+                return;
+          
+            if (uint32 eventId = events.ExecuteEvent())
+            {
+                switch (eventId)
+                {
+                case EVENT_JAOMIN_JUMP:
+                    DoCastVictim(108938);
+                    events.RescheduleEvent(EVENT_JAOMIN_JUMP, 30000);
+                    break;
+                case EVENT_HIT_CIRCLE:
+                    DoCastVictim(119301);
+                    events.RescheduleEvent(EVENT_HIT_CIRCLE, 8000);
+                    break;
+                case EVENT_FALCON:
+                    DoCast(108935);
+                    events.RescheduleEvent(EVENT_FALCON, 6000);
+                    break;
+                case EVENT_RESET:
+                    me->NearTeleportTo(me->GetHomePosition());
+                    EnterEvadeMode();
+                    break;
+                }
+            }
+            DoMeleeAttackIfReady();
+        }
+    };
+};
+
 void AddSC_the_wandering_isle()
 {
-    new at_cave_of_meditation();
+    //spells
     new spell_summon_troublemaker();
     new spell_meditation_timer_bar();
     new spell_cave_of_scrolls_comp_timer_aura();
-    new q_the_way_of_the_tushui();
     new spell_summon_living_air();
-    new q_only_the_worthy_shall_pass();
     new spell_fan_the_flames();
-    new q_passion_of_shenzin_su();
-    new at_singing_pools_transform();
-    new npc_balance_pole();
-    new npc_tushui_monk_on_pole();
-    new at_singing_pools_training_bell();
     new spell_rock_jump_a();
-    new npc_shu_playing();
-    new spell_shu_jump_to_rock();
+    new spell_jump_to_front_right();
+    new spell_jump_to_front_left();
+    new spell_jump_to_back_right();
+    new spell_jump_to_back_left();
     new spell_summon_water_spout();
     new spell_water_spout_quest_credit();
     new spell_aysa_congrats_timer();
     new spell_aysa_congrats_trigger_aura();
-    new at_temple_of_five_dawns_summon_zhaoren();
     new spell_monkey_wisdom_text();
     new spell_ruk_ruk_ooksplosions();
-    new npc_ruk_ruk();
-    new npc_ruk_ruk_rocket();
-    new npc_zhaoren();
     new spell_master_shang_final_escort_say();
-    new npc_shen_zin_shu_bunny();
     new spell_injured_sailor_feign_death();
     new spell_rescue_injured_sailor();
-    new at_wreck_of_the_skyseeker_injured_sailor();
-    new npc_aysa_vordraka_fight();
     new spell_tempered_fury();
-    new npc_vordraka();
     new spell_summon_deep_sea_aggressor();
-    new areatrigger_healing_sphere();
-    new npc_healers_active_bunny();
     new spell_healing_shenzin_su();
     new spell_turtle_healed_phase_timer();
     new spell_ally_horde_argument();
     new spell_pandaren_faction_choice();
     new spell_faction_choice_trigger();
     new spell_balloon_exit_timer();
+
+    //areatrigger
+    new at_cave_of_meditation();
+    new at_singing_pools_transform();
+    new at_singing_pools_training_bell();
+    new at_temple_of_five_dawns_summon_zhaoren();
+    new at_wreck_of_the_skyseeker_injured_sailor();
+    new areatrigger_healing_sphere();
+
+    //quests
+    new q_the_way_of_the_tushui();   
+    new q_only_the_worthy_shall_pass();   
+    new q_passion_of_shenzin_su();
+
+    //NPC
+    new npc_balance_pole();
+    new npc_tushui_monk_on_pole();
+    new npc_shu_playing();
+    new npc_ji_firepaw_escort();         
+    new npc_ruk_ruk();
+    new npc_ruk_ruk_rocket();
+    new npc_zhaoren();
+    new npc_ji_firepaw();
+    new npc_shen_zin_shu_bunny();
+    new npc_aysa_vordraka_fight();
+    new npc_vordraka();
+    new npc_healers_active_bunny();
+    new mob_tushui_trainee();
+    new mob_master_shang_xi();
 }

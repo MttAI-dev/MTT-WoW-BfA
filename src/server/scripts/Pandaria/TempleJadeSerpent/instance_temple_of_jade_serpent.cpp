@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2016 Firestorm Servers <https://firestorm-servers.com>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -310,28 +309,37 @@ public:
             {
                 // Handle damage of water in wise mari combat
                 // Blizz handle that case with trigger and aura cast every 250 ms, anyway it's work
-                DoOnPlayers([this](Player* player)
-                {
-                    Unit* wiseMari = ObjectAccessor::GetUnit(*player, wiseMariGUID);
-                    if (!wiseMari)
-                        return;
+                Map::PlayerList const& PlayerList = instance->GetPlayers();
 
-                    if (!wiseMari->IsAlive() || !wiseMari->IsInCombat())
-                        return;
+                if (!PlayerList.isEmpty())
+                {
+                    for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
+                    {
+                        Player* plr = i->GetSource();
+                        if (!plr)
+                            continue;
+
+                        Unit* wiseMari = ObjectAccessor::GetUnit(*plr, wiseMariGUID);
+                        if (!wiseMari)
+                            continue;
+
+                        if (!wiseMari->IsAlive() || !wiseMari->IsInCombat())
+                            continue;
 
                     // position : center of the wise mari's room
-                    Position pos = player->GetPosition();
+                    Position pos = plr->GetPosition();
 
-                    if ((player->GetDistance(roomCenter) < 20.00f && roomCenter.HasInArc((float)M_PI, &pos))
-                        || (!roomCenter.HasInArc((float)M_PI, &pos) && player->GetDistance(roomCenter) < 14.00f))
+                    if ((plr->GetDistance(roomCenter) < 20.00f && roomCenter.HasInArc((float)M_PI, &pos))
+                        || (!roomCenter.HasInArc((float)M_PI, &pos) && plr->GetDistance(roomCenter) < 14.00f))
                     {
-                        if (player->GetPositionZ() > 174.05f && player->GetPositionZ() < 174.23f)
-                            player->CastSpell(player, SPELL_CORRUPTED_WATERS, true);
+                        if (plr->GetPositionZ() > 174.05f && plr->GetPositionZ() < 174.23f)
+                            plr->CastSpell(plr, SPELL_CORRUPTED_WATERS, true);
                     }
 
-                    if (player->GetDistance(roomCenter) < 30.00f && player->GetPositionZ() > 170.19f && player->GetPositionZ() < 170.215f)
-                        player->CastSpell(player, SPELL_CORRUPTED_WATERS, true);
-                });
+                    if (plr->GetDistance(roomCenter) < 30.00f && plr->GetPositionZ() > 170.19f && plr->GetPositionZ() < 170.215f)
+                        plr->CastSpell(plr, SPELL_CORRUPTED_WATERS, true);
+                }
+              }
                 waterDamageTimer = 250;
             }
             else
@@ -757,10 +765,18 @@ public:
                             go->SetGoState(GO_STATE_ACTIVE);
                         eventStatus_lorewalkter_stonestep = STATUS_LOREWALKER_STONESTEP_FINISH;
 
-                        DoOnPlayers([](Player* player)
+                        Map::PlayerList const& PlayerList = instance->GetPlayers();
+
+                        if (!PlayerList.isEmpty())
                         {
-                            player->CastSpell(player, SPELL_LOREWALKER_ALACRITY, false);
-                        });
+                            for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
+                            {
+                                Player* plr = i->GetSource();
+                                if ( !plr)
+                                    continue;
+                                plr->CastSpell(plr, SPELL_LOREWALKER_ALACRITY, false);
+                            }
+                        }
                     }
                 }
             }
@@ -776,10 +792,18 @@ public:
                             go->SetGoState(GO_STATE_ACTIVE);
                         eventStatus_lorewalkter_stonestep = STATUS_LOREWALKER_STONESTEP_FINISH;
 
-                        DoOnPlayers([](Player* player)
+                        Map::PlayerList const& PlayerList = instance->GetPlayers();
+
+                        if (!PlayerList.isEmpty())
                         {
-                            player->CastSpell(player, SPELL_LOREWALKER_ALACRITY, false);
-                        });
+                            for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
+                            {
+                                Player* plr = i->GetSource();
+                                if ( !plr)
+                                    continue;
+                                plr->CastSpell(plr, SPELL_LOREWALKER_ALACRITY, false);
+                            }
+                        }
                     }
                 }
             }
@@ -791,10 +815,18 @@ public:
 
                 eventStatus_lorewalkter_stonestep = STATUS_LOREWALKER_STONESTEP_FINISH;
 
-                DoOnPlayers([](Player* player)
+                Map::PlayerList const& PlayerList = instance->GetPlayers();
+
+                if (!PlayerList.isEmpty())
                 {
-                    player->CastSpell(player, SPELL_LOREWALKER_ALACRITY, false);
-                });
+                    for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
+                    {
+                        Player* plr = i->GetSource();
+                        if ( !plr)
+                            continue;
+                        plr->CastSpell(plr, SPELL_LOREWALKER_ALACRITY, false);
+                    }
+                }
             }
 
             if (unit->ToCreature() && unit->ToCreature()->GetEntry() == CREATURE_SUN)

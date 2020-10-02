@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2016 Firestorm Servers <https://firestorm-servers.com>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,11 +16,11 @@
  */
 
 #include "highmaul.h"
-#include "Chat.h"
 #include "GameObjectAI.h"
 #include "Group.h"
-#include "ObjectMgr.h"
 #include "ScriptedGossip.h"
+#include "Chat.h"
+#include "ObjectMgr.h"
 
 /// Gharg positions
 Position const g_GhargFirstPos = { 3466.11f, 7577.58f, 15.203f, 0.8954f };
@@ -3665,10 +3664,11 @@ class go_highmaul_instance_portal : public GameObjectScript
                         std::list<Player*> playerList;
                         go->GetPlayerListInGrid(playerList, 5.0f);
 
-                        WorldSafeLocsEntry const* safeLoc = sObjectMgr->GetWorldSafeLoc(ExitTarget);
+                        auto entry = sObjectMgr->GetWorldSafeLoc(ExitTarget);
+                        Position pos = { entry->Loc.GetPositionX(), entry->Loc.GetPositionY(), entry->Loc.GetPositionZ() };
 
                         for (Player* player : playerList)
-                            player->TeleportTo(MAP_DRAENOR, safeLoc->Loc);
+                            player->TeleportTo(MAP_DRAENOR, pos);
                     }
                     else
                         m_CheckTimer -= diff;

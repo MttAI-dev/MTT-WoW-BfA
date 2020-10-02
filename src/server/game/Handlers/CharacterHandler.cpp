@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,6 +23,7 @@
 #include "Battleground.h"
 #include "BattlegroundPackets.h"
 #include "BattlePetPackets.h"
+#include "BattlePayMgr.h"
 #include "CalendarMgr.h"
 #include "CharacterCache.h"
 #include "CharacterPackets.h"
@@ -298,6 +299,10 @@ bool LoginQueryHolder::Initialize()
     stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_ARCHAEOLOGY_HISTORY);
     stmt->setUInt64(0, lowGuid);
     res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_ARCHAEOLOGY_HISTORY, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_COMPLETED_CHALLENGE);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_COMPLETED_CHALLENGES, stmt);
 
     return res;
 }
@@ -745,7 +750,7 @@ void WorldSession::HandleCharCreateOpcode(WorldPackets::Character::CreateCharact
             CharacterDatabaseTransaction characterTransaction = CharacterDatabase.BeginTransaction();
             LoginDatabaseTransaction trans = LoginDatabase.BeginTransaction();
 
-                                                                  // Player created, save it now
+            // Player created, save it now
             newChar->SaveToDB(trans, characterTransaction, true);
             createInfo->CharCount += 1;
 
@@ -904,9 +909,14 @@ void WorldSession::AbortLogin(WorldPackets::Character::LoginFailureReason reason
     SendPacket(WorldPackets::Character::CharacterLoginFailed(reason).Write());
 }
 
-void WorldSession::HandleLoadScreenOpcode(WorldPackets::Character::LoadingScreenNotify& /*loadingScreenNotify*/)
+void WorldSession::HandleLoadScreenOpcode(WorldPackets::Character::LoadingScreenNotify& loadingScreenNotify)
 {
-    // TODO: Do something with this packet
+    if (!loadingScreenNotify.Showing)
+    {
+        if (auto player = GetPlayer())
+            player->SendInitialPacketsAfterAddToMap();
+        m_playerLoading.Clear();
+    }
 }
 
 void WorldSession::HandlePlayerLogin(LoginQueryHolder* holder)
@@ -1008,40 +1018,26 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder* holder)
 
         if (ChrClassesEntry const* cEntry = sChrClassesStore.LookupEntry(pCurrChar->getClass()))
         {
-            if (pCurrChar->getClass() == CLASS_DEMON_HUNTER) /// @todo: find a more generic solution
+            if (pCurrChar->getClass() == CLASS_DEMON_HUNTER)
                 pCurrChar->SendMovieStart(469);
-            else if (cEntry->CinematicSequenceID)
+            else if (cEntry->CinematicSequenceID && pCurrChar->GetMapId() != 2297)
                 pCurrChar->SendCinematicStart(cEntry->CinematicSequenceID);
             else if (ChrRacesEntry const* rEntry = sChrRacesStore.LookupEntry(pCurrChar->getRace()))
             {
-                if (rEntry->CinematicSequenceID)
+                if (pCurrChar->getRace() == RACE_NIGHTBORNE && pCurrChar->getClass() != 6)
+                    pCurrChar->GetSceneMgr().PlayScene(1900);
+                else if (pCurrChar->getRace() == RACE_HIGHMOUNTAIN_TAUREN && pCurrChar->getClass() != 6)
+                    pCurrChar->GetSceneMgr().PlayScene(1901);
+                else if (pCurrChar->getRace() == RACE_VOID_ELF && pCurrChar->getClass() != 6)
+                    pCurrChar->GetSceneMgr().PlayScene(1903);
+                else if (pCurrChar->getRace() == RACE_LIGHTFORGED_DRAENEI && pCurrChar->getClass() != 6)
+                    pCurrChar->GetSceneMgr().PlayScene(1902);
+                else if (pCurrChar->getRace() == RACE_DARK_IRON_DWARF)
+                    pCurrChar->GetSceneMgr().PlayScene(2137);
+                else if (pCurrChar->getRace() == RACE_MAGHAR_ORC)
+                    pCurrChar->GetSceneMgr().PlaySceneByPackageId(2085, 2);
+                else if (cEntry->CinematicSequenceID && pCurrChar->GetMapId() != 2297)
                     pCurrChar->SendCinematicStart(rEntry->CinematicSequenceID);
-                else
-                {
-                    switch (pCurrChar->getRace())
-                    {
-                      case RACE_HIGHMOUNTAIN_TAUREN:
-                            pCurrChar->GetSceneMgr().PlayScene(1901);
-                            break;
-                        case RACE_NIGHTBORNE:
-                            pCurrChar->GetSceneMgr().PlayScene(1900);
-                            break;
-                        case RACE_LIGHTFORGED_DRAENEI:
-                            pCurrChar->GetSceneMgr().PlayScene(1902);
-                            break;
-                        case RACE_VOID_ELF:
-                            pCurrChar->GetSceneMgr().PlayScene(1903);
-                            break;
-                        /*case RACE_DARK_IRON_DWARF:
-                            pCurrChar->GetSceneMgr().PlaySceneByPackageId(2086, 2);
-                            break;*/
-                        case RACE_MAGHAR_ORC:
-                            pCurrChar->GetSceneMgr().PlaySceneByPackageId(2085, 2);
-                            break;
-                        default:
-                            break;
-                    }
-                }
             }
 
             // send new char string if not empty
@@ -1257,7 +1253,8 @@ void WorldSession::SendFeatureSystemStatus()
     features.EuropaTicketSystemStatus->SuggestionsEnabled = sWorld->getBoolConfig(CONFIG_SUPPORT_SUGGESTIONS_ENABLED);
 
     features.CharUndeleteEnabled = sWorld->getBoolConfig(CONFIG_FEATURE_SYSTEM_CHARACTER_UNDELETE_ENABLED);
-    features.BpayStoreEnabled = sWorld->getBoolConfig(CONFIG_FEATURE_SYSTEM_BPAY_STORE_ENABLED);
+    features.BpayStoreEnabled = GetBattlePayMgr()->IsAvailable();
+    features.BpayStoreAvailable = GetBattlePayMgr()->IsAvailable();
     features.WarModeFeatureEnabled = sWorld->getBoolConfig(CONFIG_FEATURE_SYSTEM_WAR_MODE_ENABLED);
     features.IsMuted = !CanSpeak();
 
@@ -2047,40 +2044,58 @@ void WorldSession::HandleCharRaceOrFactionChangeCallback(std::shared_ptr<WorldPa
         trans->Append(stmt);
 
         // Race specific languages
-        if (factionChangeInfo->RaceID != RACE_ORC && factionChangeInfo->RaceID != RACE_HUMAN && factionChangeInfo->RaceID != RACE_MAGHAR_ORC && factionChangeInfo->RaceID != RACE_KUL_TIRAN)
+        if (factionChangeInfo->RaceID != RACE_ORC && factionChangeInfo->RaceID != RACE_HUMAN && factionChangeInfo->RaceID != RACE_MAGHAR_ORC && factionChangeInfo->RaceID != RACE_KUL_TIRAN && factionChangeInfo->RaceID != RACE_VULPERA)
         {
             stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_CHAR_SKILL_LANGUAGE);
             stmt->setUInt64(0, lowGuid);
 
-            uint16 raceLang = 0;
-
             switch (factionChangeInfo->RaceID)
             {
                 case RACE_DWARF:
-                case RACE_DARK_IRON_DWARF:      raceLang = 111;     break;
+                case RACE_DARK_IRON_DWARF:
+                    stmt->setUInt16(1, 111);
+                    break;
                 case RACE_DRAENEI:
-                case RACE_LIGHTFORGED_DRAENEI:  raceLang = 759;     break;
-                case RACE_GNOME:                raceLang = 313;     break;
-                case RACE_NIGHTELF:             raceLang = 113;     break;
-                case RACE_WORGEN:               raceLang = 791;     break;
-                case RACE_UNDEAD_PLAYER:        raceLang = 673;     break;
+                case RACE_LIGHTFORGED_DRAENEI:
+                    stmt->setUInt16(1, 759);
+                    break;
+                case RACE_MECHAGNOME:
+                case RACE_GNOME:
+                    stmt->setUInt16(1, 313);
+                    break;
+                case RACE_NIGHTELF:
+                    stmt->setUInt16(1, 113);
+                    break;
+                case RACE_WORGEN:
+                    stmt->setUInt16(1, 791);
+                    break;
+                case RACE_UNDEAD_PLAYER:
+                    stmt->setUInt16(1, 673);
+                    break;
                 case RACE_TAUREN:
-                case RACE_HIGHMOUNTAIN_TAUREN:  raceLang = 115;     break;
+                case RACE_HIGHMOUNTAIN_TAUREN:
+                    stmt->setUInt16(1, 115);
+                    break;
                 case RACE_ZANDALARI_TROLL:
-                case RACE_TROLL:                raceLang = 315;     break;
-                case RACE_BLOODELF:             raceLang = 137;     break;
-                case RACE_GOBLIN:               raceLang = 792;     break;
-                case RACE_PANDAREN_ALLIANCE:
-                case RACE_PANDAREN_HORDE:       raceLang = 905;     break;
-                case RACE_NIGHTBORNE:           raceLang = 2464;    break;
-                case RACE_VOID_ELF:             raceLang = 2465;    break;
+                case RACE_TROLL:
+                    stmt->setUInt16(1, 315);
+                    break;
+                case RACE_BLOODELF:
+                case RACE_VOID_ELF:
+                    stmt->setUInt16(1, 137);
+                    break;
+                case RACE_GOBLIN:
+                    stmt->setUInt16(1, 792);
+                    break;
+                case RACE_NIGHTBORNE:
+                    stmt->setUInt16(1, 2464);
+                    break;
                 default:
                     TC_LOG_ERROR("entities.player", "Could not find language data for race (%u).", factionChangeInfo->RaceID);
                     SendCharFactionChange(CHAR_CREATE_ERROR, factionChangeInfo.get());
                     return;
             }
 
-            stmt->setUInt16(1, raceLang);
             trans->Append(stmt);
         }
 

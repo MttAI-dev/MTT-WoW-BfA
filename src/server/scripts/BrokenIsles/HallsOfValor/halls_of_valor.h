@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -53,14 +53,11 @@ enum CreatureIds
     NPC_KING_TOR                = 97084,
 
     NPC_STORM_DRAKE             = 99891,
-    NPC_STORM_DRAKE_HYMDALL     = 97788,
     NPC_STATIC_FIELD            = 97795,
-    NPC_DANCING_BLADE           = 97960,
     NPC_SOLSTEN                 = 97219,
     NPC_SOLSTEN_GHOST           = 102558,
     NPC_OLMYR_THE_ENLIGHTENED   = 97202,
     NPC_OLMYR_GHOST             = 102557,
-    NPC_AEGIS                   = 98364,
 };
 
 enum GameObjects
@@ -82,7 +79,6 @@ enum Actions
 {
     ACTION_EVENT_START,
     ACTION_CAN_JOIN_COMBAT,
-    ACTION_EMPOWERMENT,
 };
 
 enum SpellVisualKit

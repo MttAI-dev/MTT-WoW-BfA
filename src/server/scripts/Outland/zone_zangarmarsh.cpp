@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -31,6 +31,7 @@ EndContentData */
 
 #include "ScriptMgr.h"
 #include "Player.h"
+#include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
 #include "ScriptedEscortAI.h"
 
@@ -367,9 +368,74 @@ public:
     }
 };
 
-/*######
-## AddSC
-######*/
+class npc_mortog_steamhead : public CreatureScript
+{
+public:
+    npc_mortog_steamhead() : CreatureScript("npc_mortog_steamhead") {}
+
+    bool OnGossipHello(Player* player, Creature* creature) override
+    {
+        if (creature->IsVendor() && player->GetReputationRank(942) == REP_EXALTED)
+            AddGossipItemFor(player, GOSSIP_ICON_VENDOR, GOSSIP_TEXT_BROWSE_GOODS, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_TRADE);
+
+        SendGossipMenuFor(player, player->GetGossipTextId(creature), creature->GetGUID());
+
+        return true;
+    }
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    {
+        player->PlayerTalkClass->ClearMenus();
+        //if (action == GOSSIP_ACTION_TRADE)
+          //  player->GetSession()->SendListInventory(creature->GetGUID());
+
+        return true;
+    }
+};
+
+#define GOSSIP_TIMOTHY_DANIELS_ITEM1    "Specialist, eh? Just what kind of specialist are you, anyway?"
+#define GOSSIP_TEXT_BROWSE_POISONS      "Let me browse your reagents and poison supplies."
+
+enum eTimothy
+{
+    GOSSIP_TEXTID_TIMOTHY_DANIELS1 = 9239
+};
+
+class npc_timothy_daniels : public CreatureScript
+{
+public:
+    npc_timothy_daniels() : CreatureScript("npc_timothy_daniels") {}
+
+    bool OnGossipHello(Player* player, Creature* creature) override
+    {
+        if (creature->IsQuestGiver())
+            player->PrepareQuestMenu(creature->GetGUID());
+
+        if (creature->IsVendor())
+            AddGossipItemFor(player, GOSSIP_ICON_VENDOR, GOSSIP_TEXT_BROWSE_POISONS, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_TRADE);
+
+        AddGossipItemFor(player, GOSSIP_ICON_CHAT, GOSSIP_TIMOTHY_DANIELS_ITEM1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
+        SendGossipMenuFor(player, player->GetGossipTextId(creature), creature->GetGUID());
+        return true;
+    }
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    {
+        ClearGossipMenuFor(player);
+
+        switch (action)
+        {
+        case GOSSIP_ACTION_INFO_DEF + 1:
+            SendGossipMenuFor(player, GOSSIP_TEXTID_TIMOTHY_DANIELS1, creature->GetGUID());
+            break;
+        case GOSSIP_ACTION_TRADE:
+         //   player->GetSession()->SendListInventory(creature->GetGUID());
+            break;
+        }
+
+        return true;
+    }
+};
 
 void AddSC_zangarmarsh()
 {
@@ -377,4 +443,6 @@ void AddSC_zangarmarsh()
     new npc_cooshcoosh();
     new npc_elder_kuruti();
     new npc_kayra_longmane();
+    new npc_mortog_steamhead();
+    new npc_timothy_daniels();
 }

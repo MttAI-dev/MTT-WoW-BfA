@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -197,7 +197,7 @@ void CreatureTextMgr::LoadCreatureTextLocales()
         std::string localeName   = fields[3].GetString();
 
         LocaleConstant locale    = GetLocaleByName(localeName);
-        if (locale == LOCALE_enUS)
+        if (!IsValidLocale(locale) || locale == LOCALE_enUS)
             continue;
 
         CreatureTextLocale& data = mLocaleTextMap[CreatureTextId(creatureId, groupId, id)];

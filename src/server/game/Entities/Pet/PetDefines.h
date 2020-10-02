@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -35,7 +35,8 @@ enum PetSaveMode
     PET_SAVE_CURRENT_STATE     =  1,  // Saves everything like it is atm
     PET_SAVE_DISMISS           =  2,  // Saves everything like it is atm, but removes auras and sets unactive
     PET_SAVE_LOGOUT            =  3,  // Saves everything like it is atm, but removes auras
-    PET_SAVE_NEW_PET           =  4
+    PET_SAVE_NEW_PET           =  4,
+    PET_SAVE_NOT_IN_SLOT       = 100 // for avoid conflict with stable size grow will use 100
 };
 
 enum PetStableSlot

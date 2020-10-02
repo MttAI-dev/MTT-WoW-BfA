@@ -1,0 +1,147 @@
+UPDATE `creature_template_model` SET `displayscale`='0.90' WHERE `creatureid`=57626;
+UPDATE `creature` SET `equipment_id`=0 WHERE `id` IN (2002002,132678,132316,133077,130919);
+UPDATE `creature` SET `phasegroup`=0 WHERE `guid`=401248;
+UPDATE `creature` SET `map`=1865 WHERE `guid`=14207900;
+UPDATE `creature_addon` SET `emote`=0 WHERE `guid`=20508437;
+DELETE FROM `creature_addon` WHERE `guid`=358500;
+UPDATE `creature` SET `movementtype`=0 WHERE `guid` IN (210426355,210426356);
+UPDATE `gameobject`SET `spawndifficulties`=0 WHERE `map`=1220 AND `spawndifficulties`=1;
+UPDATE `gameobject`SET `spawndifficulties`=0 WHERE `map`=654 AND `spawndifficulties`=1;
+
+UPDATE `creature_template` SET `unit_flags`=295680 WHERE `entry`=130073;
+
+DELETE FROM `gameobject` WHERE `guid` IN (280200493,280200491,280200470,280200462,280200461,280200454,105624,105622,105613);
+
+UPDATE `quest_template` SET `rewardskilllineid`=0 WHERE `id` IN
+(42057,
+42059,
+42060,
+42121,
+42122,
+42152,
+42153,
+42155,
+42156,
+42161,
+42163,
+42164,
+42216,
+42219,
+42246,
+42247,
+42248,
+42249,
+42252,
+42253,
+42254,
+42256,
+42257,
+42258,
+42259,
+42260,
+42263,
+42264,
+42298,
+42299,
+42300,
+42301,
+42302,
+42304,
+42306,
+42307,
+42310,
+42311,
+42312,
+42313,
+42314,
+42315,
+42317,
+42318,
+42319,
+42320,
+42321,
+42322,
+42324,
+42325,
+42326,
+42335,
+42336,
+42337,
+42341,
+42342,
+42343,
+42344,
+42346,
+42347,
+42356,
+42357,
+42359,
+42348);
+
+UPDATE `quest_details` SET `Emote3`=0 WHERE `id`=11633;
+UPDATE `quest_details` SET `Emote3`=0 WHERE `id`=11907;
+UPDATE `quest_details` SET `Emote3`=0 WHERE `id`=11647;
+UPDATE `quest_details` SET `Emote3`=0 WHERE `id`=11640;
+UPDATE `quest_details` SET `Emote4`=0 WHERE `id`=11907;
+UPDATE `quest_details` SET `Emote3`=0 WHERE `id`=11898;
+
+
+
+
+DELETE FROM creature_equip_template where creatureid in
+( 106655 ,
+ 127976 ,
+ 127237 ,
+ 136779 ,
+ 136310 ,
+ 136309 ,
+ 128296 ,
+ 128296 ,
+ 128295 ,
+ 128295 ,
+ 129276 ,
+ 129276 ,
+ 138717 ,
+ 138716 ,
+ 138707 ,
+ 138715 ,
+ 132316 ,
+ 132678 ,
+ 131095 ,
+ 122613 ,
+ 128773 ,
+ 131978 ,
+ 124547 ,
+ 128726 ,
+ 128726 ,
+ 128185 ,
+ 127609 ,
+ 124703 ,
+ 124703 ,
+ 127960 ,
+ 127004 ,
+ 126529 ,
+ 124513 ,
+ 124428 ,
+ 122987 ,
+ 122102 ,
+ 133077 ,
+ 133077 ,
+ 127770 ,
+ 127770 ,
+ 127770 ,
+ 129561 ,
+ 121744 ,
+ 121744 ,
+ 122760 ,
+ 123335 ,
+ 127101 ,
+ 121566 ,
+ 121566 ,
+ 121577 ,
+ 121577 ,
+ 121581 ,
+ 121581 ,
+ 126560 ,
+ 129529 ,
+ 129529 );

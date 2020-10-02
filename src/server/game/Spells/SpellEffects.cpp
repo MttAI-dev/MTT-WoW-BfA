@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -45,6 +45,7 @@
 #include "GossipDef.h"
 #include "GridNotifiers.h"
 #include "Group.h"
+#include "GroupMgr.h"
 #include "Guild.h"
 #include "InstanceScript.h"
 #include "Item.h"
@@ -82,6 +83,7 @@
 #include "World.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
+#include "WaypointManager.h"
 
 NonDefaultConstructible<pEffect> SpellEffects[TOTAL_SPELL_EFFECTS] =
 {
@@ -259,7 +261,7 @@ NonDefaultConstructible<pEffect> SpellEffects[TOTAL_SPELL_EFFECTS] =
     &Spell::EffectSummonObjectWild,                         //171 SPELL_EFFECT_SUMMON_OBJECT_PERSONNAL
     &Spell::EffectResurrectWithAura,                        //172 SPELL_EFFECT_RESURRECT_WITH_AURA
     &Spell::EffectUnlockGuildVaultTab,                      //173 SPELL_EFFECT_UNLOCK_GUILD_VAULT_TAB
-    &Spell::EffectNULL,                                     //174 SPELL_EFFECT_APPLY_AURA_ON_PET
+    &Spell::EffectApplyAura,                                //174 SPELL_EFFECT_APPLY_AURA_ON_PET
     &Spell::EffectUnused,                                   //175 SPELL_EFFECT_175  unused
     &Spell::EffectSanctuary,                                //176 SPELL_EFFECT_SANCTUARY_2
     &Spell::EffectNULL,                                     //177 SPELL_EFFECT_177
@@ -267,7 +269,7 @@ NonDefaultConstructible<pEffect> SpellEffects[TOTAL_SPELL_EFFECTS] =
     &Spell::EffectCreateAreaTrigger,                        //179 SPELL_EFFECT_CREATE_AREATRIGGER
     &Spell::EffectNULL,                                     //180 SPELL_EFFECT_UPDATE_AREATRIGGER
     &Spell::EffectRemoveTalent,                             //181 SPELL_EFFECT_REMOVE_TALENT
-    &Spell::EffectNULL,                                     //182 SPELL_EFFECT_DESPAWN_AREATRIGGER
+    &Spell::EffectDespawnAreatrigger,                       //182 SPELL_EFFECT_DESPAWN_AREATRIGGER
     &Spell::EffectNULL,                                     //183 SPELL_EFFECT_183
     &Spell::EffectNULL,                                     //184 SPELL_EFFECT_REPUTATION
     &Spell::EffectNULL,                                     //185 SPELL_EFFECT_185
@@ -275,7 +277,7 @@ NonDefaultConstructible<pEffect> SpellEffects[TOTAL_SPELL_EFFECTS] =
     &Spell::EffectNULL,                                     //187 SPELL_EFFECT_RANDOMIZE_ARCHAEOLOGY_DIGSITES
     &Spell::EffectNULL,                                     //188 SPELL_EFFECT_188
     &Spell::EffectLootWithToast,                            //189 SPELL_EFFECT_LOOT
-    &Spell::EffectNULL,                                     //190 SPELL_EFFECT_190
+    &Spell::EffectJoinOrLeavePlayerParty,                   //190 SPELL_EFFECT_190 SPELL_EFFECT_JOIN_LEAVE_PLAYER_PARTY
     &Spell::EffectNULL,                                     //191 SPELL_EFFECT_TELEPORT_TO_DIGSITE
     &Spell::EffectUncageBattlePet,                          //192 SPELL_EFFECT_UNCAGE_BATTLEPET
     &Spell::EffectNULL,                                     //193 SPELL_EFFECT_START_PET_BATTLE
@@ -287,7 +289,7 @@ NonDefaultConstructible<pEffect> SpellEffects[TOTAL_SPELL_EFFECTS] =
     &Spell::EffectNULL,                                     //199 SPELL_EFFECT_199
     &Spell::EffectHealBattlePetPct,                         //200 SPELL_EFFECT_HEAL_BATTLEPET_PCT
     &Spell::EffectEnableBattlePets,                         //201 SPELL_EFFECT_ENABLE_BATTLE_PETS
-    &Spell::EffectApplyAuraWithAmount,                      //202 SPELL_EFFECT_APPLY_AURA_WITH_AMOUNT
+    &Spell::EffectApplyAura,                                //202 SPELL_EFFECT_202
     &Spell::EffectRemoveAura,                               //203 SPELL_EFFECT_REMOVE_AURA_2
     &Spell::EffectNULL,                                     //204 SPELL_EFFECT_CHANGE_BATTLEPET_QUALITY
     &Spell::EffectLaunchQuestChoice,                        //205 SPELL_EFFECT_LAUNCH_QUEST_CHOICE
@@ -311,7 +313,7 @@ NonDefaultConstructible<pEffect> SpellEffects[TOTAL_SPELL_EFFECTS] =
     &Spell::EffectNULL,                                     //223 SPELL_EFFECT_CHANGE_ITEM_BONUSES
     &Spell::EffectActivateGarrisonBuilding,                 //224 SPELL_EFFECT_ACTIVATE_GARRISON_BUILDING
     &Spell::EffectNULL,                                     //225 SPELL_EFFECT_GRANT_BATTLEPET_LEVEL
-    &Spell::EffectNULL,                                     //226 SPELL_EFFECT_226
+    &Spell::EffectPlayerMoveWaypoints,                      //226 SPELL_EFFECT_226
     &Spell::EffectTeleportToLFG,                            //227 SPELL_EFFECT_TELEPORT_TO_LFG_DUNGEON
     &Spell::EffectNULL,                                     //228 SPELL_EFFECT_228
     &Spell::EffectNULL,                                     //229 SPELL_EFFECT_SET_FOLLOWER_QUALITY
@@ -334,7 +336,7 @@ NonDefaultConstructible<pEffect> SpellEffects[TOTAL_SPELL_EFFECTS] =
     &Spell::EffectNULL,                                     //246 SPELL_EFFECT_FINISH_GARRISON_MISSION
     &Spell::EffectNULL,                                     //247 SPELL_EFFECT_ADD_GARRISON_MISSION
     &Spell::EffectNULL,                                     //248 SPELL_EFFECT_FINISH_SHIPMENT
-    &Spell::EffectNULL,                                     //249 SPELL_EFFECT_FORCE_EQUIP_ITEM
+    &Spell::EffectForceEquipItem,                           //249 SPELL_EFFECT_FORCE_EQUIP_ITEM
     &Spell::EffectNULL,                                     //250 SPELL_EFFECT_TAKE_SCREENSHOT
     &Spell::EffectNULL,                                     //251 SPELL_EFFECT_SET_GARRISON_CACHE_SIZE
     &Spell::EffectTeleportUnits,                            //252 SPELL_EFFECT_TELEPORT_UNITS
@@ -352,11 +354,11 @@ NonDefaultConstructible<pEffect> SpellEffects[TOTAL_SPELL_EFFECTS] =
     &Spell::EffectNULL,                                     //264 SPELL_EFFECT_REMOVE_GEM
     &Spell::EffectLearnAzeriteEssencePower,                 //265 SPELL_EFFECT_LEARN_AZERITE_ESSENCE_POWER
     &Spell::EffectNULL,                                     //266 SPELL_EFFECT_266
-    &Spell::EffectNULL,                                     //267 SPELL_EFFECT_267
+    &Spell::EffectCreateConversation,                       //267 SPELL_EFFECT_CREATE_CONVERSATION_GLOBAL
     &Spell::EffectNULL,                                     //268 SPELL_EFFECT_APPLY_MOUNT_EQUIPMENT
     &Spell::EffectNULL,                                     //269 SPELL_EFFECT_UPGRADE_ITEM
     &Spell::EffectNULL,                                     //270 SPELL_EFFECT_270
-    &Spell::EffectNULL,                                     //271 SPELL_EFFECT_APPLY_AREA_AURA_PARTY_NONRANDOM
+    &Spell::EffectApplyAreaAura,                            //271 SPELL_EFFECT_APPLY_AREA_AURA_PARTY_NONRANDOM
 };
 
 void Spell::EffectNULL(SpellEffIndex /*effIndex*/)
@@ -614,18 +616,24 @@ void Spell::EffectDummy(SpellEffIndex effIndex)
     }
 
     // pet auras
-    if (m_caster->GetTypeId() == TYPEID_PLAYER)
+    if (PetAura const* petSpell = sSpellMgr->GetPetAura(m_spellInfo->Id, effIndex))
     {
-        if (PetAura const* petSpell = sSpellMgr->GetPetAura(m_spellInfo->Id, effIndex))
-        {
-            m_caster->ToPlayer()->AddPetAura(petSpell);
-            return;
-        }
+        m_caster->AddPetAura(petSpell);
+        return;
     }
 
     // normal DB scripted effect
     TC_LOG_DEBUG("spells", "Spell ScriptStart spellid %u in EffectDummy(%u)", m_spellInfo->Id, effIndex);
     m_caster->GetMap()->ScriptsStart(sSpellScripts, uint32(m_spellInfo->Id | (effIndex << 24)), m_caster, unitTarget);
+
+    // Script based implementation. Must be used only for not good for implementation in core spell effects
+    // So called only for not proccessed cases
+    if (gameObjTarget)
+        sScriptMgr->OnDummyEffect(m_caster, m_spellInfo->Id, effIndex, gameObjTarget);
+    else if (unitTarget && unitTarget->GetTypeId() == TYPEID_UNIT)
+        sScriptMgr->OnDummyEffect(m_caster, m_spellInfo->Id, effIndex, unitTarget->ToCreature());
+    else if (itemTarget)
+        sScriptMgr->OnDummyEffect(m_caster, m_spellInfo->Id, effIndex, itemTarget);
 }
 
 void Spell::EffectTriggerSpell(SpellEffIndex effIndex)
@@ -643,13 +651,27 @@ void Spell::EffectTriggerSpell(SpellEffIndex effIndex)
         // special cases
         switch (triggered_spell_id)
         {
-            // Vanish (not exist)
-            case 18461:
-            {
-                unitTarget->RemoveMovementImpairingAuras(true);
-                unitTarget->RemoveAurasByType(SPELL_AURA_MOD_STALKED);
-                return;
-            }
+
+             case 153795: //Skyreach: Rukhran - Pierce Armor
+             {
+                 if (unitTarget->HasAura(77535) || unitTarget->HasAura(112048) || unitTarget->HasAura(115308)
+                     || unitTarget->HasAura(132402) || unitTarget->HasAura(132403))
+                 {
+                     return;
+                 }
+                 break;
+             }
+             case 18461:
+             {
+                // unitTarget->RemoveMovementImpairingAuras(true);
+                 if (unitTarget->GetAura(14983)) {
+                     unitTarget->SetPower(POWER_ENERGY, 170.0f);
+                 }
+                 unitTarget->CastSpell(unitTarget, 11327, true);
+                 unitTarget->CombatStop();
+                 return;
+             }
+
             // Demonic Empowerment -- succubus
             case 54437:
             {
@@ -1306,6 +1328,31 @@ void Spell::EffectHeal(SpellEffIndex /*effIndex*/)
 
         addhealth = unitTarget->SpellHealingBonusTaken(caster, m_spellInfo, addhealth, HEAL, effectInfo);
 
+        switch (m_spellInfo->Id)
+        {
+        case 45470:
+        {
+            if (Aura* aur = m_caster->GetAura(77513)) // Mastery: Blood Shield
+            {
+                int32 bp0 = float(addhealth * float(aur->GetEffect(EFFECT_0)->GetAmount() / 100.0f));
+                if (Aura* aurShield = m_caster->GetAura(77535))
+                    bp0 += aurShield->GetEffect(0)->GetAmount();
+
+                if (bp0 > int32(m_caster->GetMaxHealth()))
+                    bp0 = int32(m_caster->GetMaxHealth());
+
+                if (m_caster->HasAura(192567)) // Unending Thirst
+                    m_caster->CastSpell(m_caster, 216019, true);
+
+                m_caster->CastCustomSpell(m_caster, 77535, &bp0, nullptr, nullptr, true);
+            }
+            break;
+        }
+        
+        default:
+            break;
+        }
+
         // Remove Grievious bite if fully healed
         if (unitTarget->HasAura(48920) && (unitTarget->GetHealth() + addhealth >= unitTarget->GetMaxHealth()))
             unitTarget->RemoveAura(48920);
@@ -1330,6 +1377,17 @@ void Spell::EffectHealPct(SpellEffIndex /*effIndex*/)
     heal = unitTarget->SpellHealingBonusTaken(m_originalCaster, m_spellInfo, heal, HEAL, effectInfo);
 
     m_healing += heal;
+
+    switch (m_spellInfo->Id)
+    {
+    case 197509: // Bloodworm
+        if (!unitTarget->IsFullHealth())
+            if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(195679))
+                heal = CalculatePct(unitTarget->GetMaxHealth() - unitTarget->GetHealth(), spellInfo->GetEffect(EFFECT_2)->CalcValue(unitTarget));
+        break;
+    default:
+        break;
+    }
 }
 
 void Spell::EffectHealMechanical(SpellEffIndex /*effIndex*/)
@@ -1621,6 +1679,18 @@ void Spell::EffectEnergize(SpellEffIndex /*effIndex*/)
                     AddPct(damage, 25);
             break;
         }
+        case 219809: // Tombstone
+        {
+            if (Aura* aura = unitTarget->GetAura(195181))
+            {
+                if (aura->GetStackAmount() > 5)
+                    damage = m_spellInfo->GetEffect(EFFECT_2)->CalcValue(unitTarget) * aura->GetStackAmount() * 5;
+                else
+                    damage = m_spellInfo->GetEffect(EFFECT_2)->CalcValue(unitTarget) * aura->GetStackAmount() * 10;
+            }
+            break;
+        }
+		
         default:
             break;
     }
@@ -2045,19 +2115,19 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
             }
             switch (SummonTitle(properties->Title))
             {
-                case SummonTitle::Pet:
-                case SummonTitle::Guardian:
-                case SummonTitle::Runeblade:
-                case SummonTitle::Minion:
+            case SummonTitle::Pet:
+            case SummonTitle::Guardian:
+            case SummonTitle::Runeblade:
+            case SummonTitle::Minion:
                     SummonGuardian(effIndex, entry, properties, numSummons);
                     break;
                 // Summons a vehicle, but doesn't force anyone to enter it (see SUMMON_CATEGORY_VEHICLE)
-                case SummonTitle::Vehicle:
-                case SummonTitle::Mount:
+            case SummonTitle::Vehicle:
+            case SummonTitle::Mount:
                     summon = m_caster->GetMap()->SummonCreature(entry, *destTarget, properties, duration, m_originalCaster, m_spellInfo->Id, 0, personalSpawn, this);
                     break;
-                case SummonTitle::Lightwell:
-                case SummonTitle::Totem:
+            case SummonTitle::Lightwell:
+            case SummonTitle::Totem:
                 {
                     summon = m_caster->GetMap()->SummonCreature(entry, *destTarget, properties, duration, m_originalCaster, m_spellInfo->Id, 0, personalSpawn, this);
                     if (!summon || !summon->IsTotem())
@@ -2070,7 +2140,7 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
                     }
                     break;
                 }
-                case SummonTitle::Companion:
+            case SummonTitle::Companion:
                 {
                     summon = m_caster->GetMap()->SummonCreature(entry, *destTarget, properties, duration, m_originalCaster, m_spellInfo->Id, 0, personalSpawn, this);
                     if (!summon || !summon->HasUnitTypeMask(UNIT_MASK_MINION))
@@ -2925,7 +2995,7 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
             }
             break;
         }
-        case SPELLFAMILY_ROGUE:
+       /* case SPELLFAMILY_ROGUE:
         {
             // Hemorrhage
             if (m_spellInfo->SpellFamilyFlags[0] & 0x2000000)
@@ -2939,7 +3009,7 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
                             totalDamagePercentMod *= 1.5f;
             }
             break;
-        }
+        }*/
         case SPELLFAMILY_SHAMAN:
         {
             // Skyshatter Harness item set bonus
@@ -2948,7 +3018,7 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
                 m_caster->CastSpell(m_caster, 38430, true, NULL, aurEff);
             break;
         }
-        case SPELLFAMILY_DRUID:
+       /* case SPELLFAMILY_DRUID:
         {
             // Mangle (Cat): CP
             if (m_spellInfo->SpellFamilyFlags[1] & 0x400)
@@ -2957,7 +3027,7 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
                     m_caster->ToPlayer()->AddComboPoints(1, this);
             }
             break;
-        }
+        }*/
         case SPELLFAMILY_HUNTER:
         {
             // Kill Shot - bonus damage from Ranged Attack Power
@@ -2967,6 +3037,28 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
         }
         case SPELLFAMILY_DEATHKNIGHT:
         {
+          switch (m_spellInfo->Id)
+          {
+            case 66196: // Frost Strike
+            case 222026: // Frost Strike
+            {
+                if (AuraEffect const* aurEff = m_caster->GetAuraEffect(204132, EFFECT_0)) // Tundra Stalker (Honor Talent)
+                    if (unitTarget->HasAuraWithMechanic(1 << MECHANIC_SNARE))
+                        AddPct(m_damage, aurEff->GetAmount());
+                break;
+            }
+            case 49998: // Death Strike
+            {
+                float pctDamage = m_caster->IsFFAPvP() ? m_spellInfo->GetEffect(EFFECT_2)->CalcValue(m_caster) / 2 : m_spellInfo->GetEffect(EFFECT_2)->CalcValue(m_caster);
+                int32 lastTime = m_spellInfo->GetEffect(EFFECT_3)->CalcValue(m_caster);
+                int32 pctHeal = m_spellInfo->GetEffect(EFFECT_4)->CalcValue(m_caster);
+                int32 bp = m_caster->CountPctFromMaxHealth(pctHeal) + CalculatePct(m_caster->GetDamageOverLastSeconds(lastTime), pctDamage);
+
+                m_caster->CastCustomSpell(m_caster, 45470, &bp, nullptr, nullptr, false);
+                break;
+            }
+          }
+
             // Blood Strike
             if (m_spellInfo->SpellFamilyFlags[0] & 0x400000)
             {
@@ -3062,6 +3154,8 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
     uint32 damageBonusDone = m_caster->MeleeDamageBonusDone(unitTarget, eff_damage, m_attackType, m_spellInfo);
 
     m_damage += unitTarget->MeleeDamageBonusTaken(m_caster, damageBonusDone, m_attackType, m_spellInfo);
+
+    
 }
 
 void Spell::EffectThreat(SpellEffIndex /*effIndex*/)
@@ -3095,6 +3189,7 @@ void Spell::EffectHealMaxHealth(SpellEffIndex /*effIndex*/)
         addhealth = unitTarget->GetMaxHealth() - unitTarget->GetHealth();
 
     m_healing += addhealth;
+    m_healing = unitTarget->SpellHealingBonusTaken(m_caster, m_spellInfo, m_healing, HEAL, effectInfo);
 }
 
 void Spell::EffectInterruptCast(SpellEffIndex effIndex)
@@ -3668,7 +3763,7 @@ void Spell::EffectAddComboPoints(SpellEffIndex /*effIndex*/)
     if (damage <= 0)
         return;
 
-    m_caster->m_playerMovingMe->AddComboPoints(damage, this);
+   // m_caster->m_playerMovingMe->AddComboPoints(damage, this);
 }
 
 void Spell::EffectDuel(SpellEffIndex effIndex)
@@ -3798,6 +3893,9 @@ void Spell::EffectStuck(SpellEffIndex /*effIndex*/)
     }
 
     player->TeleportTo(player->m_homebindMapId, player->m_homebindX, player->m_homebindY, player->m_homebindZ, player->GetOrientation(), TELE_TO_SPELL);
+
+    //clear auras in case player is phase buggued
+    player->RemoveAllAuras();
 
     // Stuck spell trigger Hearthstone cooldown
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(8690);
@@ -4464,7 +4562,8 @@ void Spell::EffectCharge(SpellEffIndex effIndex)
             spellEffectExtraData->SpellVisualId = effectInfo->MiscValueB;
         }
         // Spell is not using explicit target - no generated path
-        if (!m_preGeneratedPath || m_preGeneratedPath->GetPathType() == PATHFIND_BLANK)
+        //if (!m_preGeneratedPath || m_preGeneratedPath->GetPathType() == PATHFIND_BLANK)
+        if (!m_preGeneratedPath)
         {
             //unitTarget->GetContactPoint(m_caster, pos.m_positionX, pos.m_positionY, pos.m_positionZ);
             Position pos = unitTarget->GetFirstCollisionPosition(unitTarget->GetObjectSize(), unitTarget->GetRelativeAngle(m_caster));
@@ -4525,9 +4624,10 @@ void Spell::EffectKnockBack(SpellEffIndex /*effIndex*/)
     if (!unitTarget)
         return;
 
-    if (Creature* creatureTarget = unitTarget->ToCreature())
-        if (creatureTarget->isWorldBoss() || creatureTarget->IsDungeonBoss())
-            return;
+    if (m_caster->GetTypeId() == TYPEID_PLAYER || m_caster->GetOwnerGUID().IsPlayer() || m_caster->IsHunterPet())
+        if (Creature* creatureTarget = unitTarget->ToCreature())
+            if (creatureTarget->isWorldBoss() || creatureTarget->IsDungeonBoss())
+                return;
 
     // Spells with SPELL_EFFECT_KNOCK_BACK (like Thunderstorm) can't knockback target if target has ROOT
     if (unitTarget->HasUnitState(UNIT_STATE_ROOT))
@@ -5799,6 +5899,14 @@ void Spell::EffectRemoveTalent(SpellEffIndex /*effIndex*/)
     player->SendTalentsInfoData();
 }
 
+void Spell::EffectDespawnAreatrigger(SpellEffIndex /*effIndex*/)
+{
+    if (!m_caster)
+        return;
+
+    m_caster->RemoveAllAreaTriggers();
+}
+
 void Spell::EffectDestroyItem(SpellEffIndex /*effIndex*/)
 {
     if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
@@ -5854,10 +5962,16 @@ void Spell::EffectCreateConversation(SpellEffIndex /*effIndex*/)
     if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT)
         return;
 
-    if (!m_targets.HasDst())
-        return;
+    Position targetPos = GetCaster()->GetPosition();
 
-    Conversation::CreateConversation(effectInfo->MiscValue, GetCaster(), destTarget->GetPosition(), { GetCaster()->GetGUID() }, GetSpellInfo());
+    if (m_targets.HasDst())
+        targetPos = destTarget->GetPosition();
+    else if (unitTarget)
+        targetPos = unitTarget->GetPosition();
+
+    if (Conversation* conversation = Conversation::CreateConversation(effectInfo->MiscValue, GetCaster(), targetPos, { GetCaster()->GetGUID() }, GetSpellInfo()))
+        if (effectInfo->Effect == SPELL_EFFECT_CREATE_CONVERSATION_GLOBAL)
+            conversation->SetGlobal(true);
 }
 
 void Spell::EffectAddGarrisonFollower(SpellEffIndex /*effIndex*/)
@@ -5939,6 +6053,26 @@ void Spell::EffectApplyAuraWithAmount(SpellEffIndex effIndex)
     m_spellAura->_ApplyEffectForTargets(effIndex);
 }
 
+void Spell::EffectPlayerMoveWaypoints(SpellEffIndex effIndex)
+{
+    if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
+        return;
+
+    if (!unitTarget || !unitTarget->IsPlayer())
+        return;
+
+    auto player = unitTarget->ToPlayer();
+    if (!player)
+        return;
+
+    auto path = sWaypointMgr->GetPath(m_spellInfo->GetEffect(effIndex)->MiscValue);
+    if (!path)
+        return;
+
+    player->GetMotionMaster()->MoveIdle();
+    player->GetMotionMaster()->MovePath(m_spellInfo->GetEffect(effIndex)->MiscValue, false);
+}
+
 void Spell::EffectLaunchQuestChoice(SpellEffIndex /*effIndex*/)
 {
     if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
@@ -5958,8 +6092,39 @@ void Spell::EffectLootWithToast(SpellEffIndex /*effIndex*/)
     if (!unitTarget || !unitTarget->IsPlayer())
         return;
 
-    ItemContext context = m_spellInfo->HasAttribute(SPELL_ATTR0_TRADESPELL) ? ItemContext::Trade_Skill : ItemContext::NONE;
-    unitTarget->ToPlayer()->AutoStoreLoot(m_spellInfo->Id, LootTemplates_Spell, context, false, true, TOAST_METHOD_POPUP);
+    unitTarget->ToPlayer()->AutoStoreLoot(m_spellInfo->Id, LootTemplates_Spell, ItemContext::NONE, false, true, TOAST_METHOD_POPUP);
+}
+
+void Spell::EffectJoinOrLeavePlayerParty(SpellEffIndex effIndex)
+{
+    if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
+        return;
+
+    if (!unitTarget || !m_caster || !unitTarget->IsPlayer())
+        return;
+
+    Player* player = unitTarget->ToPlayer();
+
+    Group* group = player->GetGroup();
+    Creature* creature = m_caster->ToCreature();
+    if (!creature)
+        return;
+
+    if (!group)
+    {
+        group = new Group();
+        group->Create(player);
+       // group->ConvertToLFG(dungeon);
+        //group->SetDungeonDifficultyID(Difficulty(player->GetDifficultyID(player->GetMap())));
+        sGroupMgr->AddGroup(group);
+    }
+    else if (group->IsMember(creature->GetGUID()))
+        return;
+
+    if (m_spellInfo->GetEffect(effIndex)->MiscValue == 1)
+        group->AddMember(player);
+    else
+        group->RemoveMember(creature->GetGUID());
 }
 
 void Spell::EffectUncageBattlePet(SpellEffIndex /*effIndex*/)
@@ -6065,7 +6230,7 @@ void Spell::EffectUpdateZoneAurasAndPhases(SpellEffIndex /*effIndex*/)
     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
         return;
 
-    unitTarget->ToPlayer()->UpdateAreaDependentAuras();
+    unitTarget->ToPlayer()->UpdateAreaDependentAuras(unitTarget->GetAreaId());
 }
 
 void Spell::EffectGiveExperience(SpellEffIndex /*effIndex*/)
@@ -6207,29 +6372,6 @@ void Spell::EffectLearnTransmogSet(SpellEffIndex /*effIndex*/)
     unitTarget->ToPlayer()->GetSession()->GetCollectionMgr()->AddTransmogSet(effectInfo->MiscValue);
 }
 
-void Spell::EffectScrapItem(SpellEffIndex /*effIndex*/)
-{
-    if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
-        return;
-
-    if (!itemTarget)
-        return;
-
-    if (!(itemTarget->GetTemplate()->GetFlags4() & ITEM_FLAG4_SCRAPABLE))
-        return;
-
-    ItemScrappingLoot const* iSL = sObjectMgr->GetItemScrappingLoot(itemTarget);
-
-    if (!iSL)
-        return;
-
-    if (Player* player = GetCaster()->ToPlayer())
-    {
-        player->DestroyItem(itemTarget->GetBagSlot(), itemTarget->GetSlot(), true);
-        player->AutoStoreLoot(iSL->Id, LootTemplates_Scrapping);
-    }
-}
-
 void Spell::EffectRespecAzeriteEmpoweredItem(SpellEffIndex /*effIndex*/)
 {
     if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
@@ -6256,6 +6398,29 @@ void Spell::EffectRespecAzeriteEmpoweredItem(SpellEffIndex /*effIndex*/)
 
     azeriteEmpoweredItem->SetState(ITEM_CHANGED, owner);
     owner->SetNumRespecs(owner->GetNumRespecs() + 1);
+}
+
+void Spell::EffectScrapItem(SpellEffIndex /*effIndex*/)
+{
+    if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
+        return;
+
+    if (!itemTarget)
+        return;
+
+    if (!(itemTarget->GetTemplate()->GetFlags4() & ITEM_FLAG4_SCRAPABLE))
+        return;
+
+    ItemScrappingLoot const* iSL = sObjectMgr->GetItemScrappingLoot(itemTarget);
+
+    if (!iSL)
+        return;
+
+    if (Player* player = GetCaster()->ToPlayer())
+    {
+        player->DestroyItem(itemTarget->GetBagSlot(), itemTarget->GetSlot(), true);
+        player->AutoStoreLoot(iSL->Id, LootTemplates_Scrapping);
+    }
 }
 
 void Spell::EffectLearnAzeriteEssencePower(SpellEffIndex /*effIndex*/)
@@ -6295,4 +6460,27 @@ void Spell::EffectLearnAzeriteEssencePower(SpellEffIndex /*effIndex*/)
 
     azeriteItem->SetEssenceRank(effectInfo->MiscValue, effectInfo->MiscValueB);
     azeriteItem->SetState(ITEM_CHANGED, playerTarget);
+}
+
+void Spell::EffectForceEquipItem(SpellEffIndex effIndex)
+{
+    if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
+        return;
+
+    Player* player = m_caster->ToPlayer();
+    if (!player)
+        return;
+
+    auto const& item = player->GetItemByEntry(m_spellInfo->GetEffect(effIndex)->MiscValue);
+    if (!item)
+        return;
+
+    return;
+
+    uint16 dest;
+    if (player->CanEquipItem(NULL_SLOT, dest, item, true) == EQUIP_ERR_OK)
+    {
+        player->EquipItem(dest, item, true);
+        player->AutoUnequipOffhandIfNeed();
+    }
 }

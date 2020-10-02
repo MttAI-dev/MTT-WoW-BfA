@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,12 +22,14 @@
 #include "Battleground.h"
 #include "BattlePetMgr.h"
 #include "CollectionMgr.h"
+#include "Containers.h"
 #include "Creature.h"
+#include "ClassHall.h"
 #include "DatabaseEnv.h"
 #include "DB2Stores.h"
 #include "DisableMgr.h"
 #include "GameEventMgr.h"
-#include "ClassHall.h"
+#include "Garrison.h"
 #include "Group.h"
 #include "InstanceScript.h"
 #include "Item.h"
@@ -729,7 +731,12 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
             case CRITERIA_TYPE_SEND_EVENT_SCENARIO:
                 if (miscValue1 != uint64(criteria->Entry->Asset.ScenarioEventID))
                     continue;
-                SetCriteriaProgress(criteria, 1, referencePlayer);
+                SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
+                break;
+            case CRITERIA_TYPE_SEND_EVENT:
+                if (miscValue1 != criteria->Entry->Asset.EventID)
+                    continue;
+                SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
                 break;
             // FIXME: not triggered in code as result, need to implement
             case CRITERIA_TYPE_COMPLETE_RAID:
@@ -785,7 +792,6 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
             case CRITERIA_TYPE_COMPLETE_CHALLENGE_MODE_GUILD:
             case CRITERIA_TYPE_DEFEAT_CREATURE_GROUP:
             case CRITERIA_TYPE_COMPLETE_CHALLENGE_MODE:
-            case CRITERIA_TYPE_SEND_EVENT:
             case CRITERIA_TYPE_COOK_RECIPES_GUILD:
             case CRITERIA_TYPE_EARN_PET_BATTLE_ACHIEVEMENT_POINTS:
             case CRITERIA_TYPE_RELEASE_SPIRIT:
@@ -2154,16 +2160,16 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
             if (!referencePlayer->HasPlayerFlag(PLAYER_FLAGS_MENTOR))
                 return false;
             break;
-        case CRITERIA_ADDITIONAL_CONDITION_GARRISON_LEVEL_ABOVE: // 126
+        /*case CRITERIA_ADDITIONAL_CONDITION_GARRISON_LEVEL_ABOVE: // 126
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GarrisonType(secondaryAsset) || garrison->GetSiteLevel()->GarrLevel < reqValue)
                 return false;
             break;
         }
         case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWERS_ABOVE_LEVEL: // 127
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GarrisonType(tertiaryAsset))
                 return false;
             uint32 followerCount = garrison->CountFollowers([secondaryAsset](Garrison::Follower const& follower)
@@ -2176,7 +2182,7 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
         }
         case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWERS_ABOVE_QUALITY: // 128
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GarrisonType(tertiaryAsset))
                 return false;
             uint32 followerCount = garrison->CountFollowers([secondaryAsset](Garrison::Follower const& follower)
@@ -2189,7 +2195,7 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
         }
         case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_ABOVE_LEVEL_WITH_ABILITY: // 129
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GarrisonType(tertiaryAsset))
                 return false;
             uint32 followerCount = garrison->CountFollowers([reqValue, secondaryAsset](Garrison::Follower const& follower)
@@ -2202,7 +2208,7 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
         }
         case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_ABOVE_LEVEL_WITH_TRAIT: // 130
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GarrisonType(tertiaryAsset))
                 return false;
             GarrAbilityEntry const* traitEntry = sGarrAbilityStore.LookupEntry(secondaryAsset);
@@ -2218,7 +2224,7 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
         }
         case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_WITH_ABILITY_IN_BUILDING: // 131
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GarrisonType(tertiaryAsset))
                 return false;
             uint32 followerCount = garrison->CountFollowers([reqValue, secondaryAsset](Garrison::Follower const& follower)
@@ -2234,7 +2240,7 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
         }
         case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_WITH_TRAIT_IN_BUILDING: // 132
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GarrisonType(tertiaryAsset))
                 return false;
             GarrAbilityEntry const* traitEntry = sGarrAbilityStore.LookupEntry(reqValue);
@@ -2253,7 +2259,7 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
         }
         case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_ABOVE_LEVEL_IN_BUILDING: // 133
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GarrisonType(tertiaryAsset))
                 return false;
             uint32 followerCount = garrison->CountFollowers([reqValue, secondaryAsset](Garrison::Follower const& follower)
@@ -2271,11 +2277,10 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
         }
         case CRITERIA_ADDITIONAL_CONDITION_GARRISON_BUILDING_ABOVE_LEVEL: // 134
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GarrisonType(tertiaryAsset))
                 return false;
-            WodGarrison* wodGarrison = garrison->ToWodGarrison();
-            for (WodGarrison::Plot const* plot : wodGarrison->GetPlots())
+            for (Garrison::Plot const* plot : garrison->GetPlots())
             {
                 if (!plot->BuildingInfo.PacketInfo)
                     continue;
@@ -2293,11 +2298,10 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
             GarrBuildingEntry const* blueprintBuilding = sGarrBuildingStore.LookupEntry(reqValue);
             if (!blueprintBuilding)
                 return false;
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GarrisonType(blueprintBuilding->GarrTypeID))
                 return false;
-            WodGarrison const* wodGarrison = garrison->ToWodGarrison();
-            if (!wodGarrison->HasBlueprint(reqValue))
+            if (!garrison->HasBlueprint(reqValue))
                 return false;
             break;
         }
@@ -2306,11 +2310,10 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
             GarrBuildingEntry const* building = sGarrBuildingStore.LookupEntry(reqValue);
             if (!building)
                 return false;
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GarrisonType(tertiaryAsset))
                 return false;
-            WodGarrison* wodGarrison = garrison->ToWodGarrison();
-            for (WodGarrison::Plot const* plot : wodGarrison->GetPlots())
+            for (Garrison::Plot const* plot : garrison->GetPlots())
             {
                 if (!plot->BuildingInfo.PacketInfo || plot->BuildingInfo.PacketInfo->GarrBuildingID != reqValue)
                     continue;
@@ -2321,11 +2324,10 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
         }
         case CRITERIA_ADDITIONAL_CONDITION_GARRISON_BUILDING_EQUAL_LEVEL: // 142
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GarrisonType(tertiaryAsset))
                 return false;
-            WodGarrison* wodGarrison = garrison->ToWodGarrison();
-            for (WodGarrison::Plot const* plot : wodGarrison->GetPlots())
+            for (Garrison::Plot const* plot : garrison->GetPlots())
             {
                 if (!plot->BuildingInfo.PacketInfo)
                     continue;
@@ -2340,12 +2342,12 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
         }
         case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_WITH_ABILITY: // 143
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GarrisonType(secondaryAsset))
                 return false;
             if (miscValue1)
             {
-                Garrison::Follower* follower = garrison->GetFollower(miscValue1);
+                Garrison::Follower const* follower = garrison->GetFollower(miscValue1);
                 if (!follower)
                     return false;
                 if (!follower->HasAbility(reqValue))
@@ -2367,12 +2369,12 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
             GarrAbilityEntry const* traitEntry = sGarrAbilityStore.LookupEntry(reqValue);
             if (!traitEntry || !(traitEntry->Flags & GARRISON_ABILITY_FLAG_TRAIT))
                 return false;
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GarrisonType(secondaryAsset))
                 return false;
             if (miscValue1)
             {
-                Garrison::Follower* follower = garrison->GetFollower(miscValue1);
+                Garrison::Follower const* follower = garrison->GetFollower(miscValue1);
                 if (!follower || !follower->HasAbility(reqValue))
                     return false;
             }
@@ -2389,12 +2391,12 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
         }
         case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_ABOVE_QUALITY_WOD: // 145
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GARRISON_TYPE_GARRISON)
                 return false;
             if (miscValue1)
             {
-                Garrison::Follower* follower = garrison->GetFollower(miscValue1);
+                Garrison::Follower const* follower = garrison->GetFollower(miscValue1);
                 if (!follower || follower->PacketInfo.Quality < reqValue)
                     return false;
             }
@@ -2411,12 +2413,12 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
         }
         case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_EQUAL_LEVEL: // 146
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GarrisonType(secondaryAsset))
                 return false;
             if (miscValue1)
             {
-                Garrison::Follower* follower = garrison->GetFollower(miscValue1);
+                Garrison::Follower const* follower = garrison->GetFollower(miscValue1);
                 if (!follower || follower->PacketInfo.FollowerLevel < reqValue)
                     return false;
             }
@@ -2430,7 +2432,7 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
                     return false;
             }
             break;
-        }
+        }*/
         case CRITERIA_ADDITIONAL_CONDITION_BATTLE_PET_SPECIES_IN_TEAM: // 151
         {
             uint32 count = 0;
@@ -2452,23 +2454,23 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
                 return false;
             break;
         }
-        case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_ID: // 157
+        /*case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_ID: // 157
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison)
                 return false;
             if (miscValue1)
             {
-                Garrison::Follower* follower = garrison->GetFollower(miscValue1);
+                Garrison::Follower const* follower = garrison->GetFollower(miscValue1);
                 if (!follower || follower->PacketInfo.GarrFollowerID != reqValue)
                     return false;
             }
             else
             {
                 uint32 followerCount = garrison->CountFollowers([reqValue](Garrison::Follower const& follower)
-                {
-                    return follower.PacketInfo.GarrFollowerID == reqValue;
-                });
+                    {
+                        return follower.PacketInfo.GarrFollowerID == reqValue;
+                    });
                 if (followerCount < 1)
                     return false;
             }
@@ -2476,12 +2478,12 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
         }
         case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_ABOVE_ITEM_LEVEL: // 168
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison)
                 return false;
             if (miscValue1)
             {
-                Garrison::Follower* follower = garrison->GetFollower(miscValue1);
+                Garrison::Follower const* follower = garrison->GetFollower(miscValue1);
                 if (!follower || follower->PacketInfo.GarrFollowerID != reqValue)
                     return false;
             }
@@ -2498,7 +2500,7 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
         }
         case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWERS_ABOVE_ITEM_LEVEL: // 169
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GarrisonType(tertiaryAsset))
                 return false;
             uint32 followerCount = garrison->CountFollowers([secondaryAsset](Garrison::Follower const& follower)
@@ -2511,18 +2513,18 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
         }
         case CRITERIA_ADDITIONAL_CONDITION_GARRISON_LEVEL_EQUAL: // 170
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GARRISON_TYPE_GARRISON || garrison->GetSiteLevel()->GarrLevel != reqValue)
                 return false;
             break;
-        }
+        }*/
         case CRITERIA_ADDITIONAL_CONDITION_TARGETING_CORPSE: // 173
             if (referencePlayer->GetTarget().GetHigh() != HighGuid::Corpse)
                 return false;
             break;
-        case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWERS_LEVEL_EQUAL: // 175
+        /*case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWERS_LEVEL_EQUAL: // 175
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GarrisonType(tertiaryAsset))
                 return false;
             uint32 followerCount = garrison->CountFollowers([secondaryAsset](Garrison::Follower const& follower)
@@ -2535,7 +2537,7 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
         }
         case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_ID_IN_BUILDING: // 176
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison || garrison->GetType() != GARRISON_TYPE_GARRISON)
                 return false;
             uint32 followerCount = garrison->CountFollowers([reqValue, secondaryAsset](Garrison::Follower const& follower)
@@ -2550,7 +2552,7 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
             if (followerCount < 1)
                 return false;
             break;
-        }
+        }*/
         case CRITERIA_ADDITIONAL_CONDITION_WORLD_PVP_AREA: // 179
         {
             Battlefield const* bf = sBattlefieldMgr->GetBattlefieldToZoneId(referencePlayer->GetZoneId());
@@ -2558,9 +2560,9 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
                 return false;
             break;
         }
-        case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWERS_ITEM_LEVEL_ABOVE: // 184
+        /*case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWERS_ITEM_LEVEL_ABOVE: // 184
         {
-            Garrison* garrison = referencePlayer->GetGarrison(GARRISON_TYPE_GARRISON);
+            Garrison const* garrison = referencePlayer->GetGarrison();
             if (!garrison)
                 return false;
             uint32 followerCount = garrison->CountFollowers([secondaryAsset, tertiaryAsset](Garrison::Follower const& follower)
@@ -2573,7 +2575,7 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
             if (followerCount < reqValue)
                 return false;
             break;
-        }
+        }*/
         case CRITERIA_ADDITIONAL_CONDITION_HONOR_LEVEL: // 193
             if (referencePlayer->GetHonorLevel() != reqValue)
                 return false;

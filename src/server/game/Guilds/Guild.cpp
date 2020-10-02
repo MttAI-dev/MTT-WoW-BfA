@@ -1,5 +1,6 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
+ * Copyright (C) Thordekk
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -373,7 +374,7 @@ void Guild::BankTab::LoadFromDB(Field* fields)
 
 bool Guild::BankTab::LoadItemFromDB(Field* fields)
 {
-    uint8 slotId = fields[45].GetUInt8();
+    uint8 slotId = fields[52].GetUInt8();
     ObjectGuid::LowType itemGuid = fields[0].GetUInt64();
     uint32 itemEntry = fields[1].GetUInt32();
     if (slotId >= GUILD_BANK_MAX_SLOTS)
@@ -1103,6 +1104,10 @@ Guild::Guild():
     m_achievementMgr(this)
 {
     memset(&m_bankEventLog, 0, (GUILD_BANK_MAX_TABS + 1) * sizeof(LogHolder*));
+
+    m_ChallengeCount.resize(ChallengeMax);
+    for (uint8 i = 0; i < ChallengeMax; ++i)
+        m_ChallengeCount[i] = 0;
 }
 
 Guild::~Guild()
@@ -1188,6 +1193,15 @@ bool Guild::Create(Player* pLeader, std::string const& name)
         sScriptMgr->OnGuildCreate(this, pLeader, name);
     }
 
+    for (uint8 i = 1; i < ChallengeMax; ++i)
+    {
+        auto statement = CharacterDatabase.GetPreparedStatement(CHAR_INIT_GUILD_CHALLENGES);
+        statement->setInt32(0, GetId());
+        statement->setInt32(1, i);
+        CharacterDatabase.Execute(statement);
+    }
+
+    SendGuildEventRanksUpdated();
     return ret;
 }
 
@@ -1239,6 +1253,9 @@ void Guild::Disband()
     stmt->setUInt64(0, m_id);
     trans->Append(stmt);
 
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_REMOVE_GUILD_CHALLENGES);
+    stmt->setUInt64(0, m_id);
+    trans->Append(stmt);
     CharacterDatabase.CommitTransaction(trans);
 
     sGuildFinderMgr->DeleteGuild(GetGUID());
@@ -2067,24 +2084,24 @@ void Guild::HandleGuildPartyRequest(WorldSession* session) const
     TC_LOG_DEBUG("guild", "SMSG_GUILD_PARTY_STATE_RESPONSE [%s]", session->GetPlayerInfo().c_str());
 }
 
-void Guild::HandleGuildRequestChallengeUpdate(WorldSession* session) const
-{
-    WorldPackets::Guild::GuildChallengeUpdate updatePacket;
-
-    for (int i = 0; i < GUILD_CHALLENGES_TYPES; ++i)
-        updatePacket.CurrentCount[i] = int32(0); /// @todo current count
-
-    for (int i = 0; i < GUILD_CHALLENGES_TYPES; ++i)
-        updatePacket.MaxCount[i] = int32(GuildChallengesMaxCount[i]);
-
-    for (int i = 0; i < GUILD_CHALLENGES_TYPES; ++i)
-        updatePacket.MaxLevelGold[i] = int32(GuildChallengeMaxLevelGoldReward[i]);
-
-    for (int i = 0; i < GUILD_CHALLENGES_TYPES; ++i)
-        updatePacket.Gold[i] = int32(GuildChallengeGoldReward[i]);
-
-    session->SendPacket(updatePacket.Write());
-}
+//void Guild::HandleGuildRequestChallengeUpdate(WorldSession* session) const
+//{
+//    WorldPackets::Guild::GuildChallengeUpdate updatePacket;
+//
+//    for (int i = 0; i < GUILD_CHALLENGES_TYPES; ++i)
+//        updatePacket.CurrentCount[i] = int32(0); /// @todo current count
+//
+//    for (int i = 0; i < GUILD_CHALLENGES_TYPES; ++i)
+//        updatePacket.MaxCount[i] = int32(GuildChallengesMaxCount[i]);
+//
+//    for (int i = 0; i < GUILD_CHALLENGES_TYPES; ++i)
+//        updatePacket.MaxLevelGold[i] = int32(GuildChallengeMaxLevelGoldReward[i]);
+//
+//    for (int i = 0; i < GUILD_CHALLENGES_TYPES; ++i)
+//        updatePacket.Gold[i] = int32(GuildChallengeGoldReward[i]);
+//
+//    session->SendPacket(updatePacket.Write());
+//}
 
 void Guild::SendEventLog(WorldSession* session) const
 {
@@ -2277,6 +2294,56 @@ void Guild::SendEventBankMoneyChanged() const
     eventPacket.Money = GetBankMoney();
     BroadcastPacket(eventPacket.Write());
 }
+
+//void Guild::SendGuildChallengeUpdated(WorldSession* session /*= nullptr*/)
+//{
+//    auto rewards = sGuildMgr->GetGuildChallengeRewardData();
+//    WorldPackets::Guild::GuildChallengeUpdated update;
+//    for (uint8 i = 0; i < ChallengeMax; ++i)
+//    {
+//        update.Gold[i] = rewards[i].Gold;
+//        update.CurrentCount[i] = m_ChallengeCount[i];
+//        update.MaxCount[i] = rewards[i].ChallengeCount;
+//        update.MaxLevelGold[i] = rewards[i].Gold2;
+//    }
+//
+//    if (session != nullptr)
+//        session->SendPacket(update.Write());
+//    else
+//        BroadcastPacket(update.Write());
+//}
+
+//void Guild::CompleteGuildChallenge(uint32 challengeType)
+//{
+//    if (challengeType >= ChallengeMax)
+//        return;
+//
+//    auto reards = sGuildMgr->GetGuildChallengeRewardData();
+//    if (m_ChallengeCount[challengeType] >= reards[challengeType].ChallengeCount)
+//        return;
+//
+//    m_ChallengeCount[challengeType]++;
+//
+//    auto stmt = CharacterDatabase.GetPreparedStatement(CHAR_COMPLETE_GUILD_CHALLENGE);
+//    stmt->setInt32(0, m_ChallengeCount[challengeType]);
+//    stmt->setInt32(1, GetId());
+//    stmt->setInt32(2, challengeType);
+//    CharacterDatabase.Execute(stmt);
+//
+//    auto trans = CharacterDatabase.BeginTransaction();
+//    _ModifyBankMoney(trans, reards[challengeType].Gold2 * GOLD, true);
+//    CharacterDatabase.CommitTransaction(trans);
+//
+//    WorldPackets::Guild::GuildChallengeCompleted completed;
+//    completed.ChallengeType = challengeType;
+//    completed.CurrentCount = m_ChallengeCount[challengeType];
+//    completed.MaxCount = reards[challengeType].ChallengeCount;
+//    completed.GoldAwarded = reards[challengeType].Gold2;
+//    BroadcastPacket(completed.Write());
+//
+//  //  SendGuildChallengeUpdated();
+//}
+
 
 void Guild::SendEventMOTD(WorldSession* session, bool broadcast) const
 {
@@ -2497,7 +2564,7 @@ void Guild::LoadBankTabFromDB(Field* fields)
 
 bool Guild::LoadBankItemFromDB(Field* fields)
 {
-    uint8 tabId = fields[44].GetUInt8();
+    uint8 tabId = fields[51].GetUInt8();
     if (tabId >= _GetPurchasedTabsSize())
     {
         TC_LOG_ERROR("guild", "Invalid tab for item (GUID: %u, id: #%u) in guild bank, skipped.",
@@ -2507,6 +2574,14 @@ bool Guild::LoadBankItemFromDB(Field* fields)
     return m_bankTabs[tabId]->LoadItemFromDB(fields);
 }
 
+bool Guild::LoadGuildChallengesFromDB(Field* fields)
+{
+    if (fields[1].GetInt32() >= ChallengeMax)
+        return false;
+
+    m_ChallengeCount[fields[1].GetInt32()] = fields[2].GetInt32();
+    return true;
+}
 // Validates guild data loaded from database. Returns false if guild should be deleted.
 bool Guild::Validate()
 {
@@ -3338,7 +3413,7 @@ void Guild::_SendBankContentUpdate(uint8 tabId, SlotIds slots) const
             itemInfo.Count = int32(tabItem ? tabItem->GetCount() : 0);
             itemInfo.Charges = int32(tabItem ? abs(tabItem->GetSpellCharges()) : 0);
             itemInfo.OnUseEnchantmentID = 0/*int32(tabItem->GetItemSuffixFactor())*/;
-            itemInfo.Flags = 0;
+            //itemInfo.Flags = tabItem->m_itemData->DynamicFlags;
             itemInfo.Locked = false;
 
             if (tabItem)
@@ -3448,6 +3523,12 @@ void Guild::SendBankList(WorldSession* session, uint8 tabId, bool fullUpdate) co
 
     session->SendPacket(packet.Write());
 }
+
+void Guild::SendGuildEventRanksUpdated()
+{
+    BroadcastPacket(WorldPackets::Guild::GuildEventRanksUpdated().Write());
+}
+
 
 void Guild::SendGuildRanksUpdate(ObjectGuid setterGuid, ObjectGuid targetGuid, uint32 rank)
 {

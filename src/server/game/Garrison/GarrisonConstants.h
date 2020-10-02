@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2020 LatinCoreTeam
+ * Copyright (C) Thordekk
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -29,6 +29,8 @@ enum GarrisonTimers
 enum GarrisonMisc
 {
     GARRISON_WOD_CURRENCY   = 824,
+    FollowerActivationCost = (250 * 10000),
+    MaxActiveFollowerAllowedCount = 20,
 };
 
 enum GarrisonSite
@@ -68,6 +70,18 @@ enum GarrisonFollowerType
     FOLLOWER_TYPE_GARRISON      = 1,
     FOLLOWER_TYPE_SHIPYARD      = 2,
     FOLLOWER_TYPE_CLASS_HALL    = 4
+};
+
+enum GarrisonTalentAvailabilitys
+{
+    GARRISON_TALENT_AVAILABILITY_AVAILABLE = 0x001,
+    GARRISON_TALENT_AVAILABILITY_UNAVAILABLE = 0x002,
+    GARRISON_TALENT_AVAILABILITY_UNAVAILABANOTHER_IS_RESEARCHING = 0x004,
+    GARRISON_TALENT_AVAILABILITY_UNAVAILABNOT_ENOUGH_RESOURCES = 0x008,
+    GARRISON_TALENT_AVAILABILITY_UNAVAILABNOT_ENOUGH_GOLD = 0x010,
+    GARRISON_TALENT_AVAILABILITY_UNAVAILABTIER_UNAVAILABLE = 0x020,
+    GARRISON_TALENT_AVAILABILITY_UNAVAILABPLAYER_CONDITION = 0x040,
+    GARRISON_TALENT_AVAILABILITY_UNAVAILABALREADY_HAVE = 0x080
 };
 
 enum GarrisonAbilityFlags
@@ -198,6 +212,42 @@ enum GarrisonError
     GARRISON_ERROR_FAILED_CONDITION                             = 86,
     GARRISON_ERROR_INVALID_TIER                                 = 87,
     GARRISON_ERROR_INVALID_CLASS                                = 88
+};
+
+enum ShipmentGetType : uint8
+{
+    SHIPMENT_GET_BY_NPC = 0,
+    SHIPMENT_GET_BY_CONTEINER_ID = 1,
+};
+
+enum GarrBuildingType
+{
+    GARR_BTYPE_NONE = 0,
+    GARR_BTYPE_MINE = 1,
+    GARR_BTYPE_HERB_GARDEN = 2,
+    GARR_BTYPE_BARN = 3,
+    GARR_BTYPE_LUMBER_MILL = 4,
+    GARR_BTYPE_TAVERN = 5,
+    GARR_BTYPE_TRADING_POST = 6,
+    GARR_BTYPE_MENAGERIE = 7,
+    GARR_BTYPE_BARRACKS = 8,
+    GARR_BTYPE_WARMILL = 10,
+    GARR_BTYPE_STABLES = 11,
+    GARR_BTYPE_MAGETOWER = 13,
+    GARR_BTYPE_SALVAGE_YARD = 14,
+    GARR_BTYPE_STOREHOUSE = 15,
+    GARR_BTYPE_ALCHEMY_LAB = 16,
+    GARR_BTYPE_FORGE = 17,
+    GARR_BTYPE_ENCHANTERS = 18,
+    GARR_BTYPE_ENGINEERING = 19,
+    GARR_BTYPE_SCRIBE = 20,
+    GARR_BTYPE_GEM = 21,
+    GARR_BTYPE_TANNERY = 22,
+    GARR_BTYPE_TAILORING = 23,
+    GARR_BTYPE_FISHING = 24,
+    GARR_BTYPE_GLADIATORS = 25,
+    GARR_BTYPE_WORKSHOP = 26,
+    GARR_BTYPE_MAX
 };
 
 enum GarrisonFollowerStatus

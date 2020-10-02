@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -93,24 +93,7 @@ enum BattlegroundQuests
     SPELL_AB_QUEST_REWARD_5_BASES   = 24064
 };
 
-enum BattlegroundMarks
-{
-    SPELL_WS_MARK_LOSER             = 24950,
-    SPELL_WS_MARK_WINNER            = 24951,
-    SPELL_AB_MARK_LOSER             = 24952,
-    SPELL_AB_MARK_WINNER            = 24953,
-    SPELL_AV_MARK_LOSER             = 24954,
-    SPELL_AV_MARK_WINNER            = 24955,
-    SPELL_SA_MARK_WINNER            = 61160,
-    SPELL_SA_MARK_LOSER             = 61159,
-    ITEM_AV_MARK_OF_HONOR           = 20560,
-    ITEM_WS_MARK_OF_HONOR           = 20558,
-    ITEM_AB_MARK_OF_HONOR           = 20559,
-    ITEM_EY_MARK_OF_HONOR           = 29024,
-    ITEM_SA_MARK_OF_HONOR           = 42425
-};
-
-enum BattlegroundMarksCount
+enum BattlegroundChests
 {
     ITEM_BG_ALLIANCE_CHEST  = 151557,
     ITEM_BG_HORDE_CHEST     = 151558,
@@ -242,6 +225,79 @@ enum BattlegroundPlayerPositionConstants
     PLAYER_POSITION_ARENA_SLOT_3        = 4,
     PLAYER_POSITION_ARENA_SLOT_4        = 5,
     PLAYER_POSITION_ARENA_SLOT_5        = 6
+};
+
+enum class BattlegroundQueueIdType : uint8
+{
+    Battleground  = 0,
+    Arena         = 1,
+    Wargame       = 2,
+    Cheat         = 3,
+    ArenaSkirmish = 4
+};
+
+enum class BattlegroundBracketType : uint8
+{
+    Arena2v2 = 0,
+    Arena3v3 = 1,
+    Arena5v5 = 2,
+    Battleground10v10 = 3,
+    ArenaSkirmish = 4,
+    RandomBattleground = 5,
+    ArenaBraw = 6,
+    BattlegroundBraw = 7,
+    EpicBattleground = 8,
+    Max = 9
+};
+
+static std::unordered_map<uint8, uint32> HonorRewardPerBracket =
+{
+    { (uint8)BattlegroundBracketType::RandomBattleground, 150 },
+    { (uint8)BattlegroundBracketType::ArenaSkirmish,       80 },
+    { (uint8)BattlegroundBracketType::Arena2v2,           100 },
+    { (uint8)BattlegroundBracketType::Arena3v3,           100 },
+    { (uint8)BattlegroundBracketType::Battleground10v10,  300 },
+    { (uint8)BattlegroundBracketType::EpicBattleground,   225 }
+};
+
+static std::unordered_map<uint8, uint32> ConquestRewardPerBracket =
+{
+    { (uint8)BattlegroundBracketType::RandomBattleground, 40 },
+    { (uint8)BattlegroundBracketType::ArenaSkirmish,      15 },
+    { (uint8)BattlegroundBracketType::Arena2v2,           35 },
+    { (uint8)BattlegroundBracketType::Arena3v3,           50 },
+    { (uint8)BattlegroundBracketType::Battleground10v10, 150 },
+    { (uint8)BattlegroundBracketType::EpicBattleground,   65 }
+};
+
+static std::unordered_map<uint8, uint32> AzeriteRewardPerBracket =
+{
+    { (uint8)BattlegroundBracketType::RandomBattleground, 151 },
+    { (uint8)BattlegroundBracketType::ArenaSkirmish,       16 },
+    { (uint8)BattlegroundBracketType::Arena2v2,           121 },
+    { (uint8)BattlegroundBracketType::Arena3v3,           151 },
+    { (uint8)BattlegroundBracketType::Battleground10v10,  526 },
+    { (uint8)BattlegroundBracketType::EpicBattleground,   301 }
+};
+
+enum class Rank : uint8
+{
+    Unranked = 0,
+    Combatant = 1,
+    Challenger = 2,
+    Rival = 3,
+    Duelist = 4,
+    Gladiator = 5,
+    Max = 6
+};
+
+static std::unordered_map<uint8, uint32> TopRank =
+{
+    { (uint8)Rank::Combatant,  1400 },
+    { (uint8)Rank::Challenger, 1600 },
+    { (uint8)Rank::Rival,      1800 },
+    { (uint8)Rank::Duelist,    2100 },
+    { (uint8)Rank::Gladiator,  2400 }
 };
 
 /*

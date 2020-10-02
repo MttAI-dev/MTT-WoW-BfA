@@ -1,5 +1,6 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
+ * Copyright (C) Thordekk
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1197,34 +1198,190 @@ void WorldSession::HandleUseCritterItem(WorldPackets::Item::UseCritterItem& useC
     int32 spellToLearn = item->GetTemplate()->Effects[1]->SpellID;
 
 
+
     if (BattlePetSpeciesEntry const* entry = sSpellMgr->GetBattlePetSpecies(uint32(spellToLearn)))
     {
         GetBattlePetMgr()->AddPet(entry->ID, entry->CreatureID, sBattlePetDataStore->RollPetBreed(entry->ID), sBattlePetDataStore->GetDefaultPetQuality(entry->ID));
         _player->UpdateCriteria(CRITERIA_TYPE_OWN_BATTLE_PET_COUNT);
+
     }
 
     _player->DestroyItem(item->GetBagSlot(), item->GetSlot(), true);
 }
 
+bool StoreItemAndStack(Player* player, Item* item, uint8 bagSlot)
+{
+    ItemPosCountVec dest;
+    if (player->CanStoreItem(bagSlot, NULL_SLOT, dest, item, false) == EQUIP_ERR_OK && !(dest.size() == 1 && dest[0].pos == item->GetPos()))
+    {
+        player->RemoveItem(item->GetBagSlot(), item->GetSlot(), true);
+        player->StoreItem(dest, item, true);
+
+        return true;
+    }
+
+    return false;
+}
+
+void StoreItemInBags(Player* player, Item* item)
+{
+    if (StoreItemAndStack(player, item, INVENTORY_SLOT_BAG_0))
+        return;
+    uint8 inventoryEnd = INVENTORY_SLOT_ITEM_START + player->GetInventorySlotCount();
+    for (uint32 i = INVENTORY_SLOT_ITEM_START; i < inventoryEnd; i++)
+        if (StoreItemAndStack(player, item, i))
+            break;
+}
+
+bool BankItemAndStack(Player* player, Item* item, uint8 bagSlot)
+{
+    ItemPosCountVec dest;
+    if (player->CanBankItem(bagSlot, NULL_SLOT, dest, item, false) != EQUIP_ERR_OK)
+        return false;
+
+    player->RemoveItem(item->GetBagSlot(), item->GetSlot(), true);
+    player->BankItem(dest, item, true);
+
+    return true;
+}
+
+void StoreItemInBanks(Player* player, Item* item)
+{
+    if (BankItemAndStack(player, item, NULL_SLOT))
+        return;
+
+    for (uint32 i = BANK_SLOT_BAG_START; i < BANK_SLOT_BAG_END; i++)
+        if (BankItemAndStack(player, item, i))
+            break;
+}
+
 void WorldSession::HandleSortBags(WorldPackets::Item::SortBags& /*sortBags*/)
 {
-    // TODO: Implement sorting
-    // Placeholder to prevent completely locking out bags clientside
     SendPacket(WorldPackets::Item::SortBagsResult().Write());
+
+    _player->ApplyOnItems(1, [](Player* player, Item* item, uint8 /*bagSlot*/, uint8)
+        {
+            StoreItemInBags(player, item);
+            return true;
+        });
+
+    std::unordered_map<uint32, uint32> itemsQuality;
+    std::multimap<uint32, Item*> items;
+
+    _player->ApplyOnItems(1, [&items, &itemsQuality](Player* player, Item* item, uint8 /*bagSlot*/, uint8)
+        {
+            if (!item)
+                return false;
+
+            if (!sObjectMgr->GetItemTemplate(item->GetEntry()))
+                return true;
+
+            items.insert(std::make_pair(item->GetEntry(), item));
+            itemsQuality[item->GetEntry()] = item->GetItemLevel(player);
+
+            return true;
+        });
+
+    std::multimap<uint32, std::pair<uint32, Item*>> resultMap;
+    for (auto const& v : items)
+        resultMap.insert(std::make_pair(itemsQuality[v.first], v));
+
+    auto itr = std::begin(resultMap);
+    _player->ApplyOnItems(1, [&resultMap, &itr](Player* player, Item* /*item*/, uint8 bagSlot, uint8 itemSlot)
+        {
+            if (itr == std::end(resultMap) || !itr->second.second)
+                return false;
+
+            player->SwapItem(itr->second.second->GetPos(), (bagSlot << 8) | itemSlot);
+            ++itr;
+
+            return true;
+        });
 }
 
 void WorldSession::HandleSortBankBags(WorldPackets::Item::SortBankBags& /*sortBankBags*/)
 {
-    // TODO: Implement sorting
-    // Placeholder to prevent completely locking out bags clientside
     SendPacket(WorldPackets::Item::SortBagsResult().Write());
+
+    _player->ApplyOnItems(2, [](Player* player, Item* item, uint8 /*bagSlot*/, uint8)
+        {
+            StoreItemInBanks(player, item);
+            return true;
+        });
+
+    std::unordered_map<uint32, uint32> bankItemsQuality;
+    std::multimap<uint32, Item*> bankItems;
+
+    _player->ApplyOnItems(2, [&bankItems, &bankItemsQuality](Player* player, Item* item, uint8 /*bagSlot*/, uint8)
+        {
+            if (!item)
+                return false;
+
+            if (!sObjectMgr->GetItemTemplate(item->GetEntry()))
+                return true;
+
+            bankItems.insert(std::make_pair(item->GetEntry(), item));
+            bankItemsQuality[item->GetEntry()] = item->GetItemLevel(player);
+
+            return true;
+        });
+
+    std::multimap<uint32, std::pair<uint32, Item*>> bankResultMap;
+    for (auto const& v : bankItems)
+        bankResultMap.insert(std::make_pair(bankItemsQuality[v.first], v));
+
+    auto itr = std::begin(bankResultMap);
+    _player->ApplyOnItems(2, [&bankResultMap, &itr](Player* player, Item* /*item*/, uint8 bagSlot, uint8 itemSlot)
+        {
+            if (itr == std::end(bankResultMap))
+                return false;
+
+            player->SwapItem(itr->second.second->GetPos(), (bagSlot << 8) | itemSlot);
+            ++itr;
+
+            return true;
+        });
 }
 
 void WorldSession::HandleSortReagentBankBags(WorldPackets::Item::SortReagentBankBags& /*sortReagentBankBags*/)
 {
-    // TODO: Implement sorting
-    // Placeholder to prevent completely locking out bags clientside
     SendPacket(WorldPackets::Item::SortBagsResult().Write());
+
+    _player->ApplyOnItems(3, [](Player* player, Item* item, uint8 /*bagSlot*/, uint8)
+        {
+            StoreItemInBanks(player, item);
+            return true;
+        });
+
+    std::unordered_map<uint32, uint32> bankItemsQuality;
+    std::multimap<uint32, Item*> bankItems;
+
+    _player->ApplyOnItems(3, [&bankItems, &bankItemsQuality](Player* player, Item* item, uint8 /*bagSlot*/, uint8)
+        {
+            if (!sObjectMgr->GetItemTemplate(item->GetEntry()))
+                return true;
+
+            bankItems.insert(std::make_pair(item->GetEntry(), item));
+            bankItemsQuality[item->GetEntry()] = item->GetItemLevel(player);
+
+            return true;
+        });
+
+    std::multimap<uint32, std::pair<uint32, Item*>> bankResultMap;
+    for (auto const& v : bankItems)
+        bankResultMap.insert(std::make_pair(bankItemsQuality[v.first], v));
+
+    auto itr = std::begin(bankResultMap);
+    _player->ApplyOnItems(3, [&bankResultMap, &itr](Player* player, Item* /*item*/, uint8 bagSlot, uint8 itemSlot)
+        {
+            if (itr == std::end(bankResultMap))
+                return false;
+
+            player->SwapItem(itr->second.second->GetPos(), (bagSlot << 8) | itemSlot);
+            ++itr;
+
+            return true;
+        });
 }
 
 void WorldSession::HandleRemoveNewItem(WorldPackets::Item::RemoveNewItem& removeNewItem)

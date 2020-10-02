@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -86,6 +86,19 @@ void WorldSession::HandleGarrisonOpenMissionNpc(WorldPackets::Garrison::Garrison
     if (!adventureMap)
         return;
 
+    GarrisonType garType = GARRISON_TYPE_CLASS_HALL; // Todo : differenciate depending of NPC
+
+    switch (garrisonOpenMissionNpcClient.NpcGUID.GetEntry())
+    {
+    case 80432:
+    case 81546:
+        garType = GARRISON_TYPE_GARRISON;
+        break;
+    default:
+        garType = GARRISON_TYPE_CLASS_HALL;
+        break;
+    }
+
     uint32 uiMapId = sObjectMgr->GetAdventureMapUIByCreature(adventureMap->GetEntry());
 
     if (uiMapId)
@@ -119,24 +132,76 @@ void WorldSession::HandleGarrisonRequestScoutingMap(WorldPackets::Garrison::Garr
     switch (scoutingMap.ID)
     {
         case 40: // Zuldazar
-            active = true;
+            if (_player->GetTeam() == HORDE)
+            {
+                active = true;
+            }
             break;
         case 41:
+            if (_player->GetTeam() == HORDE)
+            {
+                active = true;
+            }
+            break;
         case 42:
+            if (_player->GetTeam() == HORDE)
+            {
+                active = true;
+            }
+            break;
         case 148:
+            if (_player->GetTeam() == HORDE)
+            {
+                active = true;
+            }
+            break;
         case 149:
+            if (_player->GetTeam() == HORDE)
+            {
+                active = true;
+            }
+            break;
         case 150:
-            active = false;// _player->GetTeam() == HORDE;
+            if (_player->GetTeam() == HORDE)
+            {
+                active = true;
+            }
             break;
         case 43: // Tiragarde Sound
-            active = true;
+            if (_player->GetTeam() == ALLIANCE)
+            {
+                active = true;
+            }
             break;
         case 44:
+            if (_player->GetTeam() == ALLIANCE)
+            {
+                active = true;
+            }
+            break;
         case 45:
+            if (_player->GetTeam() == ALLIANCE)
+            {
+                active = true;
+            }
+            break;
         case 151:
+            if (_player->GetTeam() == ALLIANCE)
+            {
+                active = true;
+            }            
+            break;
         case 152:
+            if (_player->GetTeam() == ALLIANCE)
+            {
+                active = true;
+            }
+            break;
         case 153:
-            active = false;// _player->GetTeam() == ALLIANCE;
+            if (_player->GetTeam() == ALLIANCE)
+            {
+                active = true;
+            }
             break;
         default:
             break;
@@ -198,4 +263,105 @@ void WorldSession::HandleGarrisonMissionBonusRoll(WorldPackets::Garrison::Garris
         return;
 
     garrison->CalculateMissonBonusRoll(missionBonusRoll.MissionID);
+}
+
+void WorldSession::HandleRequestLandingPageShipmentInfoOpcode(WorldPacket& /*p_RecvData*/)
+{
+    if (!_player)
+        return;
+
+    Garrison* garrison = _player->GetGarrison(GarrisonType(GarrisonType::GARRISON_TYPE_CLASS_HALL));
+    if (!garrison)
+        return;
+
+    //std::vector<MS::Garrison::GarrisonWorkOrder> l_WorkOrders = garrison->GetWorkOrders();
+
+    WorldPacket l_Data(SMSG_GARRISON_LANDING_PAGE_SHIPMENT_INFO, 1024);
+
+    l_Data << uint32(GarrisonType::GARRISON_TYPE_CLASS_HALL);
+
+    l_Data << uint32(0); //l_WorkOrders.size()
+    /*
+    for (uint32 l_I = 0; l_I < l_WorkOrders.size(); ++l_I)
+    {
+        uint32 l_Duration = 0;
+
+        CharShipmentEntry const* l_Entry = sCharShipmentStore.LookupEntry(l_WorkOrders[l_I].ShipmentID);
+
+        if (l_Entry)
+            l_Duration = l_Entry->Duration;
+
+        /// @TODO http://www.mmo-champion.com/content/4662-Patch-6-1-Iron-Horde-Scrap-Meltdown-Garrison-Vendor-Rush-Orders-Blue-Posts
+        l_Data << uint32(l_WorkOrders[l_I].ShipmentID);
+        l_Data << uint64(l_WorkOrders[l_I].DatabaseID);
+        l_Data << uint64(garrison->GetBuilding(l_WorkOrders[l_I].PlotInstanceID).FollowerAssigned);
+        l_Data << uint32(l_WorkOrders[l_I].CreationTime);
+        l_Data << uint32(l_WorkOrders[l_I].CompleteTime - l_WorkOrders[l_I].CreationTime);
+        l_Data << uint32(0);                                    ///< Rewarded XP BuildingType
+    }
+    */
+   // SendPacket(&l_Data);
+}
+
+void WorldSession::HandleGarrisonGenerateRecruits(WorldPackets::Garrison::GarrisonGenerateRecruits& generateRecruits)
+{
+    if (!_player)
+        return;
+
+    Garrison* garrison = _player->GetGarrison(GarrisonType::GARRISON_TYPE_CLASS_HALL);
+
+    if (!garrison)
+        return;
+
+   // if (Creature* unit = _player->GetNPCIfCanInteractWith(generateRecruits.NpcGUID, 0))
+    {
+        _player->Whisper(std::string("CMSG_GARRISON_GENERATE_RECRUITS"), Language::LANG_COMMON, _player);
+      //   if (unit->ToGarrisonNPCAI()) 
+        //     unit->ToGarrisonNPCAI()->SendRecruitmentFollowersGenerated(_player, generateRecruits.AbiltyID ? generateRecruits.AbiltyID : generateRecruits.TraitID, 0, generateRecruits.TraitID ? true : false);
+    }
+}
+
+void WorldSession::HandleGarrisonRecruitFollower(WorldPackets::Garrison::GarrisonRecruitsFollower& garrisonRecruitsFollower)
+{
+    if (_player == nullptr)
+        return;
+
+    Garrison* garrison = _player->GetGarrison(GarrisonType::GARRISON_TYPE_CLASS_HALL);
+
+    if (!garrison)
+        return;
+
+    WorldPackets::Garrison::GarrisonRecruitFollowerResult result;
+    std::unordered_map<uint64 /*dbId*/, Garrison::Follower> followers = garrison->GetFollowers();
+
+  //  if (Creature* unit = _player->GetNPCIfCanInteractWith(garrisonRecruitsFollower.NpcGUID, 0))
+    {
+        result.resultID = uint32(GarrisonError::GARRISON_SUCCESS);
+
+        for (auto& follower : followers)
+        {
+            if (follower.second.PacketInfo.GarrFollowerID == garrisonRecruitsFollower.FollowerID)
+            {
+                result.followers.push_back(follower.second.PacketInfo);
+                garrison->AddFollower(garrisonRecruitsFollower.FollowerID);
+                //l_Garrison->SetCanRecruitFollower(false);
+                //m_Player->SetCharacterWorldState(CharacterWorldStates::GarrisonTavernBoolCanRecruitFollower, 0);
+                break;
+            }
+        }
+        SendPacket(result.Write());
+    }
+}
+
+void WorldSession::HandleGarrisonSetFollowerInactive(WorldPackets::Garrison::GarrisonSetFollowerInactive& garrisonSetFollowerInactive)
+{
+    if (_player == nullptr)
+        return;
+
+    Garrison* garrison = _player->GetGarrison(GarrisonType::GARRISON_TYPE_CLASS_HALL);
+
+    if (!garrison)
+        return;
+
+    garrison->ChangeFollowerActivationState(garrisonSetFollowerInactive.followerDBID, !garrisonSetFollowerInactive.desActivate);
 }

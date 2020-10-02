@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,6 +21,7 @@
 #include "DatabaseEnv.h"
 #include "QuestObjectiveCriteriaMgr.h"
 #include "Log.h"
+#include "RaceMask.h"
 #include "Containers.h"
 #include "GridNotifiersImpl.h"
 
@@ -379,9 +379,9 @@ void WorldQuestMgr::RewardQuestForPlayer(Player* player, uint32 questId)
                 ItemPosCountVec dest;
                 if (player->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, worldQuestReward->RewardId, worldQuestReward->RewardCount) == EQUIP_ERR_OK)
                 {
-                    std::vector<int32> bonusListIDs = sDB2Manager.GetItemBonusTreeVector(worldQuestReward->RewardId, ItemContext(worldQuestReward->RewardContext));
-                    Item* item = player->StoreNewItem(dest, worldQuestReward->RewardId, true, GenerateItemRandomBonusListId(worldQuestReward->RewardId), GuidSet(), ItemContext(0), bonusListIDs);
-                    player->SendNewItem(item, worldQuestReward->RewardCount, true, false);
+                    //std::vector<int32> bonusListIDs = sDB2Manager.GetItemBonusTreeVector(worldQuestReward->RewardId, worldQuestReward->RewardContext);
+                    //Item* item = player->StoreNewItem(dest, worldQuestReward->RewardId, true, GenerateItemRandomBonusListId(worldQuestReward->RewardId), GuidSet(), ItemContext::Quest_Reward, bonusListIDs);
+                    //player->SendNewItem(item, worldQuestReward->RewardCount, true, false);
                 }
                 break;
             }
@@ -545,8 +545,8 @@ void WorldQuestMgr::BuildRewardPacket(Player* player, uint32 questId, WorldPacke
                 WorldPackets::Quest::QueryQuestRewardResponse::ItemReward itemReward;
                 itemReward.Item.ItemID = worldQuestReward->RewardId;
                 itemReward.Item.ItemBonus = WorldPackets::Item::ItemBonusInstanceData();
-                itemReward.Item.ItemBonus->Context = (ItemContext)worldQuestReward->RewardContext;
-                itemReward.Item.ItemBonus->BonusListIDs = sDB2Manager.GetItemBonusTreeVector(worldQuestReward->RewardId, ItemContext(worldQuestReward->RewardContext));
+                //itemReward.Item.ItemBonus->GetContext() = worldQuestReward->RewardContext;
+                //itemReward.Item.ItemBonus->BonusListIDs = sDB2Manager.GetItemBonusTreeVector(worldQuestReward->RewardId, worldQuestReward->RewardContext);
                 itemReward.Quantity = worldQuestReward->RewardCount;
                 packet.ItemRewards.push_back(itemReward);
                 break;

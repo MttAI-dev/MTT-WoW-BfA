@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -375,14 +375,14 @@ namespace WorldPackets
 
             WorldPacket const* Write() override;
 
-            int32 AuctionID      = 0; ///< the id of the auction that triggered this notification
-            int32 Command        = 0; ///< the type of action that triggered this notification. Possible values are @ref AuctionAction
-            int32 ErrorCode      = 0; ///< the error code that was generated when trying to perform the action. Possible values are @ref AuctionError
-            int32 BagResult      = 0; ///< the bid error. Possible values are @ref AuctionError
+            int32 AuctionID = 0; ///< the id of the auction that triggered this notification
+            int32 Command = 0; ///< the type of action that triggered this notification. Possible values are @ref AuctionAction
+            int32 ErrorCode = 0; ///< the error code that was generated when trying to perform the action. Possible values are @ref AuctionError
+            int32 BagResult = 0; ///< the bid error. Possible values are @ref AuctionError
             ObjectGuid Guid;          ///< the GUID of the bidder for this auction.
-            uint64 MinIncrement  = 0; ///< the sum of outbid is (1% of current bid) * 5, if the bid is too small, then this value is 1 copper.
-            uint64 Money         = 0; ///< the amount of money that the player bid in copper
-            uint32 DesiredDelay  = 0;
+            uint64 MinIncrement = 0; ///< the sum of outbid is (1% of current bid) * 5, if the bid is too small, then this value is 1 copper.
+            uint64 Money = 0; ///< the amount of money that the player bid in copper
+            uint32 DesiredDelay = 0;
         };
 
         class AuctionCommodityQuote final : public ServerPacket

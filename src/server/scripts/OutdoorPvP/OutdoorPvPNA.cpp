@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -201,7 +201,7 @@ bool OutdoorPvPNA::SetupOutdoorPvP()
     return true;
 }
 
-void OutdoorPvPNA::HandlePlayerEnterZone(Player* player, Area* zone)
+void OutdoorPvPNA::HandlePlayerEnterZone(Player* player, uint32 zone)
 {
     // add buffs
     if (player->GetTeam() == m_obj->GetControllingFaction())
@@ -209,7 +209,7 @@ void OutdoorPvPNA::HandlePlayerEnterZone(Player* player, Area* zone)
     OutdoorPvP::HandlePlayerEnterZone(player, zone);
 }
 
-void OutdoorPvPNA::HandlePlayerLeaveZone(Player* player, Area* zone)
+void OutdoorPvPNA::HandlePlayerLeaveZone(Player* player, uint32 zone)
 {
     // remove buffs
     player->RemoveAurasDueToSpell(NA_CAPTURE_BUFF);

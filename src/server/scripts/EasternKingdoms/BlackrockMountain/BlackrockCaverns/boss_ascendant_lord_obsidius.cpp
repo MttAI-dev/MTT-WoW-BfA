@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -33,13 +33,17 @@ enum Spells
     SPELL_MANA_TAP                 = 36021,
     SPELL_ARCANE_TORRENT           = 36022,
     SPELL_DOMINATION               = 35280,
+    SPELL_TWITCHY                  = 76167,
+    SPELL_SHADOW_OF_OBSIDIUS       = 76164,
+    SPELL_CREPUSCULAR_VEIL         = 76189
 };
 
 enum Events
 {
     EVENT_MANA_TAP                 = 1,
     EVENT_ARCANE_TORRENT           = 2,
-    EVENT_DOMINATION               = 3
+    EVENT_DOMINATION               = 3,
+    EVENT_CREPUSCULAR_VEIL         = 4
 };
 
 class boss_ascendant_lord_obsidius : public CreatureScript
@@ -106,7 +110,78 @@ class boss_ascendant_lord_obsidius : public CreatureScript
         }
 };
 
+class npc_shadow_of_obsidius : public CreatureScript
+{
+public:
+    npc_shadow_of_obsidius() : CreatureScript("npc_shadow_of_obsidius") {}
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_shadow_of_obsidiusAI(creature);
+    }
+
+    struct npc_shadow_of_obsidiusAI : public ScriptedAI
+    {
+        npc_shadow_of_obsidiusAI(Creature* creature) : ScriptedAI(creature)
+        {
+            me->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_KNOCK_BACK, true);
+            me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_GRIP, true);
+            instance = creature->GetInstanceScript();
+        }
+
+        InstanceScript* instance;
+        EventMap events;
+
+        void Reset() override
+        {
+            DoCast(me, SPELL_TWITCHY);
+            DoCast(me, SPELL_SHADOW_OF_OBSIDIUS);
+        }
+
+        void EnterCombat(Unit* /*attacker*/) override
+        {
+            me->RemoveAura(75054);
+            events.RescheduleEvent(EVENT_CREPUSCULAR_VEIL, 3900);
+        }
+
+        void DamageTaken(Unit* attacker, uint32& /*damage*/) override
+        {
+            if (me->GetVictim() != attacker)
+            {
+                DoResetThreat();
+                me->AddThreat(attacker, 1000000.0f);
+                me->Attack(attacker, true);
+                me->GetMotionMaster()->MoveChase(attacker);
+            }
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            if (!UpdateVictim())
+                return;
+
+            events.Update(diff);
+
+            if (me->HasUnitState(UNIT_STATE_CASTING))
+                return;
+
+            if (uint32 eventId = events.ExecuteEvent())
+            {
+                switch (eventId)
+                {
+                case EVENT_CREPUSCULAR_VEIL:
+                    DoCast(me->GetVictim(), SPELL_CREPUSCULAR_VEIL);
+                    events.RescheduleEvent(EVENT_CREPUSCULAR_VEIL, 3900);
+                    break;
+                }
+            }
+            DoMeleeAttackIfReady();
+        }
+    };
+};
+
 void AddSC_boss_ascendant_lord_obsidius()
 {
     new boss_ascendant_lord_obsidius();
+    new npc_shadow_of_obsidius();
 }

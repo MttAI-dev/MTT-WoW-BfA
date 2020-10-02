@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,6 +36,8 @@ public:
     void AddPet(BattlePet* battlePet);
     void AddPet(uint32 species, uint32 creatureId, uint16 breed, uint8 quality, uint16 level = 1);
     void RemovePet(ObjectGuid guid);
+
+    std::unordered_map<uint64 /*battlePetGuid*/, BattlePet> const& GetPets() const { return _pets; }
 
     uint8 GetPetCount(bool aliveOnly = false) const;
     uint8 GetPetCount(uint32 species) const;

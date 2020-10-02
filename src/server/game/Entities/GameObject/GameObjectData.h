@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -774,6 +774,15 @@ struct GameObjectTemplate
         }
     }
 
+    uint32 GetDungeonEncounter() const
+    {
+        switch (type)
+        {
+        case GAMEOBJECT_TYPE_CHEST: return chest.DungeonEncounter;
+        default: return 0;
+        }
+    }
+
     bool GetDespawnPossibility() const                      // despawn at targeting of cast?
     {
         switch (type)
@@ -926,6 +935,26 @@ struct GameObjectTemplate
         }
     }
 
+    uint32 GetSpellFocusType() const
+    {
+        switch (type)
+        {
+            case GAMEOBJECT_TYPE_SPELL_FOCUS:   return spellFocus.spellFocusType;
+            case GAMEOBJECT_TYPE_UI_LINK:       return UILink.spellFocusType;
+            default: return 0;
+        }
+    }
+
+    uint32 GetSpellFocusRadius() const
+    {
+        switch (type)
+        {
+            case GAMEOBJECT_TYPE_SPELL_FOCUS:   return spellFocus.radius;
+            case GAMEOBJECT_TYPE_UI_LINK:       return UILink.radius;
+            default: return 0;
+        }
+    }
+
     void InitializeQueryData();
     WorldPacket BuildQueryData(LocaleConstant loc) const;
 };
@@ -962,12 +991,11 @@ struct GameObjectAddon
 // from `gameobject`
 struct GameObjectData
 {
-    explicit GameObjectData() : id(0), mapid(0), areaId(0), posX(0.0f), posY(0.0f), posZ(0.0f), orientation(0.0f), spawntimesecs(0),
+    explicit GameObjectData() : id(0), mapid(0), posX(0.0f), posY(0.0f), posZ(0.0f), orientation(0.0f), spawntimesecs(0),
                                 animprogress(0), go_state(GO_STATE_ACTIVE), spawnDifficulties(), artKit(0),
                                 phaseUseFlags(0), phaseId(0), phaseGroup(0), terrainSwapMap(-1), ScriptId(0), dbData(true) { }
     uint32 id;                                              // entry in gamobject_template
     uint16 mapid;
-    uint32 areaId;
     float posX;
     float posY;
     float posZ;

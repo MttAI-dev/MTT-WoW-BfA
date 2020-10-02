@@ -1,5 +1,6 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
+ * Copyright (C) Thordekk
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,14 +24,15 @@
 #include "AccountMgr.h"
 #include "AchievementMgr.h"
 #include "ArchaeologyMgr.h"
-#include "Area.h"
 #include "AreaTriggerDataStore.h"
+#include "AnticheatMgr.h"
 #include "AuctionHouseBot.h"
 #include "AuctionHouseMgr.h"
 #include "AuthenticationPackets.h"
 #include "BattlefieldMgr.h"
 #include "BattlegroundMgr.h"
 #include "BattlenetRpcErrorCodes.h"
+#include "BattlePayData.h"
 #include "BattlePetDataStore.h"
 #include "BlackMarketMgr.h"
 #include "CalendarMgr.h"
@@ -61,6 +63,7 @@
 #include "IPLocation.h"
 #include "Language.h"
 #include "LFGMgr.h"
+#include "LootItemStorage.h"
 #include "LootMgr.h"
 #include "M2Stores.h"
 #include "MapManager.h"
@@ -658,6 +661,7 @@ void World::LoadConfigSettings(bool reload)
     ///- Read other configuration items from the config file
 
     m_bool_configs[CONFIG_DURABILITY_LOSS_IN_PVP] = sConfigMgr->GetBoolDefault("DurabilityLoss.InPvP", false);
+    m_bool_configs[CONFIG_PET_BATTLES] = sConfigMgr->GetBoolDefault("PetBattles", true);
 
     m_int_configs[CONFIG_COMPRESSION] = sConfigMgr->GetIntDefault("Compression", 1);
     if (m_int_configs[CONFIG_COMPRESSION] < 1 || m_int_configs[CONFIG_COMPRESSION] > 9)
@@ -998,8 +1002,8 @@ void World::LoadConfigSettings(bool reload)
     m_int_configs[CONFIG_GM_WHISPERING_TO]      = sConfigMgr->GetIntDefault("GM.WhisperingTo", 2);
     m_int_configs[CONFIG_GM_FREEZE_DURATION]    = sConfigMgr->GetIntDefault("GM.FreezeAuraDuration", 0);
 
-    m_int_configs[CONFIG_GM_LEVEL_IN_GM_LIST]   = sConfigMgr->GetIntDefault("GM.InGMList.Level", SEC_ADMINISTRATOR);
-    m_int_configs[CONFIG_GM_LEVEL_IN_WHO_LIST]  = sConfigMgr->GetIntDefault("GM.InWhoList.Level", SEC_ADMINISTRATOR);
+    m_int_configs[CONFIG_GM_LEVEL_IN_GM_LIST] = sConfigMgr->GetIntDefault("GM.InGMList.Level", SEC_ADMIN);
+    m_int_configs[CONFIG_GM_LEVEL_IN_WHO_LIST] = sConfigMgr->GetIntDefault("GM.InWhoList.Level", SEC_ADMIN);
     m_int_configs[CONFIG_START_GM_LEVEL]        = sConfigMgr->GetIntDefault("GM.StartLevel", 1);
     if (m_int_configs[CONFIG_START_GM_LEVEL] < m_int_configs[CONFIG_START_PLAYER_LEVEL])
     {
@@ -1071,12 +1075,12 @@ void World::LoadConfigSettings(bool reload)
         m_int_configs[CONFIG_MAX_OVERSPEED_PINGS] = 2;
     }
 
-    m_bool_configs[CONFIG_SAVE_RESPAWN_TIME_IMMEDIATELY] = sConfigMgr->GetBoolDefault("SaveRespawnTimeImmediately", true);
-    if (!m_bool_configs[CONFIG_SAVE_RESPAWN_TIME_IMMEDIATELY])
-    {
-        TC_LOG_WARN("server.loading", "SaveRespawnTimeImmediately triggers assertions when disabled, overridden to Enabled");
+    //m_bool_configs[CONFIG_SAVE_RESPAWN_TIME_IMMEDIATELY] = sConfigMgr->GetBoolDefault("SaveRespawnTimeImmediately", true);
+    //if (!m_bool_configs[CONFIG_SAVE_RESPAWN_TIME_IMMEDIATELY])
+    //{
+        //TC_LOG_WARN("server.loading", "SaveRespawnTimeImmediately triggers assertions when disabled, overridden to Enabled");
         m_bool_configs[CONFIG_SAVE_RESPAWN_TIME_IMMEDIATELY] = true;
-    }
+    //}
 
     m_bool_configs[CONFIG_WEATHER] = sConfigMgr->GetBoolDefault("ActivateWeather", true);
 
@@ -1187,7 +1191,7 @@ void World::LoadConfigSettings(bool reload)
     m_int_configs[CONFIG_ARENA_RATING_DISCARD_TIMER]                 = sConfigMgr->GetIntDefault ("Arena.RatingDiscardTimer", 10 * MINUTE * IN_MILLISECONDS);
     m_int_configs[CONFIG_ARENA_RATED_UPDATE_TIMER]                   = sConfigMgr->GetIntDefault ("Arena.RatedUpdateTimer", 5 * IN_MILLISECONDS);
     m_bool_configs[CONFIG_ARENA_QUEUE_ANNOUNCER_ENABLE]              = sConfigMgr->GetBoolDefault("Arena.QueueAnnouncer.Enable", false);
-    m_int_configs[CONFIG_ARENA_SEASON_ID]                            = sConfigMgr->GetIntDefault ("Arena.ArenaSeason.ID", 15);
+    m_int_configs[CONFIG_ARENA_SEASON_ID]                            = sConfigMgr->GetIntDefault ("Arena.ArenaSeason.ID", 3);
     m_int_configs[CONFIG_ARENA_START_RATING]                         = sConfigMgr->GetIntDefault ("Arena.ArenaStartRating", 0);
     m_int_configs[CONFIG_ARENA_START_PERSONAL_RATING]                = sConfigMgr->GetIntDefault ("Arena.ArenaStartPersonalRating", 1000);
     m_int_configs[CONFIG_ARENA_START_MATCHMAKER_RATING]              = sConfigMgr->GetIntDefault ("Arena.ArenaStartMatchmakerRating", 1500);
@@ -1385,6 +1389,7 @@ void World::LoadConfigSettings(bool reload)
 
     // Dungeon finder
     m_int_configs[CONFIG_LFG_OPTIONSMASK] = sConfigMgr->GetIntDefault("DungeonFinder.OptionsMask", 1);
+    m_int_configs[CONFIG_LFG_DEBUG_JOIN] = sConfigMgr->GetIntDefault("DungeonFinder.DebugJoin", 0);
 
     // DBC_ItemAttributes
     m_bool_configs[CONFIG_DBC_ENFORCE_ITEM_ATTRIBUTES] = sConfigMgr->GetBoolDefault("DBC.EnforceItemAttributes", true);
@@ -1427,6 +1432,11 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_PDUMP_NO_OVERWRITE] = sConfigMgr->GetBoolDefault("PlayerDump.DisallowOverwrite", true);
     m_bool_configs[CONFIG_UI_QUESTLEVELS_IN_DIALOGS] = sConfigMgr->GetBoolDefault("UI.ShowQuestLevelsInDialogs", false);
 
+    m_bool_configs[CONFIG_ANTICHEAT_ENABLE] = sConfigMgr->GetBoolDefault("Anticheat.Enable", true);
+    m_int_configs[CONFIG_ANTICHEAT_REPORTS_INGAME_NOTIFICATION] = sConfigMgr->GetIntDefault("Anticheat.ReportsForIngameWarnings", 70);
+    m_int_configs[CONFIG_ANTICHEAT_DETECTIONS_ENABLED] = sConfigMgr->GetIntDefault("Anticheat.DetectionsEnabled", 31);
+    m_int_configs[CONFIG_ANTICHEAT_MAX_REPORTS_FOR_DAILY_REPORT] = sConfigMgr->GetIntDefault("Anticheat.MaxReportsForDailyReport", 70);
+
     // Wintergrasp battlefield
     m_bool_configs[CONFIG_WINTERGRASP_ENABLE] = sConfigMgr->GetBoolDefault("Wintergrasp.Enable", false);
     m_int_configs[CONFIG_WINTERGRASP_PLR_MAX] = sConfigMgr->GetIntDefault("Wintergrasp.PlayerMax", 100);
@@ -1466,11 +1476,17 @@ void World::LoadConfigSettings(bool reload)
     // AHBot
     m_int_configs[CONFIG_AHBOT_UPDATE_INTERVAL] = sConfigMgr->GetIntDefault("AuctionHouseBot.Update.Interval", 20);
 
+    m_bool_configs[CONFIG_CALCULATE_CREATURE_ZONE_AREA_DATA] = sConfigMgr->GetBoolDefault("Calculate.Creature.Zone.Area.Data", false);
+    m_bool_configs[CONFIG_CALCULATE_GAMEOBJECT_ZONE_AREA_DATA] = sConfigMgr->GetBoolDefault("Calculate.Gameoject.Zone.Area.Data", false);
+
     // Black Market
     m_bool_configs[CONFIG_BLACKMARKET_ENABLED] = sConfigMgr->GetBoolDefault("BlackMarket.Enabled", true);
 
     m_int_configs[CONFIG_BLACKMARKET_MAXAUCTIONS] = sConfigMgr->GetIntDefault("BlackMarket.MaxAuctions", 12);
     m_int_configs[CONFIG_BLACKMARKET_UPDATE_PERIOD] = sConfigMgr->GetIntDefault("BlackMarket.UpdatePeriod", 24);
+
+    // Blizzard Shop
+    m_bool_configs[CONFIG_PURCHASE_SHOP_ENABLED] = sConfigMgr->GetBoolDefault("Purchase.Shop.Enabled", false);
 
     // HotSwap
     m_bool_configs[CONFIG_HOTSWAP_ENABLED] = sConfigMgr->GetBoolDefault("HotSwap.Enabled", true);
@@ -1484,18 +1500,22 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_PREVENT_RENAME_CUSTOMIZATION] = sConfigMgr->GetBoolDefault("PreventRenameCharacterOnCustomization", false);
 
     // Allow 5-man parties to use raid warnings
+    m_int_configs[CONFIG_CHALLENGE_LEVEL_LIMIT] = sConfigMgr->GetIntDefault("Challenge.LevelLimit", 30);
+    m_int_configs[CONFIG_CHALLENGE_LEVEL_MAX] = sConfigMgr->GetIntDefault("Challenge.LevelMax", 15);
+    m_int_configs[CONFIG_CHALLENGE_LEVEL_STEP] = sConfigMgr->GetIntDefault("Challenge.LevelStep", 2);
     m_bool_configs[CONFIG_CHAT_PARTY_RAID_WARNINGS] = sConfigMgr->GetBoolDefault("PartyRaidWarnings", false);
 
     // Allow to cache data queries
     m_bool_configs[CONFIG_CACHE_DATA_QUERIES] = sConfigMgr->GetBoolDefault("CacheDataQueries", true);
+    m_bool_configs[CONFIG_ARGUSWOW_ENABLE]  = sConfigMgr->GetBoolDefault("ArgusWowEnable", true);
+    m_int_configs[CONFIG_DUNGEON_ACTIVE_STEP] = sConfigMgr->GetIntDefault("Dungeon.ActiveStep", 0);
+    m_int_configs[CONFIG_WEIGHTED_MYTHIC_KEYSTONE] = sConfigMgr->GetIntDefault("Dungeon.WeightedMythicKeystone.Enabled", 1);
 
     // Check Invalid Position
     m_bool_configs[CONFIG_CREATURE_CHECK_INVALID_POSITION] = sConfigMgr->GetBoolDefault("Creature.CheckInvalidPosition", false);
     m_bool_configs[CONFIG_GAME_OBJECT_CHECK_INVALID_POSITION] = sConfigMgr->GetBoolDefault("GameObject.CheckInvalidPosition", false);
 
     m_bool_configs[CONFIG_LEGACY_BUFF_ENABLED] = sConfigMgr->GetBoolDefault("LegacyBuffEnabled", true);
-
-    m_int_configs[CONFIG_AZERITE_KNOWLEGE] = sConfigMgr->GetIntDefault("Azerite.Knowledge.Level", 1);
 
     // call ScriptMgr if we're reloading the configuration
     if (reload)
@@ -1591,7 +1611,14 @@ void World::SetInitialWorldSettings()
     {
         mapData.emplace(std::piecewise_construct, std::forward_as_tuple(mapEntry->ID), std::forward_as_tuple());
         if (mapEntry->ParentMapID != -1)
+        {
+            ASSERT(mapEntry->CosmeticParentMapID == -1 || mapEntry->ParentMapID == mapEntry->CosmeticParentMapID,
+                "Inconsistent parent map data for map %u (ParentMapID = %hd, CosmeticParentMapID = %hd)",
+                mapEntry->ID, mapEntry->ParentMapID, mapEntry->CosmeticParentMapID);
             mapData[mapEntry->ParentMapID].push_back(mapEntry->ID);
+        }
+        else if (mapEntry->CosmeticParentMapID != -1)
+            mapData[mapEntry->CosmeticParentMapID].push_back(mapEntry->ID);
     }
 
     sMapMgr->InitializeParentMapData(mapData);
@@ -1745,8 +1772,8 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading Reputation Reward Rates...");
     sObjectMgr->LoadReputationRewardRate();
 
-    TC_LOG_INFO("server.loading", "Loading Creature Reputation OnKill Data...");
-    sObjectMgr->LoadReputationOnKill();
+    TC_LOG_INFO("server.loading", "Loading Creature Reward OnKill Data...");
+    sObjectMgr->LoadRewardOnKill();
 
     TC_LOG_INFO("server.loading", "Loading Reputation Spillover Data...");
     sObjectMgr->LoadReputationSpilloverTemplate();
@@ -1810,9 +1837,6 @@ void World::SetInitialWorldSettings()
 
     TC_LOG_INFO("server.loading", "Loading Objects Pooling Data...");
     sPoolMgr->LoadFromDB();
-
-    TC_LOG_INFO("server.loading", "Filling pools data from Areas...");
-    sAreaMgr->FillGatheringNodePools();
 
     TC_LOG_INFO("server.loading", "Loading Game Event Data...");               // must be after loading pools fully
     sGameEventMgr->LoadFromDB();
@@ -2093,6 +2117,9 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading Calendar data...");
     sCalendarMgr->LoadFromDB();
 
+    TC_LOG_INFO("server.loading", "Loading Item loot...");
+    sLootItemStorage->LoadStorageFromDB();
+
     TC_LOG_INFO("server.loading", "Loading Quest task...");
     sObjectMgr->LoadQuestTasks();
 
@@ -2250,6 +2277,8 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading active world quests...");
     sWorldQuestMgr->LoadActiveWorldQuests();
 
+    sBattlePayDataStore->Initialize();
+
     // Preload all cells, if required for the base maps
     if (sWorld->getBoolConfig(CONFIG_BASEMAP_LOAD_GRIDS))
     {
@@ -2269,7 +2298,7 @@ void World::SetInitialWorldSettings()
 
     TC_METRIC_EVENT("events", "World initialized", "World initialized in " + std::to_string(startupDuration / 60000) + " minutes " + std::to_string((startupDuration % 60000) / 1000) + " seconds");
 
-    sLog->SetRealmId(realm.Id.Realm, realm.Name);
+    sLog->SetRealmId(realm.Id.Realm);
 }
 
 void World::LoadAutobroadcasts()
@@ -2298,6 +2327,19 @@ void World::LoadAutobroadcasts()
     } while (result->NextRow());
 
     TC_LOG_INFO("server.loading", ">> Loaded " SZFMTD " autobroadcast definitions in %u ms", m_Autobroadcasts.size(), GetMSTimeDiffToNow(oldMSTime));
+}
+
+CharacterInfo const* World::GetCharacterInfo(ObjectGuid const& guid) const
+{
+    if (_characterInfoStore.size() <= guid.GetCounter())
+        return nullptr;
+
+    return _characterInfoStore[guid.GetCounter()];
+}
+
+CharacterInfo const* World::GetCharacterInfo(std::string name) const
+{
+    return Trinity::Containers::MapGetValuePtr(nameMap, name);
 }
 
 /// Update the World !
@@ -3298,6 +3340,11 @@ void World::InitCurrencyResetTime()
         sWorld->setWorldState(WS_CURRENCY_RESET_TIME, uint32(m_NextCurrencyReset));
 }
 
+time_t World::getNextChallengeKeyReset()
+{
+    return m_NextChallengeKeyReset;
+}
+
 void World::DailyReset()
 {
     TC_LOG_INFO("misc", "Daily quests reset for all characters.");
@@ -3315,6 +3362,8 @@ void World::DailyReset()
 
     // change available dailies
     sPoolMgr->ChangeDailyQuests();
+
+    sAnticheatMgr->ResetDailyReportStates();
 }
 
 void World::ResetCurrencyWeekCap()
@@ -3364,7 +3413,6 @@ void World::ResetWeeklyQuests()
 
     // change available weeklies
     sPoolMgr->ChangeWeeklyQuests();
-    //CONFIG_AZERITE_KNOWLEGE increased per week after raid launch + one week
 }
 
 void World::ResetMonthlyQuests()
@@ -3435,6 +3483,14 @@ void World::ResetRandomBG()
         if (itr->second->GetPlayer())
             itr->second->GetPlayer()->SetRandomWinner(false);
 
+    CharacterDatabase.Execute("UPDATE character_arena_data SET dayGames = 0, dayWins = 0");
+
+    for (SessionMap::const_iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
+    {
+        if (Player* player = itr->second->GetPlayer())
+            player->FinishDay();
+    }
+
     m_NextRandomBGReset = time_t(m_NextRandomBGReset + DAY);
     sWorld->setWorldState(WS_BG_DAILY_RESET_TIME, uint32(m_NextRandomBGReset));
 }
@@ -3478,7 +3534,10 @@ void World::UpdateAreaDependentAuras()
     SessionMap::const_iterator itr;
     for (itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
         if (itr->second && itr->second->GetPlayer() && itr->second->GetPlayer()->IsInWorld())
-            itr->second->GetPlayer()->UpdateAreaDependentAuras();
+        {
+            itr->second->GetPlayer()->UpdateAreaDependentAuras(itr->second->GetPlayer()->GetAreaId());
+            itr->second->GetPlayer()->UpdateZoneDependentAuras(itr->second->GetPlayer()->GetZoneId());
+        }
 }
 
 void World::LoadWorldStates()

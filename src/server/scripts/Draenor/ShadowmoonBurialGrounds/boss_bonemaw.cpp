@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2016 Firestorm Servers <https://firestorm-servers.com>
+ * Copyright (C) 2020 LatinCoreTeam
+ * Copyright (C) Thordekk
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -237,7 +237,7 @@ public:
                     Position position = me->GetPosition();
 
                     for (auto itr : l_ListPlayers)
-                    {
+                    {            
                         if (Creature* l_BonemawMouth = m_Instance->GetCreature(DataBonemawMouth))
                         {
                             if (itr->IsWithinDistInMap(l_BonemawMouth, 4.0f))
@@ -519,7 +519,7 @@ public:
 
         uint32 m_Timer;
         InstanceScript* m_Instance;
-
+       
         void Reset() override
         {
             events.Reset();
@@ -567,7 +567,7 @@ public:
     }
 };
 
-/// Inhale - 153804
+/// Inhale - 153804 
 class spell_shadowmoon_burial_grounds_inhale : public SpellScriptLoader
 {
 public:
@@ -595,7 +595,7 @@ public:
         }
 
         void Register() override
-        {
+        {     
             AfterEffectRemove += AuraEffectRemoveFn(spell_shadowmoon_burial_grounds_inhale_SpellScript::OnRemove, SpellEffIndex::EFFECT_0, AuraType::SPELL_AURA_PERIODIC_TRIGGER_SPELL, AuraEffectHandleModes::AURA_EFFECT_HANDLE_REAL);
         }
 
@@ -664,7 +664,7 @@ public:
     }
 };
 
-/// Corpse Breath - 165578
+/// Corpse Breath - 165578  
 class spell_shadowmoon_burial_grounds_corpse_breath : public SpellScriptLoader
 {
 public:
@@ -747,7 +747,7 @@ public:
     }
 };
 
-/// Drowned - 154010
+/// Drowned - 154010  
 class spell_shadowmoon_burial_grounds_drowned : public SpellScriptLoader
 {
 public:
@@ -766,7 +766,7 @@ public:
 
             Unit* caster = GetCaster();
 
-            caster->NearTeleportTo(1830.360f, -505.889f, 201.652f, 5.194756f, true);
+            caster->NearTeleportTo(1830.360f, -505.889f, 201.652f, 5.194756f, true);          
         }
 
         void Register() override

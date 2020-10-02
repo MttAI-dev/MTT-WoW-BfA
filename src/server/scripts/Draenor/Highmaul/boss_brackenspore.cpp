@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2016 Firestorm Servers <https://firestorm-servers.com>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -147,7 +146,7 @@ class boss_brackenspore : public CreatureScript
             RejuvenatingMush    = 78868,
             InvisibleMan        = 64693,
             /// Explosive Shroom
-            TriggerA            = 2000006, //targetted by 163777(60ft)
+            TriggerA            = 2000006, //targetted by 163777(60ft) 
             TriggerB            = 2000007, //targetted by 163813(60ft)
             TriggerC            = 2000008, //targetted by 163815(60ft)
             TriggerD            = 2000009, //targetted by 163796(40ft)
@@ -1818,7 +1817,7 @@ class areatrigger_highmaul_call_of_the_tides : public AreaTriggerAI
 {
 public:
     areatrigger_highmaul_call_of_the_tides(AreaTrigger* areatrigger) : AreaTriggerAI(areatrigger)
-    {
+    { 
         timer = 0;
     }
 
@@ -1890,7 +1889,7 @@ public:
                     if (Creature* brackenspore = instance->instance->GetCreature(instance->GetGuidData(eHighmaulCreatures::Brackenspore)))
                         target->CastSpell(target, CallOfTheTidesDamage, true, nullptr, nullptr, brackenspore->GetGUID());
             }
-
+                        
 
             timer = 1 * IN_MILLISECONDS;
         }

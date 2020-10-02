@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -299,7 +299,7 @@ enum AuraType : uint32
     SPELL_AURA_MOD_DETAUNT                                  = 221,
     SPELL_AURA_222                                          = 222,
     SPELL_AURA_223                                          = 223,  // old SPELL_AURA_RAID_PROC_FROM_CHARGE
-    SPELL_AURA_224                                          = 224,
+    SPELL_AURA_ENABLE_EXTRA_TALENT                          = 224,
     SPELL_AURA_MOD_VISIBILITY_RANGE                         = 225,
     SPELL_AURA_PERIODIC_DUMMY                               = 226,
     SPELL_AURA_PERIODIC_TRIGGER_SPELL_WITH_VALUE            = 227,
@@ -360,7 +360,7 @@ enum AuraType : uint32
     SPELL_AURA_MOD_BASE_HEALTH_PCT                          = 282,
     SPELL_AURA_MOD_HEALING_RECEIVED                         = 283,  // Possibly only for some spell family class spells
     SPELL_AURA_LINKED                                       = 284,
-    SPELL_AURA_LINKED_2                                     = 285,
+    SPELL_AURA_MOD_ATTACK_POWER_OF_ARMOR                    = 285,
     SPELL_AURA_ABILITY_PERIODIC_CRIT                        = 286,
     SPELL_AURA_DEFLECT_SPELLS                               = 287,
     SPELL_AURA_IGNORE_HIT_DIRECTION                         = 288,
@@ -399,8 +399,8 @@ enum AuraType : uint32
     SPELL_AURA_MOD_NO_ACTIONS                               = 321,
     SPELL_AURA_INTERFERE_TARGETTING                         = 322,
     SPELL_AURA_323                                          = 323,  // Not used in 4.3.4
-    SPELL_AURA_324                                          = 324,  // spell critical chance (probably by school mask)
-    SPELL_AURA_LEARN_PVP_TALENT                             = 325,  // NYI
+    SPELL_AURA_OVERRIDE_UNLOCKED_AZERITE_ESSENCE_RANK       = 324,  // testing aura
+    SPELL_AURA_325                                          = 325,  // Not used in 4.3.4
     SPELL_AURA_PHASE_GROUP                                  = 326,  // Puts the player in all the phases that are in the group with id = miscB
     SPELL_AURA_327                                          = 327,  // Not used in 4.3.4
     SPELL_AURA_TRIGGER_SPELL_ON_POWER_PCT                   = 328,  // Triggers spell when power goes above (MiscB = 0) or falls below (MiscB = 1) specified percent value (once, not every time condition has meet)
@@ -497,7 +497,7 @@ enum AuraType : uint32
     SPELL_AURA_MOD_BASE_MANA_PCT                            = 419,
     SPELL_AURA_MOD_BATTLE_PET_XP_PCT                        = 420,  // NYI
     SPELL_AURA_MOD_ABSORB_EFFECTS_AMOUNT_PCT                = 421,
-    SPELL_AURA_MOD_ABSORB_EFFECTS_AMOUNT_PCT_2              = 422,
+    SPELL_AURA_MOD_ABSORB_EFFECTS_TAKEN_PCT                 = 422,
     SPELL_AURA_423                                          = 423,  // Not used in 7.3.5
     SPELL_AURA_424                                          = 424,  // Not used in 7.3.5
     SPELL_AURA_425                                          = 425,  // Not used in 7.3.5
@@ -555,7 +555,7 @@ enum AuraType : uint32
     SPELL_AURA_477                                          = 477,
     SPELL_AURA_478                                          = 478,  // Not used in 7.3.5
     SPELL_AURA_479                                          = 479,
-    SPELL_AURA_480                                          = 480,
+    SPELL_AURA_MOD_ARTIFACT_ITEM_LEVEL                      = 480,
     SPELL_AURA_CONVERT_CONSUMED_RUNE                        = 481,
     SPELL_AURA_PROFIL_CAMERA                                = 482,
     SPELL_AURA_SUPPRESS_TRANSFORMS                          = 483,  // NYI

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -821,6 +821,7 @@ void Group::OfflineMemberLost(ObjectGuid guid, uint32 againstMatchmakerRating, u
                 // update personal played stats
                 p->IncrementWeekGames(slot);
                 p->IncrementSeasonGames(slot);
+                p->IncrementDayGames(slot);
                 return;
             }
         }
@@ -844,6 +845,7 @@ void Group::MemberLost(Player* player, uint32 againstMatchmakerRating, uint8 slo
             // Update personal played stats
             player->IncrementWeekGames(slot);
             player->IncrementSeasonGames(slot);
+            player->IncrementDayGames(slot);
             return;
         }
     }
@@ -915,8 +917,11 @@ void Group::WonAgainst(uint32 Own_MMRating, uint32 Opponent_MMRating, int32& rat
 
             player->IncrementWeekWins(slot);
             player->IncrementSeasonWins(slot);
+            player->IncrementDayGames(slot);
+            player->IncrementDayWins(slot);
             player->IncrementWeekGames(slot);
             player->IncrementSeasonGames(slot);
+
         }
     }
 }
@@ -944,6 +949,7 @@ void Group::LostAgainst(uint32 Own_MMRating, uint32 Opponent_MMRating, int32& ra
 
             player->IncrementWeekGames(slot);
             player->IncrementSeasonGames(slot);
+            player->IncrementDayGames(slot);
         }
     }
 }
@@ -962,6 +968,7 @@ void Group::FinishGame(int32 rating_change, uint8 slot)
             player->SetArenaPersonalRating(slot, std::max(0, (int)player->GetArenaPersonalRating(slot) + rating_change));
             player->IncrementWeekGames(slot);
             player->IncrementSeasonGames(slot);
+            player->IncrementDayGames(slot);
         }
     }
 }
@@ -1906,7 +1913,7 @@ void Group::AddRaidMarker(uint8 markerId, uint32 mapId, float positionX, float p
         return;
 
     m_activeMarkers |= (1 << markerId);
-    m_markers[markerId] = Trinity::make_unique<RaidMarker>(mapId, positionX, positionY, positionZ, transportGuid);
+    m_markers[markerId] = std::make_unique<RaidMarker>(mapId, positionX, positionY, positionZ, transportGuid);
     SendRaidMarkersChanged();
 }
 
@@ -1965,6 +1972,11 @@ bool Group::isBGGroup() const
 bool Group::isBFGroup() const
 {
     return m_bfGroup != NULL;
+}
+
+bool Group::InChallenge()
+{
+    return m_dungeonDifficulty == DIFFICULTY_MYTHIC_KEYSTONE;
 }
 
 bool Group::IsCreated() const

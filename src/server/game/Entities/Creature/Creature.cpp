@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,7 +25,6 @@
 #include "CreatureAISelector.h"
 #include "CreatureGroups.h"
 #include "DatabaseEnv.h"
-#include "DB2Stores.h"
 #include "Formulas.h"
 #include "GameEventMgr.h"
 #include "GameTime.h"
@@ -56,8 +55,8 @@
 #include "World.h"
 #include "WorldPacket.h"
 #include <G3D/g3dmath.h>
-#include "DB2Stores.h"
 #include <sstream>
+#include "DB2Stores.h"
 
 TrainerSpell const* TrainerSpellData::Find(uint32 spell_id) const
 {
@@ -174,6 +173,28 @@ int32 CreatureTemplate::GetHealthScalingExpansion() const
     return HealthScalingExpansion == EXPANSION_LEVEL_CURRENT ? CURRENT_EXPANSION : HealthScalingExpansion;
 }
 
+CreatureLevelScaling const* CreatureTemplate::GetLevelScaling(uint8 difficulty) const
+{
+    std::unordered_map<uint8, CreatureLevelScaling>::const_iterator it = scalingStore.find(difficulty);
+
+    if (it != scalingStore.end())
+        return &(it->second);
+
+    struct DefaultCreatureLevelScaling : public CreatureLevelScaling
+    {
+        DefaultCreatureLevelScaling()
+        {
+            MinLevel = 0;
+            MaxLevel = 0;
+            DeltaLevelMin = 0;
+            DeltaLevelMax = 0;
+            ContentTuningID = 0;
+        }
+    };
+    static const DefaultCreatureLevelScaling defScaling;
+    return &defScaling;
+}
+
 void CreatureTemplate::InitializeQueryData()
 {
     WorldPacket queryTemp;
@@ -245,27 +266,6 @@ WorldPacket CreatureTemplate::BuildQueryData(LocaleConstant loc) const
         }
 
     return *queryTemp.Write();
-}
-
-CreatureLevelScaling const* CreatureTemplate::GetLevelScaling(Difficulty difficulty) const
-{
-    auto it = scalingStore.find(difficulty);
-    if (it != scalingStore.end())
-        return &it->second;
-
-    struct DefaultCreatureLevelScaling : public CreatureLevelScaling
-    {
-        DefaultCreatureLevelScaling()
-        {
-            MinLevel = 0;
-            MaxLevel = 0;
-            DeltaLevelMin = 0;
-            DeltaLevelMax = 0;
-            ContentTuningID = 0;
-        }
-    };
-    static const DefaultCreatureLevelScaling defScaling;
-    return &defScaling;
 }
 
 bool AssistDelayEvent::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
@@ -576,8 +576,8 @@ bool Creature::UpdateEntry(uint32 entry, CreatureData const* data /*= nullptr*/,
     SetUnitFlags3(UnitFlags3(unitFlags3));
 
     SetDynamicFlags(dynamicFlags);
-
-    SetUpdateFieldValue(m_values.ModifyValue(&Unit::m_unitData).ModifyValue(&UF::UnitData::StateAnimID), sDB2Manager.GetEmptyAnimStateID());
+    
+    SetUpdateFieldValue(m_values.ModifyValue(&Unit::m_unitData).ModifyValue(&UF::UnitData::StateAnimID), sAnimationDataStore.GetNumRows());
 
     SetBaseAttackTime(BASE_ATTACK,   cInfo->BaseAttackTime);
     SetBaseAttackTime(OFF_ATTACK,    cInfo->BaseAttackTime);
@@ -1106,8 +1106,6 @@ bool Creature::Create(ObjectGuid::LowType guidlow, Map* map, uint32 entry, float
         return false;
     }
 
-    m_area = sAreaMgr->GetArea(GetAreaIdFromPosition());
-
     // Allow players to see those units while dead, do it here (mayby altered by addon auras)
     if (cinfo->type_flags & CREATURE_TYPE_FLAG_GHOST_VISIBLE)
         m_serverSideVisibility.SetValue(SERVERSIDE_VISIBILITY_GHOST, GHOST_VISIBILITY_ALIVE | GHOST_VISIBILITY_GHOST);
@@ -1479,26 +1477,32 @@ void Creature::SelectLevel()
     CreatureTemplate const* cInfo = GetCreatureTemplate();
 
     // level
-    uint8 minlevel = std::min(cInfo->maxlevel, cInfo->minlevel);
-    uint8 maxlevel = std::max(cInfo->maxlevel, cInfo->minlevel);
+    std::pair<int16, int16> levels = cInfo->GetMinMaxLevel();
+    uint8 minlevel = std::min(levels.first, levels.second);
+    uint8 maxlevel = std::max(levels.first, levels.second);
     uint8 level = minlevel == maxlevel ? minlevel : urand(minlevel, maxlevel);
+
+    if (HasScalableLevels())
+    {
+        level = maxlevel;
+
+        CreatureLevelScaling const* scaling = cInfo->GetLevelScaling(GetMap()->GetDifficultyID());
+
+        SetUpdateFieldValue(m_values.ModifyValue(&Unit::m_unitData).ModifyValue(&UF::UnitData::ScalingLevelMin), scaling->MinLevel);
+        SetUpdateFieldValue(m_values.ModifyValue(&Unit::m_unitData).ModifyValue(&UF::UnitData::ScalingLevelMax), scaling->MaxLevel);
+
+        int8 mindelta = std::min(scaling->DeltaLevelMax, scaling->DeltaLevelMin);
+        int8 maxdelta = std::max(scaling->DeltaLevelMax, scaling->DeltaLevelMin);
+        int8 delta = mindelta == maxdelta ? mindelta : irand(mindelta, maxdelta);
+
+        SetUpdateFieldValue(m_values.ModifyValue(&Unit::m_unitData).ModifyValue(&UF::UnitData::ScalingLevelDelta), delta);
+        SetUpdateFieldValue(m_values.ModifyValue(&Unit::m_unitData).ModifyValue(&UF::UnitData::ContentTuningID), scaling->ContentTuningID);
+    }
+
     SetLevel(level);
-
-    CreatureLevelScaling const* scaling = cInfo->GetLevelScaling(GetMap()->GetDifficultyID());
-
-    SetUpdateFieldValue(m_values.ModifyValue(&Unit::m_unitData).ModifyValue(&UF::UnitData::ScalingLevelMin), scaling->MinLevel);
-    SetUpdateFieldValue(m_values.ModifyValue(&Unit::m_unitData).ModifyValue(&UF::UnitData::ScalingLevelMax), scaling->MaxLevel);
-
-    int32 mindelta = std::min(scaling->DeltaLevelMax, scaling->DeltaLevelMin);
-    int32 maxdelta = std::max(scaling->DeltaLevelMax, scaling->DeltaLevelMin);
-    int32 delta = mindelta == maxdelta ? mindelta : irand(mindelta, maxdelta);
-
-    SetUpdateFieldValue(m_values.ModifyValue(&Unit::m_unitData).ModifyValue(&UF::UnitData::ScalingLevelDelta), delta);
-    SetUpdateFieldValue(m_values.ModifyValue(&Unit::m_unitData).ModifyValue(&UF::UnitData::ContentTuningID), scaling->ContentTuningID);
 
     UpdateLevelDependantStats();
 }
-
 
 void Creature::UpdateLevelDependantStats()
 {
@@ -1707,7 +1711,6 @@ bool Creature::LoadCreatureFromDB(ObjectGuid::LowType spawnId, Map* map, bool ad
     m_creatureData = data;
     m_respawnradius = data->spawndist;
     m_respawnDelay = data->spawntimesecs;
-
     if (!Create(map->GenerateLowGuid<HighGuid::Creature>(), map, data->id, data->posX, data->posY, data->posZ, data->orientation, data, 0))
         return false;
 
@@ -1717,9 +1720,6 @@ bool Creature::LoadCreatureFromDB(ObjectGuid::LowType spawnId, Map* map, bool ad
     m_deathState = ALIVE;
 
     m_respawnTime = GetMap()->GetCreatureRespawnTime(m_spawnId);
-
-    if (data->corpsetimesecs >= 0)
-        m_corpseDelay = data->corpsetimesecs;
 
     // Is the creature script objecting to us spawning? If yes, delay by one second (then re-check in ::Update)
     if (!m_respawnTime && !sScriptMgr->CanSpawn(spawnId, GetEntry(), GetCreatureTemplate(), GetCreatureData(), map))
@@ -2261,7 +2261,12 @@ bool Creature::isWorldBoss() const
     if (IsPet())
         return false;
 
-    return (GetCreatureTemplate()->type_flags & CREATURE_TYPE_FLAG_BOSS_MOB) != 0;
+    // BUG:
+    // this causes boss damage to be like 40 when it is supposed to be over 20k...
+    // should be rewrited. this function only blocks "knockback" effect on bosses,
+    // and sets boss level to "??", so only minor effects anyway.
+    //return (GetCreatureTemplate()->type_flags & CREATURE_TYPE_FLAG_BOSS_MOB) != 0;
+    return false;
 }
 
 SpellInfo const* Creature::reachWithSpellAttack(Unit* victim)
@@ -2882,7 +2887,6 @@ float Creature::GetBaseArmorForLevel(uint8 level) const
 
     float baseArmor = sDB2Manager.EvaluateExpectedStat(ExpectedStatType::CreatureArmor, level, cInfo->GetHealthScalingExpansion(), scaling->ContentTuningID, Classes(cInfo->unit_class));
 
-
     return baseArmor * cInfo->ModArmor;
 }
 
@@ -3183,6 +3187,8 @@ void Creature::UpdateMovementFlags()
         return;
 
     // Set the movement flags if the creature is in that mode. (Only fly if actually in air, only swim if in water, etc)
+
+    float ground = GetFloorZ();
 
     bool isInAir = IsInAir(); // Can be underground too, prevent the falling
 

@@ -1,8 +1,5 @@
 /*
-* Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
-* Copyright (C) 2011-2013 Project Trinity <http://www.projectTrinity.org/>
-* Copyright (C) 2008-2013 Trinity <http://www.trinitycore.org/>
-* Copyright (C) 2005-2013 MaNGOS <http://www.getmangos.com/>
+* Copyright (C) 2020 LatinCoreTeam
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by

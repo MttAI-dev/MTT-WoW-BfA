@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2016 Firestorm Servers <https://firestorm-servers.com>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -529,7 +528,7 @@ class boss_unsok : public CreatureScript
                             std::list<Player*> mutatedList;
                             GetPlayerListInGrid(mutatedList, me, 200.0f);
                             std::list<Player*>::iterator itr = mutatedList.begin();
-
+                            
                             bool search = true;
                             uint8 countMutated = 0;
 
@@ -876,7 +875,7 @@ class mob_amber_pool_stalker : public CreatureScript
                                 events.ScheduleEvent(EVENT_VOLATILE_AMBER, 3000);
                                 break;
                             }
-
+                    
                             Player* target = 0;
 
                             // More than 1 player found
@@ -953,7 +952,7 @@ class mob_amber_globule : public CreatureScript
                 // Resetting target and movement
                 targetGuid = ObjectGuid::Empty;
                 me->GetMotionMaster()->Clear();
-
+                
                 Player* target = 0;
 
                 std::list<Player*> playerList;
@@ -1204,7 +1203,7 @@ class spell_consume_amber : public SpellScriptLoader
                     if (Unit* amber = GetClosestCreatureWithEntry(caster, NPC_LIVING_AMBER, 3.0f))
                         if (amber->HasAura(SPELL_BURNING_AMBER))
                             return SPELL_CAST_OK;
-
+                
                 return SPELL_FAILED_INCORRECT_AREA;
             }
 
@@ -1234,7 +1233,7 @@ class spell_break_free : SpellScriptLoader
 {
     public:
         spell_break_free() : SpellScriptLoader("spell_break_free") { }
-
+        
         class spell_break_free_SpellScript : public SpellScript
         {
             PrepareSpellScript(spell_break_free_SpellScript);

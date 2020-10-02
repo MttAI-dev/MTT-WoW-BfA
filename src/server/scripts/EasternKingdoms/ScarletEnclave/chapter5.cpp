@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1297,13 +1297,11 @@ public:
                             //if (GameObject* go = me->GetMap()->GetGameObject(uiDawnofLightGUID)) // Turn off dawn of light
                             //    go->SetPhaseMask(0, true);
                             {
-                                // search players with in 50 yards for quest credit
-                                Map::PlayerList const &PlayerList = me->GetMap()->GetPlayers();
-                                if (!PlayerList.isEmpty())
+                                std::list<Player*> lis;
+                                me->GetPlayerListInGrid(lis, 50.0f);
+                                for (Player* plr : lis)
                                 {
-                                    for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
-                                        if (i->GetSource()->IsAlive() && me->IsWithinDistInMap(i->GetSource(), 50))
-                                            i->GetSource()->CastSpell(i->GetSource(), SPELL_THE_LIGHT_OF_DAWN_Q, false);
+                                    plr->KilledMonsterCredit(29245);
                                 }
                             }
                             me->SetVisible(false); // respawns another Darion for quest turn in

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -90,6 +90,7 @@ void WorldPackets::Who::WhoRequestPkt::Read()
     Areas.resize(_worldPacket.ReadBits(4));
 
     _worldPacket >> Request;
+    _worldPacket >> RequestID;
 
     for (size_t i = 0; i < Areas.size(); ++i)
         _worldPacket >> Areas[i];
@@ -125,6 +126,7 @@ ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::Who::WhoResponse const& r
 
 WorldPacket const* WorldPackets::Who::WhoResponsePkt::Write()
 {
+    _worldPacket << uint32(RequestID);
     _worldPacket << Response;
 
     return &_worldPacket;

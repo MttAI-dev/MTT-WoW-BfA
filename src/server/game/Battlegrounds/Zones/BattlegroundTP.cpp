@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,6 +23,7 @@
 #include "Map.h"
 #include "Object.h"
 #include "ObjectAccessor.h"
+#include "ObjectMgr.h"
 #include "Player.h"
 #include "SpellInfo.h"
 #include "WorldStatePackets.h"
@@ -252,6 +253,7 @@ void BattlegroundTP::AddPlayer(Player* player)
     Battleground::AddPlayer(player);
     PlayerScores[player->GetGUID()] = new BattlegroundTPScore(player->GetGUID(), player->GetBGTeam());
 }
+
 
 void BattlegroundTP::RespawnFlag(uint32 Team, bool captured)
 {

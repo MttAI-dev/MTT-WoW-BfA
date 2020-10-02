@@ -1,4 +1,4 @@
-# This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+# Copyright (C) 2020 LatinCoreTeam
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -34,15 +34,12 @@ add_library(game-interface INTERFACE)
 
 target_include_directories(game-interface
   INTERFACE
-    ${PUBLIC_INCLUDES}
-    ${DUKGLUE_HEADERS})
+    ${PUBLIC_INCLUDES})
 
 target_link_libraries(game-interface
   INTERFACE
     shared
-    Detour
-    duktape
-    dukglue)
+    Detour)
 
 add_library(game
   ${PRIVATE_SOURCES})

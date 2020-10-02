@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -809,9 +809,35 @@ public:
     }
 };
 
+
+//24318
+class item_sample_water_flask_24318 : public ItemScript
+{
+public:
+    item_sample_water_flask_24318() : ItemScript("item_sample_water_flask_24318") { }
+
+    enum eItem {
+        QUEST_DONT_DRINK_THE_WATER = 9748,
+        SPELL_BLOODMYST_WATER_SAMPLE = 31549,
+    };
+
+    bool OnUse(Player* plr, Item* /*item*/, SpellCastTargets const& targets, ObjectGuid /*castId*/) override
+    {
+        if (plr->GetQuestStatus(QUEST_DONT_DRINK_THE_WATER) == QUEST_STATUS_INCOMPLETE && plr->GetAreaId() == 3906)
+        {
+            plr->GetScheduler().Schedule(6s, [this, plr] (TaskContext context)
+            {
+                plr->ForceCompleteQuest(QUEST_DONT_DRINK_THE_WATER);
+            });
+        }
+        return true;
+    }
+};
+
 void AddSC_bloodmyst_isle()
 {
     new npc_webbed_creature();
     new npc_sironas();
     new npc_demolitionist_legoso();
+    new item_sample_water_flask_24318();
 }

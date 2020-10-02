@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,6 +26,9 @@
 #include "ScriptMgr.h"
 #include "CreatureAI.h"
 #include "ScriptedGossip.h"
+#include "Pet.h"
+#include "PetAI.h"
+#include "Log.h"
 
 enum ZuldazarQuests
 {
@@ -60,9 +63,12 @@ struct npc_talanji_arrival : public ScriptedAI
 {
     npc_talanji_arrival(Creature* creature) : ScriptedAI(creature) { }
 
-    void sQuestAccept(Player* player, Quest const* /*quest*/) override
+    void sQuestAccept(Player* player, Quest const* quest) override
     {
         me->DestroyForPlayer(player);
+
+        if (quest->ID == 46957)
+            player->CastSpell(player, 261485, true);
     }
 };
 
@@ -83,11 +89,16 @@ struct npc_talanji_arrival_escort : public npc_escortAI
     {
         me->SetFacingTo(0.f);
         me->CastSpell(me, SPELL_TALANJI_EXPOSITION_KILL_CREDIT, true);
-
         if (Player* player = GetPlayerForEscort())
             player->CastSpell(player, SPELL_TALANJI_EXPOSITION_CONVERSATION_2, true);
     }
+    void sQuestCompleted(Player* player, Quest const* quest)
+    {
+        if (player->GetQuestStatus(46957) == QUEST_STATUS_COMPLETE)
+            player->RemoveAurasDueToSpell(261486);
+    }
 };
+
 
 // 138912
 struct npc_enforcer_pterrordax : public npc_escortAI
@@ -103,7 +114,7 @@ struct npc_enforcer_pterrordax : public npc_escortAI
             return;
         }
 
-        KillCreditMe(player);
+        //KillCreditMe(player);
         me->SetSpeed(MOVE_RUN, 21.f);
         player->EnterVehicle(me);
         Start(false, true, player->GetGUID());
@@ -111,8 +122,8 @@ struct npc_enforcer_pterrordax : public npc_escortAI
 
     void LastWaypointReached() override
     {
-        if (Player* player = GetPlayerForEscort())
-            player->CastSpell(player, SPELL_RASTAKHAN_GREETINGS_SCENE, true);
+        //if (Player* player = GetPlayerForEscort())
+            //player->CastSpell(player, SPELL_RASTAKHAN_GREETINGS_SCENE, true);
     }
 };
 
@@ -212,23 +223,6 @@ struct npc_talanji_great_seal : public ScriptedAI
     }
 };
 
-// 255588 - Rastari Skull Whistle
-class spell_generic_rastari_skull_whistle : public SpellScript
-{
-    PrepareSpellScript(spell_generic_rastari_skull_whistle);
-
-    void DoCast()
-    {
-        if (Player* caster = GetCaster()->ToPlayer())
-            caster->KilledMonsterCredit(129204);
-    }
-
-    void Register() override
-    {
-        AfterCast += SpellCastFn(spell_generic_rastari_skull_whistle::DoCast);
-    }
-};
-
 //
 class npc_ata_the_winglord_offensively_defence : public npc_escortAI
 {
@@ -239,6 +233,7 @@ public:
         me->SetSpeed(MOVE_FLIGHT, 26);
         me->SetReactState(REACT_PASSIVE);
         me->AddUnitFlag(UNIT_FLAG_IMMUNE_TO_NPC);
+        me->SetReactState(REACT_PASSIVE);
     }
 
     void OnCharmed(bool /*apply*/) override
@@ -274,7 +269,6 @@ public:
         me->SetCanFly(true);
         me->SetSpeed(MOVE_FLIGHT, 26);
         me->SetReactState(REACT_PASSIVE);
-      //  me->AddUnitFlag(UNIT_FLAG_IMMUNE_TO_NPC);
     }
 
     void OnCharmed(bool /*apply*/) override
@@ -319,12 +313,6 @@ public:
             me->NeedChangeAI = false;
     }
 
-   /* void WaypointReached(uint32 waypointId) override
-    {
-        if (waypointId == 11)
-            me->ForcedDespawn();
-    }*/
-
     void EnterEvadeMode(EvadeReason /*why*/) override { }
 
     void IsSummonedBy(Unit* summoner) override
@@ -359,52 +347,336 @@ struct npc_paku : public ScriptedAI
     {
     }
 
-    void Reset() override
-    {
-        me->GetScheduler().Schedule(1s, [this](TaskContext context)
-        {
-            std::list<Player*> players;
-            me->GetPlayerListInGrid(players, 75.0f);
-
-            for (Player* player : players)
-            {
-                if (player->GetPositionZ() <= 400 && !player->IsMounted() && !player->IsOnVehicle() && player->HasQuest(47440))
-                {
-                    Talk(0);
-                    player->CastSpell(player, SPELL_CALL_PTERRORDAX);
-                }
-            }
-
-            context.Repeat();
-        });
-    }
-
     void sGossipHello(Player* player) override
     {
         player->KilledMonsterCredit(127377);
     }
-};
 
+    void UpdateAI(uint32 /*diff*/) override
+    {
+        std::list<Player*> players;
+        me->GetPlayerListInGrid(players, 75.0f);
+
+        for (Player* player : players)
+        {
+            if (player->GetPositionZ() <= 400 && !player->IsMounted() && !player->IsOnVehicle() && player->HasQuest(47440))
+            {
+                Talk(0);
+                player->CastSpell(player, SPELL_CALL_PTERRORDAX);
+            }
+        }
+    }
+};
+//263018
 class spell_rastari_skull_whistle : public SpellScript
 {
 	PrepareSpellScript(spell_rastari_skull_whistle);
 
-	void HandleHitTarget(SpellEffIndex /*effIndex*/)
-	{
-		//if (Creature* target = GetHitCreature())
-			if (Player* player = GetCaster()->ToPlayer())
-				player->KilledMonsterCredit(129204);
-	}
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+        if (!caster)
+            return;
+        Player* player = caster->ToPlayer();
+        if (!player)
+            return;
+
+        if (Creature* creatureTarget = GetHitCreature())
+        {
+            int entry = creatureTarget->GetEntry();
+            if (entry == 129204 || entry == 129205 || entry == 129203 || entry == 128963)
+            {
+                player->KilledMonsterCredit(128963);
+                creatureTarget->AI()->Talk(0);
+                creatureTarget->HandleEmoteCommand(113);
+                creatureTarget->ForcedDespawn(2000);
+            }
+        }
+    }
 
 	void Register() override
 	{
-		OnEffectHitTarget += SpellEffectFn(spell_rastari_skull_whistle::HandleHitTarget, EFFECT_1, SPELL_EFFECT_DUMMY);
+		OnEffectHitTarget += SpellEffectFn(spell_rastari_skull_whistle::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
 	}
 };
 
+// 254904 - Revitalize Spirit Obelisk
+class spell_quest_revitalize_spirit_obelisk : public SpellScript
+{
+    PrepareSpellScript(spell_quest_revitalize_spirit_obelisk);
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+        if (!caster)
+            return;
+        Player* player = caster->ToPlayer();
+        if (!player)
+            return;
+
+        if (Creature* creatureTarget = GetHitCreature())
+        {
+            if (creatureTarget->GetEntry() == 128468 && creatureTarget->IsAlive())
+            {
+                player->KilledMonsterCredit(128468);
+                player->CastSpell(nullptr, 254931, true);
+                creatureTarget->KillSelf();
+            }
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_quest_revitalize_spirit_obelisk::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
+// todo fix the positions and amount of spells 224839
+class spell_call_the_storm : public SpellScript
+{
+    PrepareSpellScript(spell_call_the_storm);
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        Unit* caster = GetCaster();
+        if (!caster)
+            return;
+
+        caster->CastSpell(caster, 224842, TRIGGERED_CAN_CAST_WHILE_CASTING_MASK);
+        caster->CastSpell(caster->GetPositionWithDistInOrientation(5, 1.6f), 224846, TRIGGERED_CAN_CAST_WHILE_CASTING_MASK);
+        caster->CastSpell(caster->GetPositionWithDistInOrientation(5, 0.5f), 224842, TRIGGERED_CAN_CAST_WHILE_CASTING_MASK);
+        caster->CastSpell(caster->GetPositionWithDistInOrientation(5, 0), 224842, TRIGGERED_CAN_CAST_WHILE_CASTING_MASK);
+        caster->CastSpell(caster->GetPositionWithDistInOrientation(5, 3), 224842, TRIGGERED_CAN_CAST_WHILE_CASTING_MASK);
+
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_call_the_storm::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
+// 260075
+class spell_lightning_rod : public SpellScriptLoader
+{
+public:
+    spell_lightning_rod() : SpellScriptLoader("spell_lightning_rod") { }
+
+    class spell_lightning_rod_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(spell_lightning_rod_AuraScript);
+
+        void HandlePeriodicDummy(AuraEffect const* /*auraEff*/)
+        {
+            Unit* caster = GetCaster();
+            if (!caster)
+                return;
+
+            Unit* target = GetTarget();
+            if (!target)
+                return;
+
+            caster->CastSpell(target, 260073, TRIGGERED_CAN_CAST_WHILE_CASTING_MASK);
+        }
+
+        void Register() override
+        {
+            OnEffectPeriodic += AuraEffectPeriodicFn(spell_lightning_rod_AuraScript::HandlePeriodicDummy, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+        }
+    };
+
+    AuraScript* GetAuraScript() const override
+    {
+        return new spell_lightning_rod_AuraScript();
+    }
+
+};
+
+enum PlotTwist {
+    SPELL_CHANNEL = 259228,
+    EVENT_SOUL_BLAST = 1,
+    SPEll_SOUL_BLAST = 260572,
+    EVENT_SUMMON_MASK = 2,
+    SPELL_SUMMON_MASKS = 260577,
+    EVENT_SOUL_JAUNT = 3,
+    SPELL_SOUL_JAUNT = 264007,
+    EVENT_GONG = 4,
+    //SPELL_GONK = ,
+    EVENT_POTION = 5,
+    SPELL_POTION = 272315,
+    EVENT_URN = 6,
+};
+
+struct npc_voljamba : public ScriptedAI
+{
+    npc_voljamba(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+    }
+
+    void Reset() override
+    {
+        me->CastSpell(nullptr, SPELL_CHANNEL);
+        gong = false;
+        potion = false;
+        final = false;
+    }
 
 
+    void EnterCombat(Unit* /*who*/) override
+    {
+        events.ScheduleEvent(EVENT_SOUL_BLAST, 2000);
+        events.ScheduleEvent(EVENT_SUMMON_MASK, 9000);
+    }
 
+    void UpdateAI(uint32 diff) override
+    {
+        if (!UpdateVictim())
+            return;
+
+        events.Update(diff);
+
+       // if (me->HasUnitState(UNIT_STATE_CASTING))
+       //     return;
+
+        while (uint32 eventId = events.ExecuteEvent())
+        {
+            switch (eventId)
+            {
+            case EVENT_SOUL_BLAST:
+                DoCastVictim(SPEll_SOUL_BLAST);
+                events.ScheduleEvent(EVENT_SOUL_BLAST, urand(4000, 9000));
+                break;
+            case EVENT_SUMMON_MASK:
+                DoCast(SPELL_SUMMON_MASKS);
+                events.ScheduleEvent(EVENT_SUMMON_MASK, urand(15000, 20000));
+                break;
+            case EVENT_GONG:
+                Talk(1);
+                break;
+            case EVENT_POTION:
+                Talk(3);
+                break;
+            default:
+                break;
+            }
+        }
+        DoMeleeAttackIfReady();
+    }
+
+    void DamageTaken(Unit* /*attacker*/, uint32& damage) override
+    {
+        if (me->GetHealthPct() <= 80 && !gong)
+        {
+            if (me->HasUnitState(UNIT_STATE_CASTING))
+                me->InterruptNonMeleeSpells(false);
+            DoCast(SPELL_SOUL_JAUNT);
+            gong = true;
+        }
+
+        if (me->GetHealthPct() <= 60 && !potion)
+        {
+            if (me->HasUnitState(UNIT_STATE_CASTING))
+                me->InterruptNonMeleeSpells(false);
+            DoCast(SPELL_SOUL_JAUNT);
+            potion = true;
+        }
+
+        if (damage >= me->GetHealth())
+        {
+            damage = 0;
+            if (!final)
+            {
+                if (me->HasUnitState(UNIT_STATE_CASTING))
+                    me->InterruptNonMeleeSpells(false);
+                Talk(4);
+                DoCast(SPELL_SOUL_JAUNT);
+                final = true;
+            }
+        }
+    }
+
+    void DoAction(int32 param) override
+    {
+        if (param == 1)
+        {
+            if (gong && !potion && !final)
+            {
+                if (me->HasUnitState(UNIT_STATE_CASTING))
+                    me->InterruptNonMeleeSpells(false);
+                me->NearTeleportTo(-372.1f, 133.543f, 257.2f, 3.481f);
+                Talk(0);
+            }
+            if (gong && potion && !final)
+            {
+                if (me->HasUnitState(UNIT_STATE_CASTING))
+                    me->InterruptNonMeleeSpells(false);
+                me->NearTeleportTo(-384.489f, 161.891f, 257.51f, 3.4f);
+                Talk(2);
+                DoCast(SPELL_POTION);
+                events.ScheduleEvent(EVENT_POTION, 1500);
+            }
+            if (gong && potion && final)
+            {
+                if (me->HasUnitState(UNIT_STATE_CASTING))
+                    me->InterruptNonMeleeSpells(false);
+                me->NearTeleportTo(-351.645f, 136.92f, 257.11f, 5.31f);
+                me->KillSelf();
+
+                std::list<Player*> players;
+                me->GetPlayerListInGrid(players, 50.0f);
+
+                for (Player* player : players)
+                {
+                    player->KilledMonsterCredit(131241);
+                }
+            }
+        }
+    }
+
+
+private:
+    bool gong;
+    bool potion;
+    bool final;
+};
+
+//264007
+class spell_soul_jaunt : public SpellScript
+{
+    PrepareSpellScript(spell_soul_jaunt);
+
+    void HandleAfterCast()
+    {
+        Unit* caster = GetCaster();
+        if (!caster)
+            return;
+
+        if (Creature* creature = caster->ToCreature())
+            creature->AI()->DoAction(1);
+    }
+
+    void Register() override
+    {
+        AfterCast += SpellCastFn(spell_soul_jaunt::HandleAfterCast);
+    }
+};
+
+class scene_warpack : public SceneScript
+{
+public:
+    scene_warpack() : SceneScript("scene_warpack") { }
+
+    void OnSceneTriggerEvent(Player* player, uint32 /*sceneInstanceID*/, SceneTemplate const* /*sceneTemplate*/, std::string const& triggerName)
+    {
+        if (triggerName == "Charge")
+        {
+            if (Creature* loti = player->FindNearestCreature(134132, 5))
+            {
+                loti->AI()->SetData(0, 1);
+            }
+        }
+    }
+};
 
 void AddSC_zone_zuldazar()
 {
@@ -425,5 +697,12 @@ void AddSC_zone_zuldazar()
     RegisterCreatureAI(npc_paku);
 
     RegisterSpellScript(spell_rastari_skull_whistle);
-    RegisterSpellScript(spell_generic_rastari_skull_whistle);
+    RegisterSpellScript(spell_quest_revitalize_spirit_obelisk);
+    RegisterSpellScript(spell_call_the_storm);
+    new spell_lightning_rod();
+
+    RegisterCreatureAI(npc_voljamba);
+    RegisterSpellScript(spell_soul_jaunt);
+
+    new scene_warpack();
 }

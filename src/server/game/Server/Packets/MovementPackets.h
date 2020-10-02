@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -515,17 +515,6 @@ namespace WorldPackets
 
             ObjectGuid MoverGUID;
             uint32 TimeSkipped = 0;
-        };
-
-        class TC_GAME_API MoveSkipTime final : public ServerPacket
-        {
-        public:
-            MoveSkipTime() : ServerPacket(SMSG_MOVE_SKIP_TIME, 16 + 4) { }
-
-            WorldPacket const* Write() override;
-
-            ObjectGuid MoverGuid;
-            uint32 TimeSkipped;
         };
 
         class SummonResponse final : public ClientPacket

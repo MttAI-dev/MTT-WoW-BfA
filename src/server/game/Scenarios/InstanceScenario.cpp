@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -65,6 +65,7 @@ void InstanceScenario::SaveToDB()
         switch (CriteriaTypes(criteria->Entry->Type))
         {
             // Blizzard only appears to store creature kills
+            case CRITERIA_TYPE_COMPLETE_DUNGEON_ENCOUNTER:
             case CRITERIA_TYPE_KILL_CREATURE:
                 break;
             default:
@@ -130,6 +131,7 @@ void InstanceScenario::LoadInstanceData(uint32 instanceId)
             switch (CriteriaTypes(criteria->Entry->Type))
             {
                 // Blizzard appears to only stores creatures killed progress for unknown reasons. Either technical shortcoming or intentional
+                case CRITERIA_TYPE_COMPLETE_DUNGEON_ENCOUNTER:
                 case CRITERIA_TYPE_KILL_CREATURE:
                     break;
                 default:

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2016 Firestorm Servers <https://firestorm-servers.com>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,8 +21,9 @@
 
 enum eSpells
 {
-    SPELL_SUMMON_GLOBULE    = 119990,
-    SPELL_DETONATE          = 120001,
+    SPELL_SUMMON_GLOBULE         = 119990,
+    SPELL_SAPPLING_SUMMON_VISUAL = 120071,
+    SPELL_DETONATE               = 120001,
 
     SPELL_SAP_PUDDLE        = 119939,
     SPELL_VISUAL_SHIELD     = 131628,
@@ -131,8 +131,59 @@ class npc_sap_puddle : public CreatureScript
         }
 };
 
+class npc_sap_globule : public CreatureScript
+{
+    enum Spells
+    {
+        SPELL_SAP_RESIDUE = 120070,
+
+    };
+
+    struct npc_sap_globuleAI : public ScriptedAI
+    {
+        npc_sap_globuleAI(Creature * creature) : ScriptedAI(creature) {}
+
+        void Reset() override
+        {
+            done = false;
+        }
+
+        void IsSummonedBy(Unit* summoner)
+        {
+            if (Creature * jinbak = me->FindNearestCreature(NPC_JINBAK, 500.0f))
+                jinbak->AI()->JustSummoned(me);
+        }
+
+        void SpellHit(Unit * caster, SpellInfo const* spell) override
+        {
+            if (!done && spell->Id == SPELL_SAP_RESIDUE)
+            {
+                done = true;
+                caster->ToCreature()->AI()->DoAction(1);
+                DoCast(me, SPELL_SAPPLING_SUMMON_VISUAL, true);
+                me->DespawnOrUnsummon(500);
+            }
+        }
+
+        void UpdateAI(uint32 const diff) override
+        {
+        }
+    private:
+        bool done;
+    };
+
+public:
+    npc_sap_globule() : CreatureScript("npc_sap_globule") {}
+
+    CreatureAI * GetAI(Creature * creature) const override
+    {
+        return new npc_sap_globuleAI(creature);
+    }
+};
+
 void AddSC_boss_jinbak()
 {
     new boss_jinbak();
     new npc_sap_puddle();
+    new npc_sap_globule();
 }

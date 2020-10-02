@@ -1,5 +1,6 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
+ * Copyright (C) Thordekk
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -34,6 +35,7 @@
 #include "CreatureAI.h"
 #include "CreatureAIImpl.h"
 #include "CreatureGroups.h"
+#include "CreatureTextMgr.h"
 #include "Formulas.h"
 #include "GameTime.h"
 #include "GridNotifiersImpl.h"
@@ -78,6 +80,8 @@
 #include "World.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
+#include "Map.h"
+#include "BrawlersGuild.h"
 #include <cmath>
 
 float baseMoveSpeed[MAX_MOVE_TYPE] =
@@ -182,6 +186,7 @@ DamageInfo::DamageInfo(SpellNonMeleeDamage const& spellNonMeleeDamage, DamageEff
         m_hitMask |= PROC_HIT_ABSORB;
 }
 
+
 void DamageInfo::ModifyDamage(int32 amount)
 {
     amount = std::max(amount, -static_cast<int32>(GetDamage()));
@@ -284,6 +289,8 @@ SpellNonMeleeDamage::SpellNonMeleeDamage(Unit* _attacker, Unit* _target, uint32 
     schoolMask(_schoolMask), absorb(0), resist(0), periodicLog(false), blocked(0), HitInfo(0), cleanDamage(0), fullBlock(false), preHitHealth(_target->GetHealth())
 {
 }
+
+
 
 Unit::Unit(bool isWorldObject) :
     WorldObject(isWorldObject), m_playerMovingMe(NULL), m_lastSanctuaryTime(0),
@@ -514,7 +521,6 @@ void Unit::Update(uint32 p_time)
 
     UpdateSplineMovement(p_time);
     i_motionMaster->UpdateMotion(p_time);
-    UpdateUnderwaterState(GetMap(), GetPositionX(), GetPositionY(), GetPositionZ());
 }
 
 bool Unit::haveOffhandWeapon() const
@@ -754,6 +760,20 @@ void Unit::DealDamageMods(Unit const* victim, uint32& damage, uint32* absorb, Da
 
 uint32 Unit::DealDamage(Unit* victim, uint32 damage, CleanDamage const* cleanDamage, DamageEffectType damagetype, SpellSchoolMask damageSchoolMask, SpellInfo const* spellProto, bool durabilityLoss)
 {
+    if (victim->getRace() == RACE_WORGEN && victim->ToPlayer())
+    {
+        if (Player* worgenVictm = victim->ToPlayer())
+            if (worgenVictm->HasSpell(SPELL_TWO_FORMS_RACIAL) && !worgenVictm->HasAura(SPELL_ALTERED_FORM_RACIAL))
+                worgenVictm->CastSpell(worgenVictm, SPELL_ALTERED_FORM_RACIAL, true);
+    }
+
+    if (getRace() == RACE_WORGEN && ToPlayer())
+    {
+        if (Player* worgenPlayer = ToPlayer())
+            if (worgenPlayer->HasSpell(SPELL_TWO_FORMS_RACIAL) && !HasAura(SPELL_ALTERED_FORM_RACIAL))
+                CastSpell(worgenPlayer, SPELL_ALTERED_FORM_RACIAL, true);
+    }
+
     if (victim->IsAIEnabled)
         victim->GetAI()->DamageTaken(this, damage);
 
@@ -1030,6 +1050,7 @@ void Unit::CastStop(uint32 except_spellid)
             InterruptSpell(CurrentSpellTypes(i), false);
 }
 
+
 bool Unit::CastSpell(SpellCastTargets const& targets, SpellInfo const* spellInfo, CustomSpellValues const* value, TriggerCastFlags triggerFlags, Item* castItem, AuraEffect const* triggeredByAura, ObjectGuid originalCaster)
 {
     if (!spellInfo)
@@ -1075,6 +1096,22 @@ bool Unit::CastSpell(Unit* victim, SpellInfo const* spellInfo, TriggerCastFlags 
     SpellCastTargets targets;
     targets.SetUnitTarget(victim);
     return CastSpell(targets, spellInfo, nullptr, triggerFlags, castItem, triggeredByAura, originalCaster);
+}
+
+bool Unit::CastSpellWithOrientation(Unit* victim, uint32 spellId, bool triggered, float orientation)
+{
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    if (!spellInfo)
+    {
+        TC_LOG_ERROR("entities.unit", "CastSpellWithOrientation: unknown spell id %u by caster: %s", spellId, GetGUID().ToString().c_str());
+        return false;
+    }
+    SetFacingTo(orientation);
+    SpellCastTargets targets;
+    targets.SetUnitTarget(victim);
+    targets.SetOrientation(orientation);
+    targets.SetMapId(GetMapId());   // always set in sniffs
+    return CastSpell(targets, spellInfo, nullptr, triggered ? TRIGGERED_FULL_MASK : TRIGGERED_NONE);
 }
 
 bool Unit::CastCustomSpell(Unit* target, uint32 spellId, int32 const* bp0, int32 const* bp1, int32 const* bp2, bool triggered, Item* castItem, AuraEffect const* triggeredByAura, ObjectGuid originalCaster)
@@ -2049,18 +2086,32 @@ void Unit::CalcHealAbsorb(HealInfo& healInfo) const
     AuraEffectList const& vHealAbsorb = healInfo.GetTarget()->GetAuraEffectsByType(SPELL_AURA_SCHOOL_HEAL_ABSORB);
     for (AuraEffectList::const_iterator i = vHealAbsorb.begin(); i != vHealAbsorb.end() && healInfo.GetHeal() > 0; ++i)
     {
+        // Check if aura was removed during iteration - we don't need to work on such auras
+        AuraApplication const* aurApp = (*i)->GetBase()->GetApplicationOfTarget(healInfo.GetTarget()->GetGUID());
+        if (!aurApp)
+            continue;
+
         if (!((*i)->GetMiscValue() & healInfo.GetSpellInfo()->SchoolMask))
             continue;
 
         // Max Amount can be absorbed by this aura
         int32 currentAbsorb = (*i)->GetAmount();
 
-        // Found empty aura (impossible but..)
-        if (currentAbsorb <= 0)
-        {
-            existExpired = true;
+        // aura with infinite absorb amount - let the scripts handle absorbtion amount, set here to 0 for safety
+        if (currentAbsorb < 0)
+            currentAbsorb = 0;
+
+        AuraEffect* absorbAurEff = *i;
+
+        uint32 tempAbsorb = uint32(currentAbsorb);
+
+        bool defaultPrevented = false;
+
+        absorbAurEff->GetBase()->CallScriptEffectHealAbsorbHandlers(absorbAurEff, aurApp, healInfo, tempAbsorb, defaultPrevented);
+        currentAbsorb = tempAbsorb;
+
+        if (defaultPrevented)
             continue;
-        }
 
         // currentAbsorb - damage can be absorbed by shield
         // If need absorb less damage
@@ -2068,11 +2119,15 @@ void Unit::CalcHealAbsorb(HealInfo& healInfo) const
 
         healInfo.AbsorbHeal(currentAbsorb);
 
-        // Reduce shield amount
-        (*i)->ChangeAmount((*i)->GetAmount() - currentAbsorb);
-        // Need remove it later
-        if ((*i)->GetAmount() <= 0)
-            existExpired = true;
+        // Check if our aura is using amount to count damage
+        if (absorbAurEff->GetAmount() >= 0)
+        {
+            // Reduce shield amount
+            absorbAurEff->SetAmount(absorbAurEff->GetAmount() - currentAbsorb);
+            // Aura cannot absorb anything more - remove it
+            if (absorbAurEff->GetAmount() <= 0)
+                existExpired = true;
+        }
     }
 
     // Remove all expired absorb auras
@@ -3312,48 +3367,34 @@ bool Unit::IsUnderWater() const
     return GetMap()->IsUnderWater(GetPhaseShift(), GetPositionX(), GetPositionY(), GetPositionZ());
 }
 
-void Unit::UpdateUnderwaterState(Map* m, float x, float y, float z)
+void Unit::ProcessPositionDataChanged(PositionFullTerrainStatus const& data)
 {
-    if (IsFlying() || (!IsPet() && !IsVehicle()))
+    WorldObject::ProcessPositionDataChanged(data);
+    ProcessTerrainStatusUpdate(data.liquidStatus, data.liquidInfo);
+}
+
+void Unit::ProcessTerrainStatusUpdate(ZLiquidStatus status, Optional<LiquidData> const& liquidData)
+{
+    if (IsFlying() || (!IsControlledByPlayer()))
         return;
 
-    LiquidData liquid_status;
-    ZLiquidStatus res = m->getLiquidStatus(GetPhaseShift(), x, y, z, MAP_ALL_LIQUIDS, &liquid_status);
-    if (!res)
+    // remove appropriate auras if we are swimming/not swimming respectively
+    if (status & MAP_LIQUID_STATUS_SWIMMING)
+        RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_NOT_ABOVEWATER);
+    else
+        RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_NOT_UNDERWATER);
+
+    // liquid aura handling
+    LiquidTypeEntry const* curLiquid = nullptr;
+    if ((status & MAP_LIQUID_STATUS_SWIMMING) && liquidData)
+        curLiquid = sLiquidTypeStore.LookupEntry(liquidData->entry);
+    if (curLiquid != _lastLiquid)
     {
         if (_lastLiquid && _lastLiquid->SpellID)
             RemoveAurasDueToSpell(_lastLiquid->SpellID);
-
-        RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_NOT_UNDERWATER);
-        _lastLiquid = NULL;
-        return;
-    }
-
-    if (uint32 liqEntry = liquid_status.entry)
-    {
-        LiquidTypeEntry const* liquid = sLiquidTypeStore.LookupEntry(liqEntry);
-        if (_lastLiquid && _lastLiquid->SpellID && _lastLiquid->ID != liqEntry)
-            RemoveAurasDueToSpell(_lastLiquid->SpellID);
-
-        if (liquid && liquid->SpellID)
-        {
-            if (res & (LIQUID_MAP_UNDER_WATER | LIQUID_MAP_IN_WATER))
-            {
-                if (!HasAura(liquid->SpellID))
-                    CastSpell(this, liquid->SpellID, true);
-            }
-            else
-                RemoveAurasDueToSpell(liquid->SpellID);
-        }
-
-        RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_NOT_ABOVEWATER);
-        _lastLiquid = liquid;
-    }
-    else if (_lastLiquid && _lastLiquid->SpellID)
-    {
-        RemoveAurasDueToSpell(_lastLiquid->SpellID);
-        RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_NOT_UNDERWATER);
-        _lastLiquid = NULL;
+        if (curLiquid && curLiquid->SpellID)
+            CastSpell(this, curLiquid->SpellID, true);
+        _lastLiquid = curLiquid;
     }
 }
 
@@ -3646,6 +3687,9 @@ void Unit::_UnapplyAura(AuraApplicationMap::iterator &i, AuraRemoveMode removeMo
     // only way correctly remove all auras from list
     //if (removedAuras != m_removedAurasCount) new aura may be added
         i = m_appliedAuras.begin();
+
+    if (IsCreature() && IsAIEnabled)
+        ToCreature()->AI()->OnAuraRemoved(aura->GetSpellInfo());
 }
 
 void Unit::_UnapplyAura(AuraApplication * aurApp, AuraRemoveMode removeMode)
@@ -3981,7 +4025,12 @@ void Unit::RemoveAurasByType(AuraType auraType, std::function<bool(AuraApplicati
     {
         Aura* aura = (*iter)->GetBase();
         AuraApplication * aurApp = aura->GetApplicationOfTarget(GetGUID());
-        ASSERT(aurApp);
+        
+		if (!aurApp)
+        {
+            ++iter;
+            continue;
+        }
 
         ++iter;
         if (check(aurApp))
@@ -4838,6 +4887,15 @@ bool Unit::HasNegativeAuraWithAttribute(uint32 flag, ObjectGuid guid) const
     return false;
 }
 
+void Unit::GetAuraEffectsByMechanic(uint32 mechanic_mask, AuraList& auraList, ObjectGuid caster)
+{
+    for (AuraApplicationMap::iterator iter = m_appliedAuras.begin(); iter != m_appliedAuras.end(); ++iter)
+        if (Aura* aura = iter->second->GetBase())
+            if ((aura->GetSpellInfo()->GetAllEffectsMechanicMask() & mechanic_mask) && (caster.IsEmpty() || aura->GetCasterGUID() == caster))
+                auraList.push_back(aura);
+}
+
+
 bool Unit::HasAuraWithMechanic(uint32 mechanicMask) const
 {
     for (AuraApplicationMap::const_iterator iter = m_appliedAuras.begin(); iter != m_appliedAuras.end(); ++iter)
@@ -5499,6 +5557,15 @@ void Unit::RemoveAllAreaTriggers()
             at->Remove();
 }
 
+void Unit::RemoveAllAreaObjects()
+{
+    while (!m_AreaObj.empty())
+    {
+       // m_AreaObj.front()->Despawn();
+        // m_AreaObj.pop_front();
+    }
+}
+
 void Unit::SendSpellNonMeleeDamageLog(SpellNonMeleeDamage const* log)
 {
     WorldPackets::CombatLog::SpellNonMeleeDamageLog packet;
@@ -5950,6 +6017,11 @@ bool Unit::Attack(Unit* victim, bool meleeAttack)
     if (GetTypeId() == TYPEID_PLAYER && IsMounted())
         return false;
 
+    Creature* creature = ToCreature();
+    // creatures cannot attack while evading
+    if (creature && creature->IsInEvadeMode())
+        return false;
+
     if (HasUnitFlag(UNIT_FLAG_PACIFIED))
         return false;
 
@@ -6014,7 +6086,7 @@ bool Unit::Attack(Unit* victim, bool meleeAttack)
     //if (GetTypeId() == TYPEID_UNIT)
     //    ToCreature()->SetCombatStartPosition(GetPositionX(), GetPositionY(), GetPositionZ());
 
-    if (GetTypeId() == TYPEID_UNIT && !IsPet())
+    if (creature && !IsPet())
     {
         // should not let player enter combat by right clicking target - doesn't helps
         AddThreat(victim, 0.0f);
@@ -6022,8 +6094,8 @@ bool Unit::Attack(Unit* victim, bool meleeAttack)
         if (victim->GetTypeId() == TYPEID_PLAYER)
             victim->SetInCombatWith(this);
 
-        ToCreature()->SendAIReaction(AI_REACTION_HOSTILE);
-        ToCreature()->CallAssistance();
+        creature->SendAIReaction(AI_REACTION_HOSTILE);
+        creature->CallAssistance();
 
         // Remove emote state - will be restored on creature reset
         SetEmoteState(EMOTE_ONESHOT_NONE);
@@ -6038,7 +6110,7 @@ bool Unit::Attack(Unit* victim, bool meleeAttack)
 
     // Let the pet know we've started attacking someting. Handles melee attacks only
     // Spells such as auto-shot and others handled in WorldSession::HandleCastSpellOpcode
-    if (this->GetTypeId() == TYPEID_PLAYER)
+    if (GetTypeId() == TYPEID_PLAYER)
     {
         Pet* playerPet = this->ToPlayer()->GetPet();
 
@@ -8237,7 +8309,7 @@ MountCapabilityEntry const* Unit::GetMountCapability(uint32 mountType) const
         mountFlags = areaTable->MountFlags;
 
     LiquidData liquid;
-    ZLiquidStatus liquidStatus = GetMap()->getLiquidStatus(GetPhaseShift(), GetPositionX(), GetPositionY(), GetPositionZ(), MAP_ALL_LIQUIDS, &liquid);
+    ZLiquidStatus liquidStatus = GetMap()->GetLiquidStatus(GetPhaseShift(), GetPositionX(), GetPositionY(), GetPositionZ(), MAP_ALL_LIQUIDS, &liquid);
     isSubmerged = (liquidStatus & LIQUID_MAP_UNDER_WATER) != 0 || HasUnitMovementFlag(MOVEMENTFLAG_SWIMMING);
     isInWater = (liquidStatus & (LIQUID_MAP_IN_WATER | LIQUID_MAP_UNDER_WATER)) != 0;
 
@@ -9453,7 +9525,7 @@ int32 Unit::CalculateSpellDamage(Unit const* target, SpellInfo const* spellProto
 
 int32 Unit::CalcSpellDuration(SpellInfo const* spellProto)
 {
-    uint32 comboPoints = m_playerMovingMe ? m_playerMovingMe->GetComboPoints() : 0;
+    uint32 comboPoints = m_playerMovingMe ? m_playerMovingMe->GetPower(POWER_COMBO_POINTS) : 0;
 
     int32 minduration = spellProto->GetDuration();
     int32 maxduration = spellProto->GetMaxDuration();
@@ -10165,6 +10237,8 @@ void Unit::SetPower(Powers power, int32 val)
         SendMessageToSet(packet.Write(), GetTypeId() == TYPEID_PLAYER);
     }
 
+    CheckPowerProc(power, oldPower, val);
+
     if (ToPlayer())
         sScriptMgr->OnModifyPower(ToPlayer(), power, oldPower, val, false, true);
 
@@ -10204,6 +10278,39 @@ void Unit::SetMaxPower(Powers power, int32 val)
 
     if (val < cur_power)
         SetPower(power, val);
+}
+
+void Unit::CheckPowerProc(Powers power, int32 oldVal, int32 newVal)
+{
+    CheckPowerProc(power, oldVal, newVal, GetAuraEffectsByType(SPELL_AURA_TRIGGER_SPELL_ON_POWER_PCT));
+    CheckPowerProc(power, oldVal, newVal, GetAuraEffectsByType(SPELL_AURA_TRIGGER_SPELL_ON_POWER_AMOUNT));
+}
+
+void Unit::CheckPowerProc(Powers power, int32 oldVal, int32 newVal, AuraEffectList effects)
+{
+    for (AuraEffect* effect : effects)
+    {
+        if (effect->GetMiscValue() == power)
+        {
+            float oldValueCheck = oldVal;
+            float newValueCheck = newVal;
+
+            if (effect->GetAuraType() == SPELL_AURA_TRIGGER_SPELL_ON_POWER_PCT)
+            {
+                if (int32 maxPower = GetMaxPower(power))
+                {
+                    //Crash
+                    //oldValueCheck = GetPctOf(oldVal, maxPower);
+                    newValueCheck = GetPctOf(newVal, maxPower);
+                }
+            }
+
+            uint32 effectAmount = effect->GetAmount();
+            if ((effect->GetMiscValueB() == POWER_PROC_UPPER && oldValueCheck < effectAmount && newValueCheck >= effectAmount) ||
+                (effect->GetMiscValueB() == POWER_PROC_LOWER && oldValueCheck > effectAmount && newValueCheck <= effectAmount))
+                CastSpell(this, effect->GetSpellEffectInfo()->TriggerSpell, true);
+        }
+    }
 }
 
 int32 Unit::GetCreatePowers(Powers power) const
@@ -10792,7 +10899,7 @@ void Unit::ProcSkillsAndReactives(bool isVictim, Unit* procTarget, uint32 typeMa
                 // Overpower on victim dodge
                 if ((hitMask & PROC_HIT_DODGE) && GetTypeId() == TYPEID_PLAYER && getClass() == CLASS_WARRIOR)
                 {
-                    ToPlayer()->AddComboPoints(1);
+                    ToPlayer()->ModifyPower(POWER_COMBO_POINTS ,1);
                     StartReactiveTimer(REACTIVE_OVERPOWER);
                 }
             }
@@ -10928,13 +11035,13 @@ Player* Unit::GetSpellModOwner() const
     if (Player* player = const_cast<Unit*>(this)->ToPlayer())
         return player;
 
-    if (IsPet() || IsTotem())
+    if (HasUnitTypeMask(UNIT_MASK_PET | UNIT_MASK_TOTEM | UNIT_MASK_GUARDIAN))
     {
         if (Unit* owner = GetOwner())
             if (Player* player = owner->ToPlayer())
                 return player;
     }
-    return NULL;
+    return nullptr;
 }
 
 ///----------Pet responses methods-----------------
@@ -11103,12 +11210,12 @@ void Unit::RestoreDisplayId(bool ignorePositiveAurasPreventingMounting /*= false
             if (!ignorePositiveAurasPreventingMounting || !IsDisallowedMountForm(0, GetShapeshiftForm(), modelId))
                 SetDisplayId(modelId);
             else
-                SetDisplayId(GetNativeDisplayId());
+                SetDisplayId(GetNativeDisplayId(), GetNativeDisplayScale());
         }
     }
     // no auras found - set modelid to default
     else
-        SetDisplayId(GetNativeDisplayId());
+        SetDisplayId(GetNativeDisplayId(), GetNativeDisplayScale());
 }
 
 void Unit::ClearAllReactives()
@@ -11121,7 +11228,7 @@ void Unit::ClearAllReactives()
     if (getClass() == CLASS_HUNTER && HasAuraState(AURA_STATE_HUNTER_PARRY))
         ModifyAuraState(AURA_STATE_HUNTER_PARRY, false);
     if (getClass() == CLASS_WARRIOR && GetTypeId() == TYPEID_PLAYER)
-        ToPlayer()->ClearComboPoints();
+        ToPlayer()->RemoveAurasByType(SPELL_AURA_RETAIN_COMBO_POINTS);
 }
 
 void Unit::UpdateReactives(uint32 p_time)
@@ -11149,7 +11256,7 @@ void Unit::UpdateReactives(uint32 p_time)
                     break;
                 case REACTIVE_OVERPOWER:
                     if (getClass() == CLASS_WARRIOR && GetTypeId() == TYPEID_PLAYER)
-                        ToPlayer()->ClearComboPoints();
+                        ToPlayer()->RemoveAurasByType(SPELL_AURA_RETAIN_COMBO_POINTS);
                     break;
             }
         }
@@ -11412,7 +11519,7 @@ float Unit::CalculateDefaultCoefficient(SpellInfo const* spellInfo, DamageEffect
     return (CastingTime / 3500.0f) * DotFactor;
 }
 
-float Unit::GetAPMultiplier(WeaponAttackType attType, bool normalized)
+float Unit::GetAPMultiplier(WeaponAttackType attType, bool normalized) const
 {
     if (GetTypeId() != TYPEID_PLAYER || (IsInFeralForm() && !normalized))
         return GetBaseAttackTime(attType) / 1000.0f;
@@ -11426,27 +11533,27 @@ float Unit::GetAPMultiplier(WeaponAttackType attType, bool normalized)
 
     switch (weapon->GetTemplate()->GetSubClass())
     {
-        case ITEM_SUBCLASS_WEAPON_AXE2:
-        case ITEM_SUBCLASS_WEAPON_MACE2:
-        case ITEM_SUBCLASS_WEAPON_POLEARM:
-        case ITEM_SUBCLASS_WEAPON_SWORD2:
-        case ITEM_SUBCLASS_WEAPON_STAFF:
-        case ITEM_SUBCLASS_WEAPON_FISHING_POLE:
-            return 3.3f;
-        case ITEM_SUBCLASS_WEAPON_AXE:
-        case ITEM_SUBCLASS_WEAPON_MACE:
-        case ITEM_SUBCLASS_WEAPON_SWORD:
-        case ITEM_SUBCLASS_WEAPON_WARGLAIVES:
-        case ITEM_SUBCLASS_WEAPON_EXOTIC:
-        case ITEM_SUBCLASS_WEAPON_EXOTIC2:
-        case ITEM_SUBCLASS_WEAPON_FIST_WEAPON:
-            return 2.4f;
-        case ITEM_SUBCLASS_WEAPON_DAGGER:
-            return 1.7f;
-        case ITEM_SUBCLASS_WEAPON_THROWN:
-            return 2.0f;
-        default:
-            return weapon->GetTemplate()->GetDelay() / 1000.0f;
+    case ITEM_SUBCLASS_WEAPON_AXE2:
+    case ITEM_SUBCLASS_WEAPON_MACE2:
+    case ITEM_SUBCLASS_WEAPON_POLEARM:
+    case ITEM_SUBCLASS_WEAPON_SWORD2:
+    case ITEM_SUBCLASS_WEAPON_STAFF:
+    case ITEM_SUBCLASS_WEAPON_FISHING_POLE:
+        return 3.3f;
+    case ITEM_SUBCLASS_WEAPON_AXE:
+    case ITEM_SUBCLASS_WEAPON_MACE:
+    case ITEM_SUBCLASS_WEAPON_SWORD:
+    case ITEM_SUBCLASS_WEAPON_WARGLAIVES:
+    case ITEM_SUBCLASS_WEAPON_EXOTIC:
+    case ITEM_SUBCLASS_WEAPON_EXOTIC2:
+    case ITEM_SUBCLASS_WEAPON_FIST_WEAPON:
+        return 2.4f;
+    case ITEM_SUBCLASS_WEAPON_DAGGER:
+        return 1.7f;
+    case ITEM_SUBCLASS_WEAPON_THROWN:
+        return 2.0f;
+    default:
+        return weapon->GetTemplate()->GetDelay() / 1000.0f;
     }
 }
 
@@ -11471,6 +11578,26 @@ void Unit::SetContestedPvP(Player* attackedPlayer)
         // call MoveInLineOfSight for nearby contested guards
         UpdateObjectVisibility();
     }
+}
+
+void Unit::AddPetAura(PetAura const* petSpell)
+{
+    if (GetTypeId() != TYPEID_PLAYER)
+        return;
+
+    m_petAuras.insert(petSpell);
+    if (Pet* pet = ToPlayer()->GetPet())
+        pet->CastPetAura(petSpell);
+}
+
+void Unit::RemovePetAura(PetAura const* petSpell)
+{
+    if (GetTypeId() != TYPEID_PLAYER)
+        return;
+
+    m_petAuras.erase(petSpell);
+    if (Pet* pet = ToPlayer()->GetPet())
+        pet->RemoveAurasDueToSpell(petSpell->GetAura(pet->GetEntry()));
 }
 
 Pet* Unit::CreateTamedPetFrom(Creature* creatureTarget, uint32 spell_id)
@@ -11677,7 +11804,7 @@ void Unit::Kill(Unit* victim, bool durabilityLoss)
                 }
 
                 if (uint32 lootid = creature->GetCreatureTemplate()->lootid)
-                    loot->FillLoot(lootid, LootTemplates_Creature, looter, false, false, creature->GetLootMode());
+                    loot->FillLoot(lootid, LootTemplates_Creature, looter, false, false, creature->GetLootMode(), GetMap()->GetDifficultyLootItemContext());
 
                 if (uint32 journalEncounterId = sObjectMgr->GetCreatureTemplateJournalId(creature->GetCreatureTemplate()->Entry))
                 {
@@ -11690,7 +11817,7 @@ void Unit::Kill(Unit* victim, bool durabilityLoss)
                             if (ItemTemplate const* proto = sObjectMgr->GetItemTemplate(item->ItemID))
                                 if (proto->IsUsableByLootSpecialization(looter, false))
                                     if (item->IsValidDifficultyMask(mapDifficultyMask) &&
-                                        (sDB2Manager.HasItemContext(item->ItemID, loot->GetItemContext()) || !sDB2Manager.HasItemContext(item->ItemID)))
+                                        (sDB2Manager.HasItemContext(item->ItemID, loot->GetContext()) || !sDB2Manager.HasItemContext(item->ItemID)))
                                         potentialItems.push_back(item);
 
                         Trinity::Containers::RandomResize(potentialItems, 1);
@@ -12914,7 +13041,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form, uint32 spellId) const
                             return 892;
                     }
                 }
-                else if (getRace() == RACE_TROLL)
+                else if (getRace() == RACE_TROLL || getRace() == RACE_ZANDALARI_TROLL)
                 {
                     uint8 hairColor = thisPlayer->m_playerData->HairColorID;
                     if (HasAura(210333)) // Glyph of the Feral Chameleon
@@ -12939,7 +13066,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form, uint32 spellId) const
                             return 33669;
                     }
                 }
-                else if (getRace() == RACE_WORGEN)
+                else if (getRace() == RACE_WORGEN || getRace() == RACE_KUL_TIRAN)
                 {
                     // Based on Skin color
                     uint8 skinColor = thisPlayer->m_playerData->SkinID;
@@ -13096,7 +13223,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form, uint32 spellId) const
                             return 29415;
                     }
                 }
-                else if (getRace() == RACE_TROLL)
+                else if (getRace() == RACE_TROLL || getRace() == RACE_ZANDALARI_TROLL)
                 {
                     uint8 hairColor = thisPlayer->m_playerData->HairColorID;
                     if (HasAura(107059)) // Glyph of the Ursol Chameleon
@@ -13122,7 +13249,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form, uint32 spellId) const
                             return 33655;
                     }
                 }
-                else if (getRace() == RACE_WORGEN)
+                else if (getRace() == RACE_WORGEN || getRace() == RACE_KUL_TIRAN)
                 {
                     // Based on Skin color
                     uint8 skinColor = thisPlayer->m_playerData->SkinID;
@@ -13269,8 +13396,10 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form, uint32 spellId) const
                             return 81439;
                         case RACE_TAUREN: // Brown
                             return 64329;
+                        case RACE_KUL_TIRAN:
                         case RACE_WORGEN: // Purple
                             return 64330;
+                        case RACE_ZANDALARI_TROLL:
                         case RACE_TROLL: // White
                             return 64331;
                         default:
@@ -13661,7 +13790,7 @@ void Unit::NearTeleportTo(uint32 worldSafeLocId, bool casting /*= false*/)
     if (safeLoc == nullptr)
         return;
 
-    NearTeleportTo(safeLoc->Loc.GetPositionX(), safeLoc->Loc.GetPositionY(), safeLoc->Loc.GetPositionZ(), safeLoc->Loc.GetOrientation(), casting);
+    NearTeleportTo(safeLoc->Loc, casting);
 }
 
 void Unit::SendTeleportPacket(Position const& pos)
@@ -13741,8 +13870,7 @@ bool Unit::UpdatePosition(float x, float y, float z, float orientation, bool tel
     else if (turn)
         UpdateOrientation(orientation);
 
-    // code block for underwater state update
-    UpdateUnderwaterState(GetMap(), x, y, z);
+    UpdatePositionData();
 
     return (relocated || turn);
 }
@@ -14457,34 +14585,10 @@ bool Unit::SetCanDoubleJump(bool enable)
     return true;
 }
 
-void Unit::SendSetVehicleRecId(uint32 vehicleId)
-{
-    if (Player* player = ToPlayer())
-    {
-        WorldPackets::Vehicle::MoveSetVehicleRecID moveSetVehicleRec;
-        moveSetVehicleRec.MoverGUID = GetGUID();
-        moveSetVehicleRec.SequenceIndex = m_movementCounter++;
-        moveSetVehicleRec.VehicleRecID = vehicleId;
-        player->SendDirectMessage(moveSetVehicleRec.Write());
-    }
-
-    WorldPackets::Vehicle::SetVehicleRecID setVehicleRec;
-    setVehicleRec.VehicleGUID = GetGUID();
-    setVehicleRec.VehicleRecID = vehicleId;
-    SendMessageToSet(setVehicleRec.Write(), true);
-}
-
-bool Unit::IsInAir()
-{
-    float ground = GetMap()->GetHeight(GetPhaseShift(), GetPositionX(), GetPositionY(), GetPositionZMinusOffset());
-
-    return G3D::fuzzyGt(GetPositionZMinusOffset(), ground + 0.05f) || G3D::fuzzyLt(GetPositionZMinusOffset(), ground - 0.05f);
-}
-
 void Unit::ApplyMovementForce(ObjectGuid id, Position origin, float magnitude, uint8 type, Position direction /*= {}*/, ObjectGuid transportGuid /*= ObjectGuid::Empty*/)
 {
     if (!_movementForces)
-        _movementForces = Trinity::make_unique<MovementForces>();
+        _movementForces = std::make_unique<MovementForces>();
 
     MovementForce force;
     force.ID = id;
@@ -14544,23 +14648,6 @@ void Unit::RemoveMovementForce(ObjectGuid id)
         _movementForces.reset();
 }
 
-void Unit::RemoveAllMovementForces()
-{
-    if (!_movementForces)
-        return;
-
-    std::vector<ObjectGuid> toRemoveIds = std::vector<ObjectGuid>();
-
-    for (auto force : *_movementForces.get()->GetForces())
-        toRemoveIds.push_back(force.ID);
-
-    for (ObjectGuid Id : toRemoveIds)
-        RemoveMovementForce(Id);
-
-    if (_movementForces->IsEmpty())
-        _movementForces.reset();
-}
-
 bool Unit::SetIgnoreMovementForces(bool ignore)
 {
     if (ignore == HasExtraUnitMovementFlag(MOVEMENTFLAG2_IGNORE_MOVEMENT_FORCES))
@@ -14614,7 +14701,7 @@ void Unit::UpdateMovementForcesModMagnitude()
     }
 
     if (modMagnitude != 1.0f && !_movementForces)
-        _movementForces = Trinity::make_unique<MovementForces>();
+        _movementForces = std::make_unique<MovementForces>();
 
     if (_movementForces)
     {
@@ -14622,6 +14709,30 @@ void Unit::UpdateMovementForcesModMagnitude()
         if (_movementForces->IsEmpty())
             _movementForces.reset();
     }
+}
+
+void Unit::SendSetVehicleRecId(uint32 vehicleId)
+{
+    if (Player* player = ToPlayer())
+    {
+        WorldPackets::Vehicle::MoveSetVehicleRecID moveSetVehicleRec;
+        moveSetVehicleRec.MoverGUID = GetGUID();
+        moveSetVehicleRec.SequenceIndex = m_movementCounter++;
+        moveSetVehicleRec.VehicleRecID = vehicleId;
+        player->SendDirectMessage(moveSetVehicleRec.Write());
+    }
+
+    WorldPackets::Vehicle::SetVehicleRecID setVehicleRec;
+    setVehicleRec.VehicleGUID = GetGUID();
+    setVehicleRec.VehicleRecID = vehicleId;
+    SendMessageToSet(setVehicleRec.Write(), true);
+}
+
+bool Unit::IsInAir()
+{
+    float ground = GetMap()->GetHeight(GetPhaseShift(), GetPositionX(), GetPositionY(), GetPositionZMinusOffset());
+
+    return G3D::fuzzyGt(GetPositionZMinusOffset(), ground + 0.05f) || G3D::fuzzyLt(GetPositionZMinusOffset(), ground - 0.05f);
 }
 
 void Unit::SendSetPlayHoverAnim(bool enable)
@@ -14640,7 +14751,7 @@ bool Unit::IsSplineEnabled() const
 
 UF::UpdateFieldFlag Unit::GetUpdateFieldFlagsFor(Player const* target) const
 {
-    EnumClassFlag<UF::UpdateFieldFlag> flags = UF::UpdateFieldFlag::None;
+    UF::UpdateFieldFlag flags = UF::UpdateFieldFlag::None;
     if (target == this || GetOwnerGUID() == target->GetGUID())
         flags |= UF::UpdateFieldFlag::Owner;
 
@@ -14660,6 +14771,88 @@ void Unit::BuildValuesCreate(ByteBuffer* data, Player const* target) const
     m_objectData->WriteCreate(*data, flags, this, target);
     m_unitData->WriteCreate(*data, flags, this, target);
     data->put<uint32>(sizePos, data->wpos() - sizePos - 4);
+}
+
+void Unit::SetEclipsePower(int32 power, bool send)
+{
+    if (power > 100)
+        power = 100;
+
+    if (power < -100)
+        power = -100;
+
+    if (power > 0)
+    {
+        if (HasAura(48518))
+            RemoveAurasDueToSpell(48518); // Eclipse (Lunar)
+        if (HasAura(107095))
+            RemoveAurasDueToSpell(107095);// Eclipse (Lunar) - SPELL_AURA_OVERRIDE_SPELLS
+    }
+
+    if (power == 0)
+    {
+        if (HasAura(48517))
+            RemoveAurasDueToSpell(48517); // Eclipse (Solar)
+        if (HasAura(48518))
+            RemoveAurasDueToSpell(48518); // Eclipse (Lunar)
+        if (HasAura(107095))
+            RemoveAurasDueToSpell(107095);// Eclipse (Lunar) - SPELL_AURA_OVERRIDE_SPELLS
+    }
+
+    if (power < 0)
+    {
+        if (HasAura(48517))
+            RemoveAurasDueToSpell(48517); // Eclipse (Solar)
+    }
+
+    const uint32 solarEclipseMarker = 67483;
+    const uint32 lunarEclipseMarker = 67484;
+
+    int diff = power - _eclipsePower;
+
+    if (diff < 0)
+    {
+        if (HasAura(solarEclipseMarker))
+        {
+            RemoveAurasDueToSpell(solarEclipseMarker);
+            CastSpell(this, lunarEclipseMarker, true);
+        }
+        else if (!HasAura(lunarEclipseMarker))
+        {
+            CastSpell(this, lunarEclipseMarker, true);
+        }
+    }
+    else if (diff > 0)
+    {
+        if (HasAura(lunarEclipseMarker))
+        {
+            RemoveAurasDueToSpell(lunarEclipseMarker);
+            CastSpell(this, solarEclipseMarker, true);
+        }
+        else if (!HasAura(solarEclipseMarker))
+        {
+            CastSpell(this, solarEclipseMarker, true);
+        }
+    }
+    else if (power == 0)
+    {
+        if (HasAura(lunarEclipseMarker))
+            RemoveAurasDueToSpell(lunarEclipseMarker);
+        if (HasAura(solarEclipseMarker))
+            RemoveAurasDueToSpell(solarEclipseMarker);
+    }
+
+    _eclipsePower = power;
+
+    if (send)
+    {
+        uint32 powerIndex = GetPowerIndex(POWER_LUNAR_POWER);
+        WorldPackets::Combat::PowerUpdate packet;
+        packet.Guid = GetGUID();
+        /// @todo: Support multiple counts ?
+        packet.Powers.emplace_back(power, powerIndex);
+        SendMessageToSet(packet.Write(), GetTypeId() == TYPEID_PLAYER);
+    }
 }
 
 void Unit::BuildValuesUpdate(ByteBuffer* data, Player const* target) const
@@ -14851,6 +15044,11 @@ void Unit::Talk(std::string const& text, ChatMsg msgType, Language language, flo
     Trinity::LocalizedPacketDo<Trinity::CustomChatTextBuilder> localizer(builder);
     Trinity::PlayerDistWorker<Trinity::LocalizedPacketDo<Trinity::CustomChatTextBuilder> > worker(this, textRange, localizer);
     Cell::VisitWorldObjects(this, worker, textRange);
+
+    //if(BroadcastTextEntry const* bct = sBroadcastTextStore.LookupEntry(TextId))
+      //   if (uint32 broadcastTextSoundId = bct->SoundEntriesID[getGender() == GENDER_FEMALE ? 1 : 0])
+       //  if(broadcastTextSoundId>0)
+  //  PlayDirectSound(broadcastTextSoundId);
 }
 
 void Unit::Say(std::string const& text, Language language, WorldObject const* target /*= nullptr*/)
@@ -15054,6 +15252,15 @@ void CombatLogSender::Visit(PlayerMapType& m)
     }
 }
 
+
+BrawlersGuild* Unit::GetBrawlerGuild()
+{
+    if (Map* map = GetMap())
+        return map->m_brawlerGuild;
+
+    return nullptr;
+}
+
 void CombatLogSender::Visit(CreatureMapType& m)
 {
     for (CreatureMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
@@ -15097,6 +15304,68 @@ void Unit::SendCombatLogMessage(WorldPackets::CombatLog::CombatLogServerPacket* 
     Cell::VisitWorldObjects(this, notifier, GetVisibilityRange());
 }
 
+void Unit::SendEclipse()
+{
+    enum DruidEclipseSpells
+    {
+        DRUID_SOLAR_ECLIPSE = 48517,
+        DRUID_LUNAR_ECLIPSE = 48518,
+        DRUID_LUNAR_ECLIPSE_OVERRIDE = 107095,
+        DRUID_ECLIPSE_GENERAL_ENERGIZE = 81070,
+        DRUID_NATURES_GRACE = 16886,
+        DRUID_STARFALL = 48505
+    };
+
+    if (Player* _player = this->ToPlayer())
+    {
+        if (_player->getClass() != CLASS_DRUID)
+            return;
+
+        if (_player->GetEclipsePower() == 100 && !_player->HasAura(DRUID_SOLAR_ECLIPSE))
+        {
+            _player->CastSpell(_player, DRUID_SOLAR_ECLIPSE, true, 0); // Cast Lunar Eclipse
+            _player->CastSpell(_player, DRUID_NATURES_GRACE, true); // Cast Nature's Grace
+            _player->CastSpell(_player, DRUID_ECLIPSE_GENERAL_ENERGIZE, true); // Cast Eclipse - Give 35% of POWER_MANA
+
+                                                                               // Now our last eclipse is Solar
+            _player->SetLastEclipsePower(DRUID_SOLAR_ECLIPSE);
+        }
+        else if (_player->GetEclipsePower() == -100 && !_player->HasAura(DRUID_LUNAR_ECLIPSE))
+        {
+            _player->CastSpell(_player, DRUID_LUNAR_ECLIPSE, true, 0); // Cast Lunar Eclipse
+            _player->CastSpell(_player, DRUID_NATURES_GRACE, true); // Cast Nature's Grace
+            _player->CastSpell(_player, DRUID_ECLIPSE_GENERAL_ENERGIZE, true); // Cast Eclipse - Give 35% of POWER_MANA
+            _player->CastSpell(_player, DRUID_LUNAR_ECLIPSE_OVERRIDE, true);
+
+            // Now our last eclipse is Lunar
+            _player->SetLastEclipsePower(DRUID_LUNAR_ECLIPSE);
+
+            if (_player->GetSpellHistory()->HasCooldown(DRUID_STARFALL))
+                _player->GetSpellHistory()->ResetCooldown(DRUID_STARFALL);
+        }
+    }
+};
+
+void Unit::CastExpelHarmDamage(uint32 damage)
+{
+    if (Player* _player = this->ToPlayer())
+    {
+        std::list<Unit*> targetList;
+        float radius = 10.0f;
+
+        _player->GetAttackableUnitListInRange(targetList, radius); 
+
+        for (std::list<Unit*>::iterator itr = targetList.begin(); itr != targetList.end(); ++itr)
+        {
+            if (_player->IsValidAttackTarget((*itr)))
+            {
+                int32 bp = CalculatePct(damage, 33);
+                _player->CastCustomSpell((*itr), 115129, &bp, NULL, NULL, true);
+            }
+        }
+    }
+}
+
 bool Unit::VisibleAuraSlotCompare::operator()(AuraApplication* left, AuraApplication* right) const
 {
     return left->GetSlot() < right->GetSlot();
@@ -15121,6 +15390,22 @@ void Unit::GetAttackableUnitListInRange(std::list<Unit*> &list, float fMaxSearch
 
     TypeContainerVisitor<Trinity::UnitListSearcher<Trinity::AttackableUnitInObjectRangeCheck>, WorldTypeMapContainer > world_unit_searcher(searcher);
     TypeContainerVisitor<Trinity::UnitListSearcher<Trinity::AttackableUnitInObjectRangeCheck>, GridTypeMapContainer >  grid_unit_searcher(searcher);
+
+    cell.Visit(p, world_unit_searcher, *GetMap(), *this, fMaxSearchRange);
+    cell.Visit(p, grid_unit_searcher, *GetMap(), *this, fMaxSearchRange);
+}
+
+void Unit::GetAnyUnitListInRange(std::list<Unit*>& list, float fMaxSearchRange) const
+{
+    CellCoord p(Trinity::ComputeCellCoord(GetPositionX(), GetPositionY()));
+    Cell cell(p);
+    cell.SetNoCreate();
+
+    Trinity::AnyUnitInObjectRangeCheck u_check(this, fMaxSearchRange);
+    Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck> searcher(this, list, u_check);
+
+    TypeContainerVisitor<Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck>, WorldTypeMapContainer> world_unit_searcher(searcher);
+    TypeContainerVisitor<Trinity::UnitListSearcher<Trinity::AnyUnitInObjectRangeCheck>, GridTypeMapContainer> grid_unit_searcher(searcher);
 
     cell.Visit(p, world_unit_searcher, *GetMap(), *this, fMaxSearchRange);
     cell.Visit(p, grid_unit_searcher, *GetMap(), *this, fMaxSearchRange);

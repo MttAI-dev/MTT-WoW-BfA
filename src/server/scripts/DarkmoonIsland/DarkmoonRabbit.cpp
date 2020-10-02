@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,8 +20,8 @@
 enum Enums
 {
     //Spells
-    SPELL_HUGE_SHARP_TEETH          = 114078,
-    SPELL_INTERDIMENSIONAL_HOP      = 135056,
+    SPELL_HUGE_SHARP_TEETH = 114078,
+    SPELL_INTERDIMENSIONAL_HOP = 135056,
 
     //Events
 
@@ -57,7 +57,7 @@ public:
                 return;
 
             if (!UpdateVictim())
-                    return;
+                return;
 
             /*while (uint32 eventId = events.ExecuteEvent())
             {

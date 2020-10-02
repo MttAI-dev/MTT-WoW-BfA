@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2016 Firestorm Servers <https://firestorm-servers.com>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -34,12 +33,26 @@ enum DataTypes
 
 enum CreaturesIds
 {
-    NPC_JINBAK      = 61567,
-    NPC_VOJAK       = 61634,
-    NPC_PAVALAK     = 61485,
-    NPC_NERONOK     = 62205,
+    NPC_JINBAK         = 61567,
+    NPC_VOJAK          = 61634,
+    NPC_PAVALAK        = 61485,
+    NPC_NERONOK        = 62205,
+    NPC_LI_CHU         = 61812,
+    NPC_LO_CHU         = 62794,
+    NPC_SIKTHIK_WARDEN = 62795,
+    NPC_MANTID_TAR_KEG = 61817, // Vehicle. Interaction for throwing keg.
+    NPC_SAP_PUDDLE     = 61613,
+    DATA_VOJAK_DOOR
+};
 
-    NPC_SAP_PUDDLE  = 61613
+enum GameObjects
+{
+    GO_HARDENED_RESIN = 213174, // after jinbak
+    GO_DOOR = 212921, // after vojak
+
+    GO_TEMPLE_INVIS_DOOR = 213251, // before neronok bridge
+    GO_WIND_WALL = 214548, // before neronok bridge
+    GO_FIRE_WALL = 210097,
 };
 
 #endif // SIEGE_NIUZAO_TEMPLE_H_

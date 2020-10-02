@@ -1,5 +1,6 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
+ * Copyright (C) Thordekk
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,6 +22,7 @@
 #include "ScriptSystem.h"
 #include "Log.h"
 #include "Map.h"
+#include "ObjectMgr.h"
 #include "ConfusedMovementGenerator.h"
 #include "FleeingMovementGenerator.h"
 #include "HomeMovementGenerator.h"
@@ -478,7 +480,7 @@ void MotionMaster::MoveJump(uint32 locEntry, float speedXY, float speedZ, uint32
     if (safeLoc == nullptr)
         return;
 
-    MoveJump(safeLoc->Loc.GetPositionX(), safeLoc->Loc.GetPositionY(), safeLoc->Loc.GetPositionZ(), speedXY, speedZ, safeLoc->Loc.GetOrientation(), id);
+    MoveJump(safeLoc->Loc, speedXY, speedZ, id);
 }
 
 void MotionMaster::MoveJump(float x, float y, float z, float o, float speedXY, float speedZ, uint32 id /*= EVENT_JUMP*/, bool hasOrientation /* = false*/,

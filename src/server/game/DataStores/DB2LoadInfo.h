@@ -1,6 +1,6 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
- *
+ * Copyright (C) 2020 LatinCoreTeam
+ * Thordekk
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
@@ -200,6 +200,43 @@ struct AreaTableLoadInfo
             { false, FT_SHORT, "LiquidTypeID4" },
         };
         static DB2LoadInfo const loadInfo(&fields[0], std::extent<decltype(fields)>::value, AreaTableMeta::Instance(), HOTFIX_SEL_AREA_TABLE);
+        return &loadInfo;
+    }
+};
+
+struct AlliedRaceLoadInfo
+{
+    static DB2LoadInfo const* Instance()
+    {
+        static DB2FieldMeta const fields[] =
+        {
+            { true, FT_INT, "BannerColor" },
+            { true, FT_INT, "ID" },
+            { true, FT_INT, "RaceID" },
+            { true, FT_INT, "CrestTextureID" },
+            { true, FT_INT, "ModelBackgroundTextureID" },
+            { true, FT_INT, "MaleCreatureDisplayID" },
+            { true, FT_INT, "FemaleCreatureDisplayID" },
+            { true, FT_INT, "UiUnlockAchievementID" },
+        };
+        static DB2LoadInfo const loadInfo(&fields[0], std::extent<decltype(fields)>::value, AlliedRaceMeta::Instance(), HOTFIX_SEL_ALLIED_RACE);
+        return &loadInfo;
+    }
+};
+
+struct AlliedRaceRacialAbilityLoadInfo
+{
+    static DB2LoadInfo const* Instance()
+    {
+        static DB2FieldMeta const fields[] =
+        {
+            { true, FT_INT, "ID" },
+            { false, FT_STRING, "Name" },
+            { false, FT_STRING, "Description" },
+            { false, FT_BYTE, "OrderIndex" },
+            { true, FT_INT, "IconFileDataID" },
+        };
+        static DB2LoadInfo const loadInfo(&fields[0], std::extent<decltype(fields)>::value, AlliedRaceRacialAbilityMeta::Instance(), HOTFIX_SEL_ALLIED_RACE_RACIAL_ABILITY);
         return &loadInfo;
     }
 };
@@ -1002,6 +1039,21 @@ struct CharacterFacialHairStylesLoadInfo
             { false, FT_BYTE, "VariationID" },
         };
         static DB2LoadInfo const loadInfo(&fields[0], std::extent<decltype(fields)>::value, CharacterFacialHairStylesMeta::Instance(), HOTFIX_SEL_CHARACTER_FACIAL_HAIR_STYLES);
+        return &loadInfo;
+    }
+};
+
+struct CharBaseInfoLoadInfo
+{
+    static DB2LoadInfo const* Instance()
+    {
+        static DB2FieldMeta const fields[] =
+        {
+            { false, FT_INT, "ID" },
+            { true, FT_BYTE, "RaceID"},
+            { true, FT_BYTE, "ClassID"},
+        };
+        static DB2LoadInfo const loadInfo(&fields[0], std::extent<decltype(fields)>::value, CharBaseInfoMeta::Instance(), HOTFIX_SEL_CHAR_BASE_INFO);
         return &loadInfo;
     }
 };
@@ -5665,6 +5717,24 @@ struct SpellXSpellVisualLoadInfo
         return &loadInfo;
     }
 };
+
+struct SpellLoadInfo
+{
+    static DB2LoadInfo const* Instance()
+    {
+        static DB2FieldMeta const fields[] =
+        {
+            { true, FT_INT, "ID" },
+            { false, FT_STRING, "Name" },
+            { false, FT_STRING, "NameSubtext" },
+            { false, FT_STRING, "Description" },
+            { false, FT_STRING, "AuraDescription" },
+        };
+        static DB2LoadInfo const loadInfo(&fields[0], std::extent<decltype(fields)>::value, SpellMeta::Instance(), HOTFIX_SEL_SPELL);
+        return &loadInfo;
+    }
+};
+
 
 struct SummonPropertiesLoadInfo
 {

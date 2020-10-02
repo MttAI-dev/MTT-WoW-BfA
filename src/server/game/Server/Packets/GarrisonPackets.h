@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -60,6 +60,29 @@ namespace WorldPackets
             GetGarrisonInfo(WorldPacket&& packet) : ClientPacket(CMSG_GET_GARRISON_INFO, std::move(packet)) { }
 
             void Read() override { }
+        };
+
+        class CreateShipment final : public ClientPacket
+        {
+        public:
+            CreateShipment(WorldPacket&& packet) : ClientPacket(CMSG_CREATE_SHIPMENT, std::move(packet)) { }
+
+            void Read() override;
+
+            ObjectGuid NpcGUID;
+            uint32 Count = 0;
+        };
+
+        class CreateShipmentResponse final : public ServerPacket
+        {
+        public:
+            CreateShipmentResponse() : ServerPacket(SMSG_CREATE_SHIPMENT_RESPONSE, 8 + 4 + 4) { }
+
+            WorldPacket const* Write() override;
+
+            uint64 ShipmentID = 0;
+            uint32 ShipmentRecID = 0;
+            uint32 Result = 0;
         };
 
         struct GarrisonPlotInfo
@@ -567,6 +590,89 @@ namespace WorldPackets
             GarrisonFollower NewFollower;
 
             WorldPacket const* Write() override;
+        };
+
+        class GarrisonGenerateRecruits final : public ClientPacket
+        {
+        public:
+            GarrisonGenerateRecruits(WorldPacket&& packet) : ClientPacket(CMSG_GARRISON_GENERATE_RECRUITS, std::move(packet)) { }
+
+            void Read() override;
+
+            ObjectGuid NpcGUID;
+            uint32 TraitID = 0;
+            uint32 AbiltyID = 0;
+        };
+
+        class GarrisonOpenTalentNpc final : public ServerPacket
+        {
+        public:
+            GarrisonOpenTalentNpc() : ServerPacket(SMSG_GARRISON_OPEN_TALENT_NPC, 4) { }
+
+            ObjectGuid NpcGUID;
+
+            WorldPacket const* Write() override;
+        };
+
+        class GarrisonOpenRecruitmentNpc final : public ServerPacket
+        {
+        public:
+            GarrisonOpenRecruitmentNpc() : ServerPacket(SMSG_GARRISON_OPEN_RECRUITMENT_NPC, 4) { }
+
+            ObjectGuid NpcGUID;
+            uint32 Unk1 = 0;
+            //uint32 Unk2 = 0;
+            //uint32 Unk3 = 0;
+            std::vector <GarrisonFollower> followers;
+            bool CanRecruitFollower = false;
+            bool Unk4 = false;
+            WorldPacket const* Write() override;
+        };
+
+        class GarrisonRecruitsFollower final : public ClientPacket
+        {
+        public:
+            GarrisonRecruitsFollower(WorldPacket&& packet) : ClientPacket(CMSG_GARRISON_RECRUIT_FOLLOWER, std::move(packet)) { }
+
+            void Read() override;
+
+            ObjectGuid NpcGUID;
+            uint32 FollowerID = 0;
+        };
+
+        class GarrisonRecruitFollowerResult final : public ServerPacket
+        {
+        public:
+            GarrisonRecruitFollowerResult() : ServerPacket(SMSG_GARRISON_RECRUIT_FOLLOWER_RESULT, 64) { }
+
+            uint32 resultID = 0;
+            std::vector <GarrisonFollower> followers;
+
+            WorldPacket const* Write() override;
+        };
+
+        WorldPacket InsertGarrisonFollower(WorldPacket& worldPacke, WorldPackets::Garrison::GarrisonFollower follower);
+
+        class GarrisonSetFollowerInactive final : public ClientPacket
+        {
+        public:
+            GarrisonSetFollowerInactive(WorldPacket&& packet) : ClientPacket(CMSG_GARRISON_SET_FOLLOWER_INACTIVE, std::move(packet)) { }
+
+            void Read() override;
+
+            uint64  followerDBID = 0;
+            bool    desActivate = false;
+        };
+
+        class GarrisonFollowerChangedStatus final : public ServerPacket
+        {
+        public:
+            GarrisonFollowerChangedStatus() : ServerPacket(SMSG_GARRISON_FOLLOWER_CHANGED_STATUS) { }
+
+            WorldPacket const* Write() override;
+
+            uint32 resultID = 0;
+            std::vector <GarrisonFollower> followers;
         };
     }
 }

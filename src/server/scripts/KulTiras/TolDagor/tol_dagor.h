@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2017-WoWLegacy <https://github.com/AshamaneProject>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -36,6 +36,10 @@ enum CreatureIds
     NPC_JES_HOWLIS              = 127484,
     NPC_KNIGHT_CAPTAIN_VALYRI   = 127490,
     NPC_OVERSEER_KORGUS         = 127503,
+    NPC_BUZZING_DRONE           = 131785,
+    NPC_ASHAVANE_QUATERMASTER   = 131856,
+    NPC_MUNITIONS_BARREL        = 129437,
+    NPC_HEAVY_CANNON            = 134025,
 };
 
 #endif // TOL_DAGOR_H

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -153,6 +153,10 @@ void UnitAI::DoCast(uint32 spellId)
 
     if (target)
         me->CastSpell(target, spellId, false);
+}
+
+void UnitAI::DoCastAI(uint32 spellId)
+{
 }
 
 void UnitAI::DoCast(Unit* victim, uint32 spellId, bool triggered)
@@ -365,6 +369,40 @@ bool NonTankTargetSelector::operator()(Unit const* target) const
         return target->GetGUID() != currentVictim->getUnitGuid();
 
     return target != _source->GetVictim();
+}
+
+bool BehindTargetSelector::operator()(Unit const* target) const
+{
+    if (!me)
+        return false;
+
+    if (!target)
+        return false;
+
+    if (m_playerOnly && !target->IsPlayer())
+        return false;
+
+    if (m_dist > 0.0f && !me->IsWithinCombatRange(target, m_dist))
+        return false;
+
+    if (m_dist < 0.0f && me->IsWithinCombatRange(target, -m_dist))
+        return false;
+
+    if (m_aura)
+    {
+        if (m_aura > 0)
+        {
+            if (!target->HasAura(m_aura))
+                return false;
+        }
+        else
+        {
+            if (target->HasAura(-m_aura))
+                return false;
+        }
+    }
+
+    return !me->HasInArc(static_cast<float>(3 * 4 / M_PI), target);
 }
 
 void UnitAI::UpdateOperations(uint32 const diff)

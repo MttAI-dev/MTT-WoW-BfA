@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -28,6 +28,7 @@
 #include "GuildMgr.h"
 #include "Item.h"
 #include "Log.h"
+#include "LootItemStorage.h"
 #include "LootMgr.h"
 #include "LootPackets.h"
 #include "Object.h"
@@ -258,7 +259,7 @@ void WorldSession::HandleLootMoneyOpcode(WorldPackets::Loot::LootMoney& /*packet
 
         // Delete the money loot record from the DB
         if (!loot->containerID.IsEmpty())
-            loot->DeleteLootMoneyFromContainerItemDB();
+            sLootItemStorage->RemoveStoredMoneyForContainer(loot->containerID.GetCounter());
 
         // Delete container if empty
         if (loot->isLooted() && guid.IsItem())
@@ -549,4 +550,134 @@ void WorldSession::HandleSetLootSpecialization(WorldPackets::Loot::SetLootSpecia
     }
     else
         GetPlayer()->SetLootSpecId(0);
+}
+void WorldSession::HandleMasterLootItem(WorldPackets::Loot::MasterLootItem& packet)
+{
+    Group* group = _player->GetGroup();
+    if (!group || group->isLFGGroup() || group->GetLooterGuid() != _player->GetGUID())
+    {
+        _player->SendLootRelease(GetPlayer()->GetLootGUID());
+        return;
+    }
+    
+    //for (auto const& lootData : packet.Loot)
+    //{
+    //    Player* target = ObjectAccessor::FindPlayer(packet.Target);
+    //    if (!target)
+    //        continue;
+
+    //    Loot* loot = nullptr;
+    //    if (lootData.Object.IsCreatureOrVehicle())
+    //    {
+    //        Creature* creature = GetPlayer()->GetMap()->GetCreature(lootData.Object);
+    //        if (!creature)
+    //            continue;
+
+    //        loot = &creature->loot;
+    //    }
+    //    else if (lootData.Object.IsGameObject())
+    //    {
+    //        GameObject* pGO = GetPlayer()->GetMap()->GetGameObject(lootData.Object);
+    //        if (!pGO)
+    //            continue;
+
+    //        loot = &pGO->loot;
+    //    }
+    //    else if (lootData.Object.IsLoot())
+    //    {
+    //        loot = sLootMgr->GetLoot(lootData.Object);
+    //        if (!loot)
+    //            continue;
+    //    }
+
+    //    if (!loot)
+    //        continue;
+
+    //    uint8 _LootListID = lootData.LootListID - 1;    //restore slot index; WTF?
+    //    if (_LootListID >= loot->items.size() + loot->quest_items.size())
+    //    {
+    //            GetPlayer()->GetName(), _LootListID, static_cast<uint32>(loot->items.size()));
+    //        return;
+    //    }
+
+    //    LootItem& item = _LootListID >= static_cast<uint8>(loot->items.size()) ? loot->quest_items[_LootListID - static_cast<uint8>(loot->items.size())] : loot->items[_LootListID];
+    //    if (item.currency)
+    //    {
+    //            GetPlayer()->GetName(), _LootListID, item.item.ItemID);
+    //        return;
+    //    }
+
+    //    ItemPosCountVec dest;
+    //    InventoryResult msg = target->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, item.item.ItemID, item.count);
+    //    if (item.follow_loot_rules && !loot->AllowedForPlayer(target, item.item.ItemID, item.type, item.needs_quest, &item))
+    //        msg = EQUIP_ERR_CANT_EQUIP_EVER;
+    //    if (msg != EQUIP_ERR_OK)
+    //    {
+    //        target->SendEquipError(msg, nullptr, nullptr, item.item.ItemID);
+    //        _player->SendEquipError(msg, nullptr, nullptr, item.item.ItemID);
+    //        return;
+    //    }
+
+    //    // delete roll's in progress for this aoeSlot
+    //    group->ErraseRollbyRealSlot(_LootListID, loot);
+
+    //    // ToDo: check for already rolled items. This could posible on packet spaming (special tools should be writen, no so important now)
+
+    //    // list of players allowed to receive this item in trade
+    //    // not move item from loot to target inventory
+    //    Item* newitem = target->StoreNewItem(dest, item.item.ItemID, true, item.item.RandomPropertiesID, item.GetAllowedLooters(), item.item.ItemBonus.BonusListIDs, item.item.ItemBonus.Context);
+    //    target->SendNewItem(newitem, uint32(item.count), false, false, true);
+    //    target->UpdateAchievementCriteria(CRITERIA_TYPE_LOOT_ITEM, item.item.ItemID, item.count);
+    //    target->UpdateAchievementCriteria(CRITERIA_TYPE_LOOT_TYPE, loot->loot_type, item.count);
+    //    target->UpdateAchievementCriteria(CRITERIA_TYPE_LOOT_EPIC_ITEM, item.item.ItemID, item.count);
+
+        // mark as looted
+    /*    item.count = 0;
+        item.is_looted = true;
+
+        loot->NotifyItemRemoved(_LootListID);
+        --loot->unlootedCount;*/
+    //}
+}
+
+void WorldSession::HandleCancelMasterLootRoll(WorldPackets::Loot::CancelMasterLootRoll& /*packet*/)
+{ }
+
+void WorldSession::HandleDoMasterLootRoll(WorldPackets::Loot::DoMasterLootRoll& packet)
+{
+    //if (!_player->GetGroup() || _player->GetGroup()->GetLooterGuid() != _player->GetGUID())
+    //{
+    //    _player->SendLootRelease(packet.LootObj);
+    //    return;
+    //}
+
+    //Loot* loot = nullptr;
+    //if (packet.LootObj.IsCreatureOrVehicle())
+    //{
+    //    Creature* creature = GetPlayer()->GetMap()->GetCreature(packet.LootObj);
+    //    if (creature)
+    //        loot = &creature->loot;
+    //}
+    //else if (packet.LootObj.IsGameObject())
+    //{
+    //    GameObject* pGO = GetPlayer()->GetMap()->GetGameObject(packet.LootObj);
+    //    if (pGO)
+    //        loot = &pGO->loot;
+    //}
+    //else if (packet.LootObj.IsLoot())
+    //{
+    //    loot = sLootMgr->GetLoot(packet.LootObj);
+    //    if (!loot)
+    //        return;
+    //}
+
+    //packet.LootListID -= 1; //restore slot index;
+    //if (packet.LootListID >= loot->items.size() + loot->quest_items.size())
+    //{
+    //    // TC_LOG_DEBUG(LOG_FILTER_LOOT, "MasterLootItem: Player %s might be using a hack! (slot %d, size %lu)", GetPlayer()->GetName(), packet.LootListID, (unsigned long)loot->items.size());
+    //    return;
+    //}
+
+    //LootItem& item = packet.LootListID >= loot->items.size() ? loot->quest_items[packet.LootListID - loot->items.size()] : loot->items[packet.LootListID];
+    //_player->GetGroup()->DoRollForAllMembers(packet.LootObj, packet.LootListID, _player->GetMapId(), loot, item, _player);
 }

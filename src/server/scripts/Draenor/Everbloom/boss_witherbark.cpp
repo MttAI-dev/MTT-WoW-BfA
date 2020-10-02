@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2016 Firestorm Servers <https://firestorm-servers.com>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -28,7 +27,7 @@ enum eWitherbarkTalks
 {
     WitherbarkAggro   = 4, ///< So... Thirsty(45108)
     WitherbarkKill01  = 5, ///< Return to the earth...(45110)
-    WitherbarkKill02  = 6, ///< Feed my roots.(45111)
+    WitherbarkKill02  = 6, ///< Feed my roots.(45111) 
     WitherbarkSpell01 = 7, ///< Refreshed.(45112)
     WitherbarkSpell02 = 8, ///< I Cannot Be Stopped.(45113)
     WitherbarkDeath   = 9 ///< Arghh...(45109)

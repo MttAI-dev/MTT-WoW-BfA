@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -157,7 +157,7 @@ enum ItemFieldFlags : uint32
     ITEM_FIELD_FLAG_UNK15         = 0x00100000,
     ITEM_FIELD_FLAG_NEW_ITEM      = 0x00200000, // Item glows in inventory
     ITEM_FIELD_FLAG_AZERITE_EMPOWERED_ITEM_VIEWED = 0x00400000, // Won't play azerite powers animation when viewing it
-    ITEM_FIELD_FLAG_UNK18         = 0x00800000,
+    ITEM_FIELD_FLAG_BOUGHT_FROM_SHOP = 0x00800000,
     ITEM_FIELD_FLAG_UNK19         = 0x01000000,
     ITEM_FIELD_FLAG_UNK20         = 0x02000000,
     ITEM_FIELD_FLAG_UNK21         = 0x04000000,

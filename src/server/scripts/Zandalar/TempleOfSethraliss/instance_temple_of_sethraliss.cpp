@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,12 +20,24 @@
 #include "InstanceScript.h"
 #include "temple_of_sethraliss.h"
 
+DoorData const doorData[] =
+{
+    { 292551, DATA_ADDERIS_AND_ASPIX, DOOR_TYPE_ROOM },
+    { 290906, DATA_MEREKTHA, DOOR_TYPE_ROOM },
+    { 292414, DATA_GALVAZZT, DOOR_TYPE_ROOM },
+};
+
 struct instance_temple_of_sethraliss : public InstanceScript
 {
     instance_temple_of_sethraliss(InstanceMap* map) : InstanceScript(map)
     {
         SetHeaders(DataHeader);
         SetBossNumber(EncounterCount);
+    }
+    
+    void Initialize() override
+    {
+        LoadDoorData(doorData);
     }
 };
 

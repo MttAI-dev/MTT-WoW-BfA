@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2017-2020 WoWLegacy <https://github.com/AshamaneProject>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,6 +27,38 @@ struct instance_shrine_of_the_storm : public InstanceScript
         SetHeaders(DataHeader);
         SetBossNumber(EncounterCount);
     }
+
+    void OnPlayerEnter(Player* player) override
+    {
+        if (!TeamInInstance)
+            TeamInInstance = player->GetTeam();
+    }
+
+    void OnCreatureCreate(Creature* creature) override
+    {
+        InstanceScript::OnCreatureCreate(creature);
+
+        if (!TeamInInstance)
+        {
+            Map::PlayerList const &players = instance->GetPlayers();
+            if (!players.isEmpty())
+                if (Player* player = players.begin()->GetSource())
+                    TeamInInstance = player->GetTeam();
+        }
+
+        switch (creature->GetEntry())
+        {
+        case NPC_REXXAR:
+            if (TeamInInstance == ALLIANCE)
+                creature->UpdateEntry(NPC_BROTHER_PIKE);
+            break;
+        default:
+            break;
+        }
+    }
+
+protected:
+    uint32 TeamInInstance;
 };
 
 void AddSC_instance_shrine_of_the_storm()

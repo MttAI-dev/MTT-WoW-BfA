@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,10 +27,10 @@
 
 void Metric::Initialize(std::string const& realmName, Trinity::Asio::IoContext& ioContext, std::function<void()> overallStatusLogger)
 {
-    _dataStream = Trinity::make_unique<boost::asio::ip::tcp::iostream>();
+    _dataStream = std::make_unique<boost::asio::ip::tcp::iostream>();
     _realmName = FormatInfluxDBTagValue(realmName);
-    _batchTimer = Trinity::make_unique<Trinity::Asio::DeadlineTimer>(ioContext);
-    _overallStatusTimer = Trinity::make_unique<Trinity::Asio::DeadlineTimer>(ioContext);
+    _batchTimer = std::make_unique<Trinity::Asio::DeadlineTimer>(ioContext);
+    _overallStatusTimer = std::make_unique<Trinity::Asio::DeadlineTimer>(ioContext);
     _overallStatusLogger = overallStatusLogger;
     LoadFromConfigs();
 }

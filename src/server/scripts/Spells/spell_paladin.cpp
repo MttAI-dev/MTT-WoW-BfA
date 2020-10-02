@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -294,7 +293,7 @@ class spell_pal_beacon_of_light_proc : public AuraScript
         Unit* targetOfBeacon = GetCaster();
         Unit* targetOfHeal = eventInfo.GetActionTarget();
 
-        if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->Id != SPELL_PALADIN_BEACON_OF_LIGHT_HEAL && eventInfo.GetSpellInfo()->Id != SPELL_PALADIN_LIGHT_OF_THE_MARTYR && targetOfBeacon->IsWithinLOSInMap(ownerOfBeacon) && targetOfHeal->GetGUID() != targetOfBeacon->GetGUID())
+        //if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->Id != SPELL_PALADIN_BEACON_OF_LIGHT_HEAL && eventInfo.GetSpellInfo()->Id != SPELL_PALADIN_LIGHT_OF_THE_MARTYR && targetOfBeacon->IsWithinLOSInMap(ownerOfBeacon) && targetOfHeal->GetGUID() != targetOfBeacon->GetGUID())
             return true;
 
         return false;
@@ -448,7 +447,7 @@ class spell_pal_crusader_strike : public SpellScript
 {
     PrepareSpellScript(spell_pal_crusader_strike);
 
-    void HandleOnHit(SpellEffIndex /*effIndex*/)
+    void HandleOnHit()
     {
         Unit* caster = GetCaster();
 
@@ -464,7 +463,7 @@ class spell_pal_crusader_strike : public SpellScript
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_pal_crusader_strike::HandleOnHit, EFFECT_0, SPELL_EFFECT_NORMALIZED_WEAPON_DMG);
+        OnHit += SpellHitFn(spell_pal_crusader_strike::HandleOnHit);
     }
 };
 
@@ -1126,7 +1125,7 @@ class spell_pal_judgment : public SpellScript
 {
     PrepareSpellScript(spell_pal_judgment);
 
-    void HandleDummy(SpellEffIndex /*effIndex*/)
+    void HandleOnHit()
     {
         Player* caster = GetCaster()->ToPlayer();
         Unit* target = GetExplTargetUnit();
@@ -1140,6 +1139,7 @@ class spell_pal_judgment : public SpellScript
             case TALENT_SPEC_PALADIN_RETRIBUTION:
             {
                 caster->CastSpell(target, SPELL_PALADIN_JUDGMENT_RETRI_DEBUFF);
+                caster->ModifyPower(POWER_HOLY_POWER, 1);
                 break;
             }
             case TALENT_SPEC_PALADIN_HOLY:
@@ -1169,7 +1169,7 @@ class spell_pal_judgment : public SpellScript
 
     void Register() override
     {
-        OnEffectHitTarget += SpellEffectFn(spell_pal_judgment::HandleDummy, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        OnHit += SpellHitFn(spell_pal_judgment::HandleOnHit);
     }
 };
 

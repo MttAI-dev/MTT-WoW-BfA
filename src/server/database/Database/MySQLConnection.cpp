@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -62,7 +62,7 @@ m_Mysql(NULL),
 m_connectionInfo(connInfo),
 m_connectionFlags(CONNECTION_ASYNC)
 {
-    m_worker = Trinity::make_unique<DatabaseWorker>(m_queue, this);
+    m_worker = std::make_unique<DatabaseWorker>(m_queue, this);
 }
 
 MySQLConnection::~MySQLConnection()
@@ -486,7 +486,7 @@ void MySQLConnection::PrepareStatement(uint32 index, std::string const& sql, Con
             m_prepareError = true;
         }
         else
-            m_stmts[index] = Trinity::make_unique<MySQLPreparedStatement>(reinterpret_cast<MySQLStmt*>(stmt), sql);
+            m_stmts[index] = std::make_unique<MySQLPreparedStatement>(reinterpret_cast<MySQLStmt*>(stmt), sql);
     }
 }
 
@@ -513,7 +513,6 @@ bool MySQLConnection::_HandleMySQLErrno(uint32 errNo, uint8 attempts /*= 5*/)
         case CR_SERVER_GONE_ERROR:
         case CR_SERVER_LOST:
         case CR_SERVER_LOST_EXTENDED:
-        {
             if (m_Mysql)
             {
                 TC_LOG_ERROR("sql.sql", "Lost the connection to the MySQL server!");
@@ -521,9 +520,7 @@ bool MySQLConnection::_HandleMySQLErrno(uint32 errNo, uint8 attempts /*= 5*/)
                 mysql_close(m_Mysql);
                 m_Mysql = nullptr;
             }
-
-            /*no break*/
-        }
+            /* fallthrough */
         case CR_CONN_HOST_ERROR:
         {
             TC_LOG_INFO("sql.sql", "Attempting to reconnect to the MySQL server...");

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2016 Firestorm Servers <https://firestorm-servers.com>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -455,8 +454,46 @@ class spell_sha_of_anger_aggressive_behaviour: public SpellScriptLoader
         }
  };
 
+ // Anger Sha Effect Bunny 60732.
+ class npc_overcome_by_anger_bunny : public CreatureScript
+ {
+ public:
+     npc_overcome_by_anger_bunny() : CreatureScript("npc_overcome_by_anger_bunny") { }
+
+     struct npc_overcome_by_anger_bunnyAI : public ScriptedAI
+     {
+         npc_overcome_by_anger_bunnyAI(Creature* creature) : ScriptedAI(creature) { }
+
+         void Reset()
+         {
+             me->SetReactState(REACT_PASSIVE);
+             me->AddUnitFlag(UnitFlags(UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE));
+             SetCanSeeEvenInPassiveMode(true);
+         }
+
+         void MoveInLineOfSight(Unit* who)
+         {
+             if (me->GetMapId() == 870 && who->GetTypeId() == TYPEID_PLAYER && who->IsWithinDist(me, 30.0f))
+             {
+                 if (who->IsWithinDist(me, 20.0f))
+                     who->AddAura(SPELL_OVERCOME_BY_ANGER, who);
+                 else if (!who->IsWithinDist(me, 20.0f) && who->HasAura(SPELL_OVERCOME_BY_ANGER))
+                     who->RemoveAurasDueToSpell(SPELL_OVERCOME_BY_ANGER);
+             }
+         }
+
+         void UpdateAI(uint32 const diff) { }
+     };
+
+     CreatureAI* GetAI(Creature* creature) const
+     {
+         return new npc_overcome_by_anger_bunnyAI(creature);
+     }
+ };
+
 void AddSC_boss_sha_of_anger()
 {
+    new npc_overcome_by_anger_bunny();
     new boss_sha_of_anger();
     new mob_sha_of_anger_bunny();
     new spell_sha_of_anger_aggressive_behaviour();

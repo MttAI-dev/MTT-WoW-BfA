@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,7 +20,6 @@
 
 #include "ByteBuffer.h"
 #include "Opcodes.h"
-#include <chrono>
 
 class WorldPacket : public ByteBuffer
 {
@@ -36,17 +35,12 @@ class WorldPacket : public ByteBuffer
         WorldPacket(uint32 opcode, size_t res, Reserve, ConnectionType connection = CONNECTION_TYPE_DEFAULT) : ByteBuffer(res, Reserve{}),
             m_opcode(opcode), _connection(connection) { }
 
-        WorldPacket(WorldPacket&& packet, std::chrono::steady_clock::time_point receivedTime) : ByteBuffer(std::move(packet)), m_opcode(packet.m_opcode), m_receivedTime(receivedTime)
-        {
-        }
-
         WorldPacket(uint32 opcode, size_t res, Resize, ConnectionType connection = CONNECTION_TYPE_DEFAULT) : ByteBuffer(res, Resize{}),
             m_opcode(opcode), _connection(connection) { }
 
         WorldPacket(uint32 opcode, size_t res, ConnectionType connection = CONNECTION_TYPE_DEFAULT) : WorldPacket(opcode, res, Reserve{}, connection) { }
 
         WorldPacket(WorldPacket&& packet) noexcept : ByteBuffer(std::move(packet)), m_opcode(packet.m_opcode), _connection(packet._connection)
-
         {
         }
 
@@ -91,12 +85,9 @@ class WorldPacket : public ByteBuffer
 
         ConnectionType GetConnection() const { return _connection; }
 
-        std::chrono::steady_clock::time_point GetReceivedTime() const { return m_receivedTime; }
-
     protected:
         uint32 m_opcode;
         ConnectionType _connection;
-        std::chrono::steady_clock::time_point m_receivedTime; // only set for a specific set of opcodes, for performance reasons.
 };
 
 #endif

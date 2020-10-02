@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+* Copyright (C) 2020 LatinCoreTeam
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -51,7 +51,7 @@ enum
     NPC_ESTABLISH_YOUR_GARRISON_KILL_CREDIT = 79757,
 };
 
-// 79206 - Prophète Velen - Shadowmoon start
+// 79206 - Proph?te Velen - Shadowmoon start
 class npc_velen_shadowmoon_begin : public CreatureScript
 {
 public:
@@ -120,7 +120,7 @@ public:
     };
 };
 
-// 79206 - Prophète Velen - Shadowmoon start
+// 79206 - Proph?te Velen - Shadowmoon start
 class npc_velen_shadowmoon_follower : public CreatureScript
 {
 public:
@@ -363,7 +363,7 @@ public:
     };
 };
 
-/// Submerge - 172189
+ //Submerge - 172189
 struct areatrigger_aqualir_submerge : AreaTriggerAI
 {
     areatrigger_aqualir_submerge(AreaTrigger* areatrigger) : AreaTriggerAI(areatrigger) { }
@@ -383,7 +383,7 @@ struct areatrigger_aqualir_submerge : AreaTriggerAI
     }
 };
 
-//## Gara - suite de quêtes cachées chasseur
+//## Gara - suite de qu?tes cach?es chasseur
 
 enum GaraQuestLineEnum
 {
@@ -783,7 +783,7 @@ Position VoidRealmEventPos[] =
 #define SAY_OMRA_11 "She is being swallowed by the void! You must help her! There is only one way, tame her, now! Maybe you can find a way to reverse the process, and put her soul at rest, as you have done mine !"
 #define SAY_OMRA_12 "You've done it... thank you. Goodbye, Gara, my soul is at peace now. I hope... that you find this peace some day, too. I am so sorry, my dearest Gara."
 
-// 88707 - Gara invoquée dans le vide
+// 88707 - Gara invoqu?e dans le vide
 class npc_void_gara : public CreatureScript
 {
 public:

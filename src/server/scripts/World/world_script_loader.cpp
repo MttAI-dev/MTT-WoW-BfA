@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -33,6 +33,7 @@ void AddSC_achievement_scripts();
 void AddSC_action_ip_logger();
 void AddSC_scene_scripts();
 void AddSC_rest_scripts();
+void AddSC_challenge_scripts();
 // player
 void AddSC_chat_log();
 void AddSC_duel_reset();
@@ -55,6 +56,7 @@ void AddWorldScripts()
     AddSC_chat_log(); // location: scripts\World\chat_log.cpp
     AddSC_scene_scripts();
     AddSC_rest_scripts();
+    AddSC_challenge_scripts();
 
     // FIXME: This should be moved in a script validation hook.
     // To avoid duplicate code, we check once /*ONLY*/ if logging is permitted or not.

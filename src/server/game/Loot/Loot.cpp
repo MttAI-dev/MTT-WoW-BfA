@@ -1,6 +1,6 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
- *
+ * Copyright (C) 2020 LatinCoreTeam
+ * Thordekk
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
@@ -65,7 +65,6 @@ LootItem::LootItem(LootStoreItem const& li)
     is_blocked = 0;
     is_underthreshold = 0;
     is_counted = 0;
-    canSave = true;
 }
 
 // Basic checks for player/item compatibility - if false no chance to see the item in the loot
@@ -109,40 +108,13 @@ void LootItem::AddAllowedLooter(const Player* player)
 // --------- Loot ---------
 //
 
-Loot::Loot(uint32 _gold /*= 0*/) : gold(_gold), unlootedCount(0), loot_type(LOOT_NONE), _itemContext(ItemContext::NONE)
+Loot::Loot(uint32 _gold /*= 0*/) : gold(_gold), unlootedCount(0), loot_type(LOOT_CORPSE), _itemContext(ItemContext::NONE)
 {
 }
 
 Loot::~Loot()
 {
     clear();
-}
-
-void Loot::DeleteLootItemFromContainerItemDB(Player* player, uint32 itemID)
-{
-    // Deletes a single item associated with an openable item from the DB
-    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_ITEMCONTAINER_ITEM);
-    stmt->setUInt64(0, containerID.GetCounter());
-    stmt->setUInt32(1, itemID);
-    CharacterDatabase.Execute(stmt);
-
-    // Mark the item looted to prevent resaving
-    for (LootItem& item : items[player->GetGUID()])
-    {
-        if (item.itemid != itemID)
-            continue;
-
-        item.canSave = false;
-        break;
-    }
-}
-
-void Loot::DeleteLootMoneyFromContainerItemDB()
-{
-    // Deletes money loot associated with an openable item from the DB
-    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_ITEMCONTAINER_MONEY);
-    stmt->setUInt64(0, containerID.GetCounter());
-    CharacterDatabase.Execute(stmt);
 }
 
 void Loot::clear()
@@ -265,7 +237,7 @@ void Loot::GenerateJournalEncounterLoot(Player* looter, uint32 journalEncounterI
 }
 
 // Calls processor of corresponding LootTemplate (which handles everything including references)
-bool Loot::FillLoot(uint32 lootId, LootStore const& store, Player* lootOwner, bool /*personal*/, bool noEmptyError, uint16 lootMode /*= LOOT_MODE_DEFAULT*/, ItemContext context /*= ItemContext::NONE*/, bool specOnly /*= false*/)
+bool Loot::FillLoot(uint32 lootId, LootStore const& store, Player* lootOwner, bool personal, bool noEmptyError, uint16 lootMode /*= LOOT_MODE_DEFAULT*/, ItemContext context /*= ItemContext::NONE*/, bool specOnly /*= false*/)
 {
     // Must be provided
     if (!lootOwner)
@@ -287,7 +259,6 @@ bool Loot::FillLoot(uint32 lootId, LootStore const& store, Player* lootOwner, bo
     }
 
     _itemContext = context;
-
     items.reserve(MAX_NR_LOOT_ITEMS);
 
     tab->Process(*this, store.IsRatesAllowed(), lootMode, 0, lootOwner, specOnly);          // Processing is done there, callback via Loot::AddItem()
@@ -330,7 +301,7 @@ void Loot::AddItem(LootStoreItem const& item, Player const* player /*= nullptr*/
         generatedLoot.count = std::min(count, proto->GetMaxStackSize());
         if (_itemContext != ItemContext::NONE)
         {
-            std::set<uint32> bonusListIDs = sDB2Manager.GetItemBonusTree(generatedLoot.itemid, _itemContext);
+            std::set<uint32> bonusListIDs = sDB2Manager.GetDefaultItemBonusTree(generatedLoot.itemid, _itemContext);
             generatedLoot.BonusListIDs.insert(generatedLoot.BonusListIDs.end(), bonusListIDs.begin(), bonusListIDs.end());
         }
 
@@ -417,12 +388,13 @@ void Loot::BuildLootResponse(WorldPackets::Loot::LootResponse& packet, Player* v
     uint8 lootIndex = 0;
     for (LootItem const& item : playerItems)
     {
+        ++lootIndex;
         if (!item.is_looted && item.conditions.empty() && item.AllowedForPlayer(viewer))
         {
             if (!item.currency)
             {
                 WorldPackets::Loot::LootItemData lootItem;
-                lootItem.LootListID = ++lootIndex;
+                lootItem.LootListID = lootIndex;
                 lootItem.UIType = LOOT_SLOT_TYPE_OWNER;
                 lootItem.Quantity = item.count;
                 lootItem.Loot.Initialize(item);
@@ -431,7 +403,7 @@ void Loot::BuildLootResponse(WorldPackets::Loot::LootResponse& packet, Player* v
             else
             {
                 WorldPackets::Loot::LootItemData lootItem;
-                lootItem.LootListID = ++lootIndex;
+                lootItem.LootListID = lootIndex;
                 lootItem.UIType = LOOT_SLOT_TYPE_OWNER;
                 lootItem.Quantity = item.count;
                 lootItem.Loot.Initialize(item);

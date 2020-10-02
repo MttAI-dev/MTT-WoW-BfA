@@ -1,8 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- *
- * Copyright (C) 2008-2014 Forgotten Lands <http://www.forgottenlands.eu/>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

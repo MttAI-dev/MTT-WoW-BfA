@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -347,7 +347,7 @@ public:
         boss_malygosAI(Creature* creature) : BossAI(creature, DATA_MALYGOS_EVENT)
         {
             Initialize();
-            _despawned = false; // We determine if Malygos will be realocated to spawning position on reset triggered by boss despawn on evade
+            _despawned = instance->GetBossState(DATA_MALYGOS_EVENT) == FAIL;
             _flySpeed = me->GetSpeed(MOVE_FLIGHT); // Get initial fly speed, otherwise on each wipe fly speed would add up if we get it
             _phase = PHASE_NOT_STARTED;
         }
@@ -391,6 +391,7 @@ public:
             SetPhase(PHASE_NOT_STARTED, true);
             me->SetReactState(REACT_PASSIVE);
             instance->DoStopCriteriaTimer(CRITERIA_TIMED_TYPE_EVENT, ACHIEV_TIMED_START_EVENT);
+            instance->SetBossState(DATA_MALYGOS_EVENT, NOT_STARTED);
         }
 
         uint32 GetData(uint32 data) const override
@@ -631,8 +632,6 @@ public:
                 else if (_phase == PHASE_THREE)
                     summons.DespawnAll();
             }
-
-            instance->SetBossState(DATA_MALYGOS_EVENT, NOT_STARTED);
         }
 
         void KilledUnit(Unit* victim) override

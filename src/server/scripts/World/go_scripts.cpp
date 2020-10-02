@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,7 +23,6 @@ go_ethereum_stasis
 go_sacred_fire_of_life
 go_shrine_of_the_birds
 go_southfury_moonstone
-go_orb_of_command
 go_resonite_cask
 go_tablet_of_madness
 go_tablet_of_the_seven
@@ -126,23 +125,6 @@ public:
     }
 };
 
-/*######
-## go_orb_of_command
-######*/
-
-class go_orb_of_command : public GameObjectScript
-{
-public:
-    go_orb_of_command() : GameObjectScript("go_orb_of_command") { }
-
-    bool OnGossipHello(Player* player, GameObject* /*go*/) override
-    {
-        if (player->GetQuestRewardStatus(7761))
-            player->CastSpell(player, 23460, true);
-
-        return true;
-    }
-};
 
 /*######
 ## go_tablet_of_madness
@@ -1516,7 +1498,6 @@ void AddSC_go_scripts()
     new go_cat_figurine();
     new go_barov_journal();
     new go_gilded_brazier();
-    new go_orb_of_command();
     new go_shrine_of_the_birds();
     new go_southfury_moonstone();
     new go_tablet_of_madness();

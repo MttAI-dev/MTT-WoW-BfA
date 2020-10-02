@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -180,17 +180,6 @@ void ChannelMgr::SendNotOnChannelNotify(Player const* player, std::string const&
     player->SendDirectMessage(notify.Write());
 }
 
-bool ChannelMgr::SendToAllInChannel(std::string senderName, std::string channelName, std::string message, bool showGMLogo)
-{
-    Channel* channel = GetChannel(0, channelName, nullptr, false);
-
-    if (!channel)
-        return false;
-
-    channel->SendToAllInChannel(senderName, message, showGMLogo);
-    return true;
-}
-
 ObjectGuid ChannelMgr::CreateCustomChannelGuid()
 {
     return ObjectGuid::Create<HighGuid::ChatChannel>(false, false, 0, _team == ALLIANCE ? 3 : 5, _guidGenerator.Generate());
@@ -205,3 +194,15 @@ ObjectGuid ChannelMgr::CreateBuiltinChannelGuid(uint32 channelId, AreaTableEntry
 
     return ObjectGuid::Create<HighGuid::ChatChannel>(true, (channelEntry->Flags & CHANNEL_DBC_FLAG_CITY_ONLY2) != 0, zoneId, _team == ALLIANCE ? 3 : 5, channelId);
 }
+
+bool ChannelMgr::SendToAllInChannel(std::string senderName, std::string channelName, std::string message, bool showGMLogo)
+{
+    Channel* channel = GetChannel(0, channelName, nullptr, false);
+
+    if (!channel)
+        return false;
+
+    channel->SendToAllInChannel(senderName, message, showGMLogo);
+    return true;
+}
+

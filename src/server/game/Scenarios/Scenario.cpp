@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -112,6 +112,7 @@ void Scenario::OnPlayerExit(Player* player)
 {
     _players.erase(player->GetGUID());
     SendBootPlayer(player);
+    player->GetPhaseShift().ClearPhases();
 }
 
 bool Scenario::IsComplete()
@@ -341,4 +342,11 @@ void Scenario::SendBootPlayer(Player* player)
 void Scenario::SendScenarioEvent(Player* player, uint32 eventId)
 {
     UpdateCriteria(CRITERIA_TYPE_SEND_EVENT_SCENARIO, eventId, 0, 0, nullptr, player);
+}
+
+void Scenario::SendScenarioEventToPlayers(uint32 eventId)
+{
+    for (ObjectGuid guid : _players)
+        if (Player* player = ObjectAccessor::FindPlayer(guid))
+            CriteriaHandler::UpdateCriteria(CRITERIA_TYPE_SEND_EVENT_SCENARIO, eventId, 0, 0, nullptr, player);
 }

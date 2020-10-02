@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -576,7 +576,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                         break;
                     case GO_SCOURGE_TRANSPORTER_DEATHBRINGER:
                         TeleporterDeathBringerGUID = go->GetGUID();
-                        SetTeleporterState(go, GetBossState(DATA_ICECROWN_GUNSHIP_BATTLE) == DONE);
+                        SetTeleporterState(go, GetBossState(DATA_LADY_DEATHWHISPER) == DONE);
                         break;
                     case GO_SCOURGE_TRANSPORTER_ORATORY:
                         TeleporterOratoryGUID = go->GetGUID();

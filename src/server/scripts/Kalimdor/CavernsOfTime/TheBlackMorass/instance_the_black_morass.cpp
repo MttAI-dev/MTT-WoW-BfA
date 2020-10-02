@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -202,15 +202,22 @@ public:
                     {
                         //this may be completed further out in the post-event
                         TC_LOG_DEBUG("scripts", "Instance The Black Morass: Event completed.");
+                        Map::PlayerList const& players = instance->GetPlayers();
 
-                        DoOnPlayers([](Player* player)
+                        if (!players.isEmpty())
                         {
-                            if (player->GetQuestStatus(QUEST_OPENING_PORTAL) == QUEST_STATUS_INCOMPLETE)
-                                player->AreaExploredOrEventHappens(QUEST_OPENING_PORTAL);
+                            for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+                            {
+                                if (Player* player = itr->GetSource())
+                                {
+                                    if (player->GetQuestStatus(QUEST_OPENING_PORTAL) == QUEST_STATUS_INCOMPLETE)
+                                        player->AreaExploredOrEventHappens(QUEST_OPENING_PORTAL);
 
-                            if (player->GetQuestStatus(QUEST_MASTER_TOUCH) == QUEST_STATUS_INCOMPLETE)
-                                player->AreaExploredOrEventHappens(QUEST_MASTER_TOUCH);
-                        });
+                                    if (player->GetQuestStatus(QUEST_MASTER_TOUCH) == QUEST_STATUS_INCOMPLETE)
+                                        player->AreaExploredOrEventHappens(QUEST_MASTER_TOUCH);
+                                }
+                            }
+                        }
                     }
 
                     m_auiEncounter[0] = data;

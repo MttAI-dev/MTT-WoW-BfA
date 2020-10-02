@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -321,10 +321,74 @@ class npc_pet_gen_mojo : public CreatureScript
         }
 };
 
+struct npc_dreamgrove_protector_119078 : public ScriptedAI
+     {
+    npc_dreamgrove_protector_119078(Creature * creature) : ScriptedAI(creature) { }
+    
+        enum dreamgroveSpells
+         {
+             SPELL_POUNCE = 242824,
+            SPELL_DIRE_THRASH = 242828,
+            SPELL_SMOKE_BOMB = 203343,
+            SPELL_ARCANE_INFLUX = 179678,
+         };
+    
+        void Reset() override
+         {
+        if (Unit* owner = me->GetCharmerOrOwner())
+             me->GetMotionMaster()->MoveFollow(owner, PET_FOLLOW_DIST, me->GetFollowAngle());
+        
+            if (!me->GetVictim() && me->IsSummon())
+            if (Unit* Owner = me->ToTempSummon()->GetSummoner())
+            if (Owner->getAttackerForHelper())
+            AttackStart(Owner->getAttackerForHelper());
+        }
+    
+        void EnterCombat(Unit* /*who*/) override
+         {
+        DoCastSelf(SPELL_ARCANE_INFLUX);
+        events.ScheduleEvent(SPELL_POUNCE, 1s);
+        events.ScheduleEvent(SPELL_DIRE_THRASH, 2s);
+        events.ScheduleEvent(SPELL_SMOKE_BOMB, 3s);
+        }
+    
+        void UpdateAI(uint32 diff) override
+         {
+        if (!UpdateVictim() || !me->GetVictim())
+            return;
+        
+            events.Update(diff);
+        
+            switch (events.ExecuteEvent())
+             {
+           case SPELL_POUNCE:
+                {
+                    DoCast(SPELL_POUNCE);
+                    events.Repeat(2s, 3s);
+                    break;
+                    }
+             case SPELL_DIRE_THRASH:
+                {
+                    DoCast(SPELL_DIRE_THRASH);
+                    events.Repeat(2s, 3s);
+                    break;
+                    }
+             case SPELL_SMOKE_BOMB:
+                {
+                    DoCast(SPELL_SMOKE_BOMB);
+                    events.Repeat(3s, 4s);
+                    break;
+                    }
+                 }
+        DoMeleeAttackIfReady();
+        }
+     };
+
 void AddSC_generic_pet_scripts()
 {
     new npc_pet_gen_baby_blizzard_bear();
     new npc_pet_gen_egbert();
     new npc_pet_gen_pandaren_monk();
     new npc_pet_gen_mojo();
+    RegisterCreatureAI(npc_dreamgrove_protector_119078);
 }

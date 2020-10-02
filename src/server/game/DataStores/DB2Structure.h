@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -155,6 +155,29 @@ struct AreaTableEntry
     {
         return (!IsSanctuary() && (Flags[0] & (AREA_FLAG_ARENA | AREA_FLAG_WINTERGRASP)) != 0) || ID == 5095 /*Tol Barad*/;
     }
+};
+
+// FileOptions: None
+struct AlliedRaceEntry
+{
+    int32       BannerColor;
+    int32       ID;
+    int32       RaceID;
+    int32       CrestTextureID;
+    int32       ModelBackgroundTextureID;
+    int32       MaleCreatureDisplayID;
+    int32       FemaleCreatureDisplayID;
+    int32       UiUnlockAchievementID;
+};
+
+// FileOptions: Index, None
+struct AlliedRaceRacialAbilityEntry
+{
+    int32       ID;
+    LocalizedString* Name;
+    LocalizedString* Description;
+    uint8       OrderIndex;
+    int32       IconFileDataID;
 };
 
 struct AreaTriggerEntry
@@ -411,7 +434,6 @@ struct AzeriteUnlockMappingEntry
     int32 ItemBonusListChest;
     uint32 AzeriteUnlockMappingSetID;
 };
-
 struct BankBagSlotPricesEntry
 {
     uint32 ID;
@@ -582,6 +604,13 @@ struct CharacterFacialHairStylesEntry
     uint8 RaceID;
     uint8 SexID;
     uint8 VariationID;
+};
+
+struct CharBaseInfoEntry
+{
+    uint32 ID;
+    uint8 RaceID;
+    uint8 ClassID;
 };
 
 struct CharBaseSectionEntry
@@ -998,6 +1027,9 @@ struct CriteriaEntry
         // CRITERIA_TYPE_FISH_IN_GAMEOBJECT     = 72
         int32 GameObjectID;
 
+        //CRITERIA_TYPE_SEND_EVENT              = 73
+        uint32 EventID;
+
         //CRITERIA_TYPE_SEND_EVENT_SCENARIO     = 92
         uint32 ScenarioEventID;
 
@@ -1040,7 +1072,7 @@ struct CriteriaEntry
         // CRITERIA_TYPE_REACH_ACCOUNT_HONOR_LEVEL = 213
         int32 AccountHonorLevel;
 
-        // CRITERIA_TREE_HEART_OF_AZEROTH_LEVEL_REACHED = 215
+        // CRITERIA_TYPE_HEART_OF_AZEROTH_LEVEL_REACHED = 215
         int32 HeartOfAzerothLevel;
     } Asset;
     uint32 ModifierTreeId;
@@ -2764,10 +2796,10 @@ struct QuestPOIBlobEntry
 
 struct QuestPOIPointEntry
 {
-    uint32 Id;
-    int16 X;
-    int16 Y;
-    uint32 QuestPoiBlobID;
+    uint32     Id;
+    int16      X;
+    int16      Y;
+    uint32     QuestPoiBlobID;
 };
 
 struct ResearchBranchEntry
@@ -3349,6 +3381,18 @@ struct SpellXSpellVisualEntry
     uint16 CasterUnitConditionID;
     uint32 CasterPlayerConditionID;
     uint32 SpellID;
+};
+
+
+struct SpellEntry
+{
+    int32       ID;
+    LocalizedString* Name;
+    LocalizedString* NameSubtext;
+    LocalizedString* Description;
+    LocalizedString* AuraDescription;
+
+    SpellEffectEntry const* GetSpellEffect(uint32 eff, uint8 diff = 0) const;
 };
 
 struct SummonPropertiesEntry

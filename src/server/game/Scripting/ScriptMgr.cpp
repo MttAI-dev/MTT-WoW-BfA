@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,9 +16,9 @@
  */
 
 #include "ScriptMgr.h"
-#include "Area.h"
 #include "AreaTrigger.h"
 #include "AreaTriggerAI.h"
+#include "BattlePayMgr.h"
 #include "Chat.h"
 #include "Conversation.h"
 #include "Creature.h"
@@ -255,7 +255,7 @@ public:
     void QueueForDelayedDelete(T&& any)
     {
         _delayed_delete_queue.push_back(
-            Trinity::make_unique<
+            std::make_unique<
                 DeleteableObject<typename std::decay<T>::type>
             >(std::forward<T>(any))
         );
@@ -406,6 +406,7 @@ class CreatureGameObjectAreaTriggerScriptRegistrySwapHooks
         // Remove deletable events only,
         // otherwise it causes crashes with non-deletable spell events.
         creature->m_Events.KillAllEvents(false);
+        creature->GetScheduler().CancelAll();
 
         if (creature->IsCharmed())
             creature->RemoveCharmedBy(nullptr);
@@ -431,6 +432,7 @@ class CreatureGameObjectAreaTriggerScriptRegistrySwapHooks
     // Hook which is called before a gameobject is swapped
     static void UnloadResetScript(GameObject* gameobject)
     {
+        gameobject->GetScheduler().CancelAll();
         gameobject->AI()->Reset();
     }
 
@@ -1680,6 +1682,24 @@ InstanceScript* ScriptMgr::CreateInstanceData(InstanceMap* map)
     return tmpscript->GetInstanceScript(map);
 }
 
+bool ScriptMgr::OnGossipSelect(Player* player, Item* item, uint32 uiSender, uint32 action)
+{
+    ASSERT(player);
+    ASSERT(item);
+
+    GET_SCRIPT_RET(ItemScript, item->GetScriptId(), tmpscript, false);
+    return tmpscript->OnGossipSelect(player, item, uiSender, action);
+}
+
+bool ScriptMgr::OnDummyEffect(Unit* caster, uint32 spellId, SpellEffIndex effIndex, Item* target)
+{
+    ASSERT(caster);
+    ASSERT(target);
+
+    GET_SCRIPT_RET(ItemScript, target->GetScriptId(), tmpscript, false);
+    return tmpscript->OnDummyEffect(caster, spellId, effIndex, target);
+}
+
 bool ScriptMgr::OnQuestAccept(Player* player, Item* item, Quest const* quest)
 {
     ASSERT(player);
@@ -1727,6 +1747,15 @@ bool ScriptMgr::OnCastItemCombatSpell(Player* player, Unit* victim, SpellInfo co
 
     GET_SCRIPT_RET(ItemScript, item->GetScriptId(), tmpscript, true);
     return tmpscript->OnCastItemCombatSpell(player, victim, spellInfo, item);
+}
+
+bool ScriptMgr::OnDummyEffect(Unit* caster, uint32 spellId, SpellEffIndex effIndex, Creature* target)
+{
+    ASSERT(caster);
+    ASSERT(target);
+
+    GET_SCRIPT_RET(CreatureScript, target->GetScriptId(), tmpscript, false);
+    return tmpscript->OnDummyEffect(caster, spellId, effIndex, target);
 }
 
 bool ScriptMgr::OnGossipHello(Player* player, Creature* creature)
@@ -1967,6 +1996,15 @@ void ScriptMgr::OnGameObjectUpdate(GameObject* go, uint32 diff)
 
     GET_SCRIPT(GameObjectScript, go->GetScriptId(), tmpscript);
     tmpscript->OnUpdate(go, diff);
+}
+
+bool ScriptMgr::OnDummyEffect(Unit* caster, uint32 spellId, SpellEffIndex effIndex, GameObject* target)
+{
+    ASSERT(caster);
+    ASSERT(target);
+
+    GET_SCRIPT_RET(GameObjectScript, target->GetScriptId(), tmpscript, false);
+    return tmpscript->OnDummyEffect(caster, spellId, effIndex, target);
 }
 
 bool ScriptMgr::OnAreaTrigger(Player* player, AreaTriggerEntry const* trigger, bool entered)
@@ -2349,12 +2387,12 @@ void ScriptMgr::OnPlayerBindToInstance(Player* player, Difficulty difficulty, ui
     FOREACH_SCRIPT(PlayerScript)->OnBindToInstance(player, difficulty, mapid, permanent, extendState);
 }
 
-void ScriptMgr::OnPlayerUpdateZone(Player* player, Area* newArea, Area* oldArea)
+void ScriptMgr::OnPlayerUpdateZone(Player* player, uint32 newZone, uint32 oldZone, uint32 newArea)
 {
-    FOREACH_SCRIPT(PlayerScript)->OnUpdateZone(player, newArea, oldArea);
+    FOREACH_SCRIPT(PlayerScript)->OnUpdateZone(player, newZone, oldZone, newArea);
 }
 
-void ScriptMgr::OnPlayerUpdateArea(Player* player, Area* newArea, Area* oldArea)
+void ScriptMgr::OnPlayerUpdateArea(Player* player, uint32 newArea, uint32 oldArea)
 {
     FOREACH_SCRIPT(PlayerScript)->OnUpdateArea(player, newArea, oldArea);
 }
@@ -2443,6 +2481,12 @@ void ScriptMgr::OnChargeRecoveryTimeStart(Player* player, uint32 chargeCategoryI
 {
     FOREACH_SCRIPT(PlayerScript)->OnChargeRecoveryTimeStart(player, chargeCategoryId, chargeRecoveryTime);
 }
+
+void ScriptMgr::OnPlayerStartChallengeMode(Player* player, uint8 level, uint8 affix1, uint8 affix2, uint8 affix3)
+{
+    FOREACH_SCRIPT(PlayerScript)->OnStartChallengeMode(player, level, affix1, affix2, affix3);
+}
+
 
 // Account
 void ScriptMgr::OnAccountLogin(uint32 accountId)
@@ -2705,6 +2749,42 @@ FormulaScript::FormulaScript(const char* name)
     : ScriptObject(name)
 {
     ScriptRegistry<FormulaScript>::Instance()->AddScript(this);
+}
+
+BattlePayProductScript::BattlePayProductScript(const char* name) : ScriptObject(name)
+{
+    ScriptRegistry<BattlePayProductScript>::Instance()->AddScript(this);
+}
+
+void ScriptMgr::RegisterBattlePayProductScript(std::string scriptName, BattlePayProductScript* script)
+{
+    if (_battlePayProductScripts.find(scriptName) == _battlePayProductScripts.end())
+        _battlePayProductScripts[scriptName] = script;
+}
+
+void ScriptMgr::OnBattlePayProductDelivery(WorldSession* session, Battlepay::Product const& product)
+{
+    auto itr = _battlePayProductScripts.find(product.ScriptName);
+    if (itr != _battlePayProductScripts.end())
+        itr->second->OnProductDelivery(session, product);
+}
+
+bool ScriptMgr::BattlePayCanBuy(WorldSession* session, Battlepay::Product const& product, std::string& reason)
+{
+    auto itr = _battlePayProductScripts.find(product.ScriptName);
+    if (itr == _battlePayProductScripts.end())
+        return true;
+
+    return itr->second->CanBuy(session, product, reason);
+}
+
+std::string ScriptMgr::BattlePayGetCustomData(Battlepay::Product const& product)
+{
+    auto itr = _battlePayProductScripts.find(product.ScriptName);
+    if (itr == _battlePayProductScripts.end())
+        return "";
+
+    return itr->second->GetCustomData(product);
 }
 
 UnitScript::UnitScript(const char* name, bool addToScripts)

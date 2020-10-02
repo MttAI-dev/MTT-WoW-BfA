@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -44,7 +44,7 @@ class spell_garrison_hearthstone : public SpellScript
                 if (GarrSiteLevelEntry const* siteLevel = garr->GetSiteLevel())
                 {
                     // Adjust effect summon position
-                    Position const garrPos = GarrisonHearthstoneCoordinates[caster->GetTeamId()][siteLevel->GarrLevel];
+                    Position const garrPos = GarrisonHearthstoneCoordinates[caster->GetTeamId()][siteLevel->GarrLevel - 1];
                     dest.Relocate(WorldLocation(siteLevel->MapID, garrPos));
                 }
             }

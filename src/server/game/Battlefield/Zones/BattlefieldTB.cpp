@@ -1,5 +1,5 @@
 /*
-* This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+* Copyright (C) 2020 LatinCoreTeam
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -391,7 +391,7 @@ void BattlefieldTB::SendInitWorldStatesToAll()
     for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
         if (Player* player = itr->GetSource()->ToPlayer())
             if (player->GetZoneId() == ZONE_TOL_BARAD_PENINSULA)
-                player->SendInitWorldStates();
+                player->SendInitWorldStates(ZONE_TOL_BARAD_PENINSULA, player->GetAreaId());
 }
 
 void BattlefieldTB::OnStartGrouping()

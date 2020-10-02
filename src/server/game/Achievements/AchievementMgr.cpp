@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -511,8 +511,29 @@ void PlayerAchievementMgr::CompletedAchievement(AchievementEntry const* achievem
     if (!(achievement->Flags & ACHIEVEMENT_FLAG_TRACKING_FLAG))
         _achievementPoints += achievement->Points;
 
+    if (achievement->Category == 15117) // BattlePet category
+        _achievementBattlePetPoints += achievement->Points;
+
+    if (achievement->Category == 15117) // BattlePet category
+        UpdateCriteria(CRITERIA_TYPE_EARN_PET_BATTLE_ACHIEVEMENT_POINTS, achievement->Points, 0, 0, nullptr, referencePlayer);
+
     UpdateCriteria(CRITERIA_TYPE_COMPLETE_ACHIEVEMENT, 0, 0, 0, NULL, referencePlayer);
     UpdateCriteria(CRITERIA_TYPE_EARN_ACHIEVEMENT_POINTS, achievement->Points, 0, 0, NULL, referencePlayer);
+
+    switch (achievement->ID)
+    {
+    case 7433: ///< Newbie
+    case 6566: ///< Just a Pup
+     //   _owner->GetSession()->SendPetBattleSlotUpdates(true);
+       // _owner->GetSession()->SendBattlePetLicenseChanged();
+        break;
+    case 6556: ///< Going to Need More Traps
+    case 6581: ///< Pro Pet Crew
+    //    _owner->GetSession()->SendBattlePetTrapLevel();
+        break;
+    default:
+        break;
+    }
 
     // reward items and titles if any
     AchievementReward const* reward = sAchievementMgr->GetAchievementReward(achievement);
@@ -938,6 +959,12 @@ void GuildAchievementMgr::CompletedAchievement(AchievementEntry const* achieveme
     if (!(achievement->Flags & ACHIEVEMENT_FLAG_TRACKING_FLAG))
         _achievementPoints += achievement->Points;
 
+    if (achievement->Category == 15117) // BattlePet category
+    {
+        _achievementBattlePetPoints += achievement->Points;
+        UpdateCriteria(CRITERIA_TYPE_EARN_PET_BATTLE_ACHIEVEMENT_POINTS, achievement->Points, 0, 0, nullptr, referencePlayer);
+    }
+
     UpdateCriteria(CRITERIA_TYPE_COMPLETE_ACHIEVEMENT, 0, 0, 0, NULL, referencePlayer);
     UpdateCriteria(CRITERIA_TYPE_EARN_ACHIEVEMENT_POINTS, achievement->Points, 0, 0, NULL, referencePlayer);
 }
@@ -1281,7 +1308,7 @@ void AchievementGlobalMgr::LoadRewardLocales()
 
         AchievementRewardLocale& data = _achievementRewardLocales[id];
         LocaleConstant locale         = GetLocaleByName(localeName);
-        if (locale == LOCALE_enUS)
+        if (!IsValidLocale(locale) || locale == LOCALE_enUS)
             continue;
 
         ObjectMgr::AddLocaleString(fields[2].GetString(), locale, data.Subject);

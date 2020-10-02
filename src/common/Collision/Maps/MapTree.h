@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -33,6 +33,7 @@ namespace VMAP
     struct TC_COMMON_API LocationInfo
     {
         LocationInfo(): hitInstance(nullptr), hitModel(nullptr), ground_Z(-G3D::finf()) { }
+        int32 rootId;
         const ModelInstance* hitInstance;
         const GroupModel* hitModel;
         float ground_Z;

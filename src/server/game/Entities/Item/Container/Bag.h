@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,8 +22,6 @@
 #define MAX_BAG_SIZE 36                                     // 2.0.12
 
 #include "Item.h"
-#include "DB2Stores.h"
-#include "AzeriteItem.h"
 
 class TC_GAME_API Bag : public Item
 {
@@ -58,15 +56,14 @@ class TC_GAME_API Bag : public Item
         // overwrite virtual Item::DeleteFromDB
         void DeleteFromDB(CharacterDatabaseTransaction& trans) override;
 
-    protected:
+protected:
         void BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) const override;
         void BuildValuesCreate(ByteBuffer* data, Player const* target) const override;
         void BuildValuesUpdate(ByteBuffer* data, Player const* target) const override;
         void ClearUpdateMask(bool remove) override;
-
-    public:
-        void BuildValuesUpdateForPlayerWithMask(UpdateData* data, UF::ObjectData::Mask const& requestedObjectMask, UF::ItemData::Mask const& requestedItemMask,
-            UF::ContainerData::Mask const& requestedContainerMask, Player const* target) const;
+public:
+    void BuildValuesUpdateForPlayerWithMask(UpdateData* data, UF::ObjectData::Mask const& requestedObjectMask, UF::ItemData::Mask const& requestedItemMask,
+        UF::ContainerData::Mask const& requestedContainerMask, Player const* target) const;
 
         UF::UpdateField<UF::ContainerData, 0, TYPEID_CONTAINER> m_containerData;
 

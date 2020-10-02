@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -59,7 +59,7 @@ requiredItemLevel(0)
 
 LFGMgr::LFGMgr() : m_QueueTimer(0), m_lfgProposalId(1),
     m_options(sWorld->getIntConfig(CONFIG_LFG_OPTIONSMASK)),
-    m_isTesting(false)
+    m_isTesting(sWorld->getIntConfig(CONFIG_LFG_DEBUG_JOIN))
 {
 }
 
@@ -2200,6 +2200,12 @@ LfgDungeonSet LFGMgr::GetRandomAndSeasonalDungeons(uint8 level, uint8 expansion)
 void LFGMgr::ToggleTesting()
 {
     m_isTesting = !m_isTesting;
+}
+
+void LFGMgr::JoinPersonalLfg(Player* player, uint32 dungeonId)
+{
+    m_isTesting = true;
+    JoinLfg(player, dungeonId, PLAYER_ROLE_DAMAGE);
 }
 
 LfgQueueRoleCount LFGMgr::GetRoleCountByQueueId(uint32 queueId)

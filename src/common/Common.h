@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,6 +19,7 @@
 #define TRINITYCORE_COMMON_H
 
 #include "Define.h"
+#include <array>
 #include <memory>
 #include <string>
 #include <utility>
@@ -67,27 +68,28 @@ inline unsigned long long atoull(char const* str) { return strtoull(str, nullptr
 
 enum TimeConstants
 {
-    MINUTE          = 60,
-    HOUR            = MINUTE*60,
-    DAY             = HOUR*24,
-    WEEK            = DAY*7,
-    MONTH           = DAY*30,
-    YEAR            = MONTH*12,
+    MINUTE = 60,
+    HOUR = MINUTE * 60,
+    DAY = HOUR * 24,
+    WEEK = DAY * 7,
+    MONTH = DAY * 30,
+    YEAR = MONTH * 12,
     IN_MILLISECONDS = 1000
 };
 
-enum AccountTypes
+enum AccountTypes /*DONT TOUCH MY FCKING WORK, THANKS THORDEKK*/
 {
-    SEC_PLAYER          = 0,
-    SEC_CON             = 1,
-    SEC_MODERATOR       = 2,
-    SEC_GAMEMASTER      = 3,
-    SEC_EVENTM          = 4,
-    SEC_HEADGM          = 5,
-    SEC_DEVELOPER       = 6,
-    SEC_ADMINISTRATOR   = 7,
-    SEC_OWNER           = 8,
-    SEC_CONSOLE         = 9 // must be always last in list, accounts must have less security level always also
+    SEC_PLAYER = 0,
+    SEC_MODERATOR = 1,
+    SEC_TRIAL_GAMEMASTER = 2,
+    SEC_GAMEMASTER = 3,
+    SEC_SENIOR_GAMEMASTER = 4,
+    SEC_HEAD_GAMEMASTER = 5,
+    SEC_EXECUTIVE_GAMEMASTER = 6,
+    SEC_DEVELOPER = 7,
+    SEC_COMMUNITY_MANAGER = 8,
+    SEC_ADMIN = 9,
+    SEC_CONSOLE = 10, // must be always last in list, accounts must have less security level always also
 };
 
 enum LocaleConstant : uint8
@@ -108,25 +110,6 @@ enum LocaleConstant : uint8
     TOTAL_LOCALES
 };
 
-enum DiscordMessageChannel
-{
-    DISCORD_WORLD_A = 1,
-    DISCORD_WORLD_H = 2,
-    DISCORD_TICKET  = 3
-};
-
-struct DiscordMessage
-{
-    DiscordMessageChannel channel;
-    std::string message;
-
-    // Channel Specific
-    std::string characterName;
-    bool isGm;
-};
-
-TC_COMMON_API extern LockedQueue<DiscordMessage*> DiscordMessageQueue;
-
 const uint8 OLD_TOTAL_LOCALES = 9; /// @todo convert in simple system
 #define DEFAULT_LOCALE LOCALE_enUS
 
@@ -134,10 +117,20 @@ TC_COMMON_API extern char const* localeNames[TOTAL_LOCALES];
 
 TC_COMMON_API LocaleConstant GetLocaleByName(std::string const& name);
 
+constexpr inline bool IsValidLocale(LocaleConstant locale)
+{
+    return locale < TOTAL_LOCALES && locale != LOCALE_none;
+}
+
 #pragma pack(push, 1)
 
-struct TC_COMMON_API LocalizedString
+struct LocalizedString
 {
+    constexpr char const* operator[](LocaleConstant locale) const
+    {
+        return Str[locale];
+    }
+
     char const* Str[TOTAL_LOCALES];
 };
 
@@ -158,12 +151,7 @@ struct TC_COMMON_API LocalizedString
 
 #define MAX_QUERY_LEN 32*1024
 
-namespace Trinity
-{
-    using std::make_unique;
-}
-
-namespace Ashamane
+namespace LatinCore
 {
     class TC_GAME_API AnyData
     {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  * Copyright (C) 2011 - 2012 ArkCORE <http://www.arkania.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -37,6 +37,15 @@
 #include <iostream>
 using namespace std;
 
+#define SAY_D_A "Ecrouabouille, what are you doing sitting there? You do not recognize the one who is lying?"
+#define SAY_D_B  "That's $ N! It is only thanks to $ he: she, if we still breath instead of being pieces of rind grids has Kezan."
+#define SAY_D_C  "That's $ N! Sorry, doc, I thought $ ghe death:she death; !"
+#define SAY_D_D  "Remains back, I'm $ ghe: she; revive! Hoping that this soggy defibrillator will not kill us all!"
+#define SAY_D_E  "Caution! OFF!"
+#define SAY_D_F "That's all I can do. C'' is a $ ghe: she; to react now. You hear me, $ N? Come on, wake up now! Do not go to the Light!"
+#define SAY_D_G  "You made the right choice. We need you so much, $ N. Try not to get killed here. "
+#define SAY_D_H  "There are other survivors that I must attend. I'll see you on the shore."
+
 enum DontGoIntoTheLight
 {
     NPC_GIZMO                           = 36600,
@@ -46,6 +55,11 @@ enum DontGoIntoTheLight
     SPELL_DGITL_SUMMON_DOC_ZAPNOZZLE    = 69018,
     SPELL_DGITL_JUMP_CABLES             = 69022,
     SPELL_DGITL_DESPAWN_DOC_ZAPNOZZLE   = 69043,
+};
+
+enum Texts
+{
+    SAY_GYRO = 0
 };
 
 // 69010
@@ -657,7 +671,7 @@ struct npc_precious_cargo_gyrocopter : public npc_escortAI
 
     void WaypointReached(uint32 pointId) override
     {
-        if (pointId == 2)
+        if (pointId == 3)
         {
             if (Player* player = GetPlayerForEscort())
                 me->CastSpell(player, SPELL_PRECIOUS_CARGO_KILL_CREDIT, true);
@@ -2355,6 +2369,334 @@ public:
     }
 };
 
+class gob_fronde_gobelin : public GameObjectScript
+{
+public:
+    gob_fronde_gobelin() : GameObjectScript("gob_fronde_gobelin") { }
+
+    bool OnGossipHello(Player* player, GameObject* go)
+    {
+        if (player->GetQuestStatus(14244) != QUEST_STATUS_NONE)
+        {
+            if (Creature *t = player->SummonCreature(36514, go->GetPositionX(), go->GetPositionY(), go->GetPositionZ() + 7, go->GetOrientation(), TEMPSUMMON_CORPSE_TIMED_DESPAWN, 300 * IN_MILLISECONDS))
+                player->CastCustomSpell(VEHICLE_SPELL_RIDE_HARDCODED, SPELLVALUE_BASE_POINT0, 1, t, false);
+            return true;
+        }
+        return true;
+    }
+};
+
+class gob_dyn_gobelin : public GameObjectScript
+{
+public:
+    gob_dyn_gobelin() : GameObjectScript("gob_dyn_gobelin") { }
+
+    bool OnGossipHello(Player* player, GameObject* go) override
+    {
+        if (player->GetQuestStatus(14245) != QUEST_STATUS_NONE)
+        {
+            player->CastSpell(player, 68935, true);
+            if (Creature *t = player->SummonCreature(9100000, go->GetPositionX(), go->GetPositionY(), go->GetPositionZ() + 2, go->GetOrientation(), TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30 * IN_MILLISECONDS))
+            {
+               // t->SetPhaseMask(4, true);
+                t->CastSpell(t, 71093, true);
+                t->CastSpell(t, 71095, true);
+                t->CastSpell(t, 71096, true);
+                t->CastSpell(t, 71097, true);
+            }
+            return true;
+        }
+        return true;
+    }
+};
+
+class npc_fusee_gob : public CreatureScript
+{
+public:
+    npc_fusee_gob() : CreatureScript("npc_fusee_gob") { }
+
+    struct npc_fusee_gobAI : public npc_escortAI
+    {
+        npc_fusee_gobAI(Creature* creature) : npc_escortAI(creature) {}
+
+        void AttackStart(Unit* /*who*/) override {}
+        void EnterCombat(Unit* /*who*/) override {}
+        void EnterEvadeMode(EvadeReason /*why*/) override {}
+
+        void Reset() override
+        {
+            me->SetCanFly(true);
+        }
+
+        void PassengerBoarded(Unit* who, int8 /*seatId*/, bool apply) override
+        {
+            if (apply)
+                Start(false, true, who->GetGUID());
+            me->SetCanFly(true);
+            me->SetSpeed(MOVE_FLIGHT, 5.0f);
+        }
+
+        void WaypointReached(uint32 i) override
+        {
+            if (i == 3)
+            {
+                me->CastSpell(me, 66127, true);
+                me->GetVehicleKit()->RemoveAllPassengers();
+                me->DespawnOrUnsummon();
+            }
+        }
+
+        void JustDied(Unit* /*killer*/) override
+        {
+        }
+
+        void OnCharmed(bool /*apply*/) override
+        {
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            npc_escortAI::UpdateAI(diff);
+        }
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_fusee_gobAI(creature);
+    }
+};
+
+class npc_girocoptere : public CreatureScript
+{
+public:
+    npc_girocoptere() : CreatureScript("npc_girocoptere") { }
+
+    struct npc_girocoptereAI : public npc_escortAI
+    {
+        npc_girocoptereAI(Creature* creature) : npc_escortAI(creature) {}
+
+        void AttackStart(Unit* /*who*/) override {}
+        void EnterCombat(Unit* /*who*/) override {}
+        void EnterEvadeMode(EvadeReason /*why*/) override {}
+
+        void Reset() override
+        {
+            _checkQuest = 1000;
+            isBoarded = false;
+        }
+
+        void PassengerBoarded(Unit* /*who*/, int8 /*seatId*/, bool /*apply*/) override
+        {
+            me->SetCanFly(true);
+            me->SetSpeed(MOVE_FLIGHT, 3.0f);
+        }
+
+        void WaypointReached(uint32 i) override
+        {
+            me->SetCanFly(true);
+            switch (i)
+            {
+            case 19:
+                me->GetVehicleKit()->RemoveAllPassengers();
+                me->DespawnOrUnsummon();
+                break;
+            default:
+                break;
+            }
+        }
+
+        void JustDied(Unit* /*killer*/) override
+        {
+
+        }
+
+        void OnCharmed(bool /*apply*/) override
+        {
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            npc_escortAI::UpdateAI(diff);
+        }
+
+        void UpdateEscortAI(const uint32 /*diff*/) override
+        {
+        }
+
+    private:
+        uint32 _checkQuest;
+        bool isBoarded;
+
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_girocoptereAI(creature);
+    }
+};
+
+class npc_gyrocoptere_quest_giver : public CreatureScript
+{
+public:
+    npc_gyrocoptere_quest_giver() : CreatureScript("npc_gyrocoptere_quest_giver") { }
+
+    bool OnQuestAccept(Player* player, Creature* creature, const Quest *_Quest) override
+    {
+        if (_Quest->GetQuestId() == 14242)
+        {
+            if (Creature *t = player->SummonCreature(39074, creature->GetPositionX(), creature->GetPositionY(), creature->GetPositionZ(),
+                creature->GetOrientation(), TEMPSUMMON_CORPSE_TIMED_DESPAWN, 300 * IN_MILLISECONDS))
+            {
+                player->CastCustomSpell(VEHICLE_SPELL_RIDE_HARDCODED, SPELLVALUE_BASE_POINT0, 1, t, false);
+                CAST_AI(npc_escortAI, (t->AI()))->Start(false, true, player->GetGUID(), _Quest);
+                t->AI()->Talk(SAY_GYRO, player);
+            }
+        }
+        return true;
+    }
+
+    bool OnGossipHello(Player* player, Creature* creature) override
+    {
+        if (player->GetQuestStatus(14242) != QUEST_STATUS_NONE)
+            AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Would you take a gyrocopter?", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
+        else if (creature->IsQuestGiver())
+            player->PrepareQuestMenu(creature->GetGUID());
+        SendGossipMenuFor(player, player->GetGossipTextId(creature), creature->GetGUID());
+        return true;
+    }
+
+};
+
+class npc_phaseswift : public CreatureScript
+{
+public:
+    npc_phaseswift() : CreatureScript("npc_phaseswift") { }
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_phaseswiftAI(creature);
+    }
+
+    struct npc_phaseswiftAI : public ScriptedAI
+    {
+        npc_phaseswiftAI(Creature* creature) : ScriptedAI(creature) {}
+
+        void Reset() override
+        {
+            mui_talk = 5000;
+            cnt = 6;
+        }
+
+        void DoAction(const int32 /*param*/) override
+        {
+        }
+
+        void SpellHit(Unit* /*caster*/, const SpellInfo* /*spell*/) override
+        {
+        }
+
+        void JustReachedHome() override
+        {
+
+        }
+
+        void MovementInform(uint32 /*type*/, uint32 /*id*/) override
+        {
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            if (mui_talk <= diff)
+            {
+                if (Unit *p = me->ToTempSummon()->GetSummoner())
+                    if (Player* player = p->ToPlayer())
+                    {
+                        std::set<uint32> terrainswap;
+                        std::set<uint32> phaseId;
+                        std::set<uint32> worldMapAreaSwap;
+                        terrainswap.insert(661);
+                        phaseId.insert(180);
+                        player->CastSpell(p->ToPlayer(), 68750, true);
+                        player->KilledMonsterCredit(38024);
+                        //player->GetSession()->SendSetPhaseShift(phaseId, terrainswap, worldMapAreaSwap);
+                    }
+                me->DespawnOrUnsummon();
+                mui_talk = 6000;
+            }
+            else
+                mui_talk -= diff;
+        }
+
+    private:
+        uint32 mui_talk;
+        int cnt;
+    };
+};
+
+#define FLASH_EFFECT 70649
+
+class spell_68281 : public SpellScriptLoader
+{
+public:
+    spell_68281() : SpellScriptLoader("spell_68281") { }
+
+    class  spell_68281SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_68281SpellScript);
+
+        bool Validate(SpellInfo const* /*spellEntry*/) override
+        {
+            st = false;
+            st2 = false;
+            return true;
+        }
+
+        bool Load() override
+        {
+            return true;
+        }
+
+        void HandleBeforeHit(SpellMissInfo /*missInfo*/)
+        {
+            if (st2)
+                return;
+
+            if (GetCastItem())
+                if (Unit* caster = GetCastItem()->GetOwner())
+                    caster->CastSpell(caster, FLASH_EFFECT, true);
+            st2 = true;
+        }
+
+        void HandleAfterHit()
+        {
+            if (st)
+                return;
+            st = true;
+        }
+
+        void Unload() override
+        {
+            if (GetCastItem())
+                if (Unit* caster = GetCastItem()->GetOwner())
+                    caster->RemoveAura(FLASH_EFFECT);
+        }
+
+    private:
+        bool st, st2;
+
+        void Register() override
+        {
+            BeforeHit += BeforeSpellHitFn(spell_68281SpellScript::HandleBeforeHit);
+            AfterHit += SpellHitFn(spell_68281SpellScript::HandleAfterHit);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_68281SpellScript();
+    }
+};
+
 void AddSC_lost_isle()
 {
     RegisterSpellScript(spell_lost_isles_near_death);
@@ -2388,6 +2730,7 @@ void AddSC_lost_isle()
     new npc_megs_isle_gob();
     new npc_crack_isle_gob();
     new npc_canon_gob();
+    new npc_fusee_gob();
     new spell_boot_damage();
     new spell_boot_gob();
     new npc_oom_isle_gob();
@@ -2401,8 +2744,14 @@ void AddSC_lost_isle()
     new npc_Chariot();
     new npc_Chariot2();
     new gob_red_but();
+    new gob_fronde_gobelin();
+    new gob_dyn_gobelin();
     new npc_grilly_2();
     new npc_Prince();
     new npc_boot();
+    new npc_girocoptere();
+    new npc_gyrocoptere_quest_giver();
+    new npc_phaseswift();
     RegisterCreatureAI(npc_flying_bomber);
+    new spell_68281();
 }

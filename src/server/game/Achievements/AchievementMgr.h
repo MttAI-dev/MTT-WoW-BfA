@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -70,6 +70,7 @@ protected:
 protected:
     std::unordered_map<uint32, CompletedAchievementData> _completedAchievements;
     uint32 _achievementPoints;
+    uint32 _achievementBattlePetPoints;
 };
 
 class TC_GAME_API PlayerAchievementMgr : public AchievementMgr

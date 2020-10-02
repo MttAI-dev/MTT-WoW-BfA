@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -259,6 +259,17 @@ struct GuildReward
 
 uint32 const MinNewsItemLevel = 353;
 
+enum GuildChallengeType
+{
+    ChallengeNone,
+    ChallengeDungeon,
+    ChallengeRaid,
+    ChallengeRatedBG,
+    ChallengeScenario,
+    ChallengeDungeonChallenge,
+
+    ChallengeMax
+};
 // Guild Challenge
 #define GUILD_CHALLENGES_TYPES 6
 
@@ -326,7 +337,7 @@ typedef std::set <uint8> SlotIds;
 class TC_GAME_API Guild
 {
     public:
-    Ashamane::AnyData Variables;
+    LatinCore::AnyData Variables;
 
     private:
         // Class representing guild member
@@ -334,7 +345,7 @@ class TC_GAME_API Guild
         {
             public:
 
-                Ashamane::AnyData Variables;
+                LatinCore::AnyData Variables;
                 Member(ObjectGuid::LowType guildId, ObjectGuid guid, uint8 rankId);
 
                 void SetStats(Player* player);
@@ -353,7 +364,7 @@ class TC_GAME_API Guild
 
                 bool LoadFromDB(Field* fields);
                 void SaveToDB(CharacterDatabaseTransaction& trans) const;
-
+               
                 ObjectGuid const& GetGUID() const { return m_guid; }
                 std::string const& GetName() const { return m_name; }
                 uint32 GetAccountId() const { return m_accountId; }
@@ -784,7 +795,7 @@ class TC_GAME_API Guild
         void HandleDelete(WorldSession* session);
         void HandleGuildPartyRequest(WorldSession* session) const;
         void HandleNewsSetSticky(WorldSession* session, uint32 newsId, bool sticky) const;
-        void HandleGuildRequestChallengeUpdate(WorldSession* session) const;
+       // void HandleGuildRequestChallengeUpdate(WorldSession* session) const;
 
         void UpdateMemberData(Player* player, uint8 dataid, uint32 value);
         void OnPlayerStatusChange(Player* player, uint32 flag, bool state);
@@ -799,7 +810,9 @@ class TC_GAME_API Guild
         void SendMoneyInfo(WorldSession* session) const;
         void SendLoginInfo(WorldSession* session);
         void SendNewsUpdate(WorldSession* session) const;
-
+	   //void SendGuildChallengeUpdated(WorldSession* session = nullptr);
+       //void CompleteGuildChallenge(uint32 type);
+       //
         // Send events
         void SendEventAwayChanged(ObjectGuid const& memberGuid, bool afk, bool dnd);
         void SendEventBankMoneyChanged() const;
@@ -818,6 +831,7 @@ class TC_GAME_API Guild
         void LoadBankTabFromDB(Field* fields);
         bool LoadBankEventLogFromDB(Field* fields);
         bool LoadBankItemFromDB(Field* fields);
+        bool LoadGuildChallengesFromDB(Field* fields);
         bool Validate();
 
         // Broadcasts
@@ -864,6 +878,7 @@ class TC_GAME_API Guild
         EmblemInfo const& GetEmblemInfo() const { return m_emblemInfo; }
         void ResetTimes(bool weekly);
 
+       
         bool HasAchieved(uint32 achievementId) const;
         void UpdateCriteria(CriteriaTypes type, uint64 miscValue1, uint64 miscValue2, uint64 miscValue3, Unit* unit, Player* player);
 
@@ -874,6 +889,7 @@ class TC_GAME_API Guild
         std::string m_motd;
         std::string m_info;
         time_t m_createdDate;
+        std::vector<uint32> m_ChallengeCount;
 
         EmblemInfo m_emblemInfo;
         uint32 m_accountsNumber;
@@ -963,5 +979,6 @@ class TC_GAME_API Guild
         void _SendBankContentUpdate(MoveItemData* pSrc, MoveItemData* pDest) const;
         void _SendBankContentUpdate(uint8 tabId, SlotIds slots) const;
         void SendGuildRanksUpdate(ObjectGuid setterGuid, ObjectGuid targetGuid, uint32 rank);
+        void SendGuildEventRanksUpdated();
 };
 #endif

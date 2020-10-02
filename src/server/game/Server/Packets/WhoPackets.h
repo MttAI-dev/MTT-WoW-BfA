@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -84,7 +84,8 @@ namespace WorldPackets
             void Read() override;
 
             WhoRequest Request;
-            std::vector<int32> Areas;
+             uint32 RequestID = 0;
+             Array<int32, 10> Areas;
         };
 
         struct WhoEntry
@@ -108,6 +109,7 @@ namespace WorldPackets
             WhoResponsePkt() : ServerPacket(SMSG_WHO, 1) { }
 
             WorldPacket const* Write() override;
+             uint32 RequestID = 0;
 
             WhoResponse Response;
         };

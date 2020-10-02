@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -75,8 +75,7 @@ public:
 char const* GetPlainName(char const* FileName);
 char* GetPlainName(char* FileName);
 char* GetExtension(char* FileName);
-void FixNameCase(char* name, size_t len);
-void FixNameSpaces(char* name, size_t len);
+void NormalizeFileName(char* name, size_t len);
 //void fixMapNamen(char *name, size_t len);
 
 #endif

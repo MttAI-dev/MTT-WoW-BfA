@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,11 +19,16 @@
 #include <iostream>
 
 #include "TileAssembler.h"
-#include "Banner.h"
+ //#include "Banner.h"
+#include "GitRevision.h"
+#include "StringFormat.h"
 
 int main(int argc, char* argv[])
 {
-    Trinity::Banner::Show("VMAP assembler", [](char const* text) { std::cout << text << std::endl; }, nullptr);
+    //Trinity::Banner::Show("VMAP assembler", [](char const* text) { std::cout << text << std::endl; }, nullptr);
+    printf(Trinity::StringFormat("%s (%s)", GitRevision::GetFullVersion(), "VMAP assembler").c_str());
+    printf("%s\n", "\n<Ctrl-C> to stop.\n");
+    printf("%s\n", "LatinCoreTeam\n");
 
     std::string src = "Buildings";
     std::string dest = "vmaps";

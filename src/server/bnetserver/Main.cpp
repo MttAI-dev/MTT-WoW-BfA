@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,6 +25,7 @@
 
 #include "AppenderDB.h"
 #include "Banner.h"
+#include "BigNumber.h"
 #include "Config.h"
 #include "DatabaseEnv.h"
 #include "DatabaseLoader.h"
@@ -56,8 +57,8 @@ namespace fs = boost::filesystem;
 #if TRINITY_PLATFORM == TRINITY_PLATFORM_WINDOWS
 #include "ServiceWin32.h"
 char serviceName[] = "bnetserver";
-char serviceLongName[] = "TrinityCore bnet service";
-char serviceDescription[] = "TrinityCore Battle.net emulator authentication service";
+char serviceLongName[] = "LatinCore bnet service";
+char serviceDescription[] = "LatinCore Battle.net emulator authentication service";
 /*
 * -1 - not in service mode
 *  0 - stopped
@@ -152,6 +153,8 @@ int main(int argc, char** argv)
     // Initialize the database connection
     if (!StartDB())
         return 1;
+
+    sSessionMgr.FixLegacyAuthHashes();
 
     // Load IP Location Database
     sIPLocation->Load();
@@ -252,7 +255,7 @@ bool StartDB()
         return false;
 
     TC_LOG_INFO("server.bnetserver", "Started auth database connection pool.");
-    sLog->SetRealmId(0, ""); // Enables DB appenders when realm is set.
+    sLog->SetRealmId(0); // Enables DB appenders when realm is set.
     return true;
 }
 

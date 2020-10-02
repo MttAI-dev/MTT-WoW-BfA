@@ -1,0 +1,1 @@
+REPLACE INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES ('260685', 'spell_Taint_Of_Ghunn');

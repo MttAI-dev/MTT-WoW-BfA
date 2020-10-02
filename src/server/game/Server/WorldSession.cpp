@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,6 +23,7 @@
 #include "QueryHolder.h"
 #include "AccountMgr.h"
 #include "AuthenticationPackets.h"
+#include "BattlePayMgr.h"
 #include "BattlePet.h"
 #include "BattlePetDataStore.h"
 #include "BattlePetMgr.h"
@@ -104,7 +105,8 @@ bool WorldSessionFilter::Process(WorldPacket* packet)
 
 /// WorldSession constructor
 WorldSession::WorldSession(uint32 id, std::string&& name, uint32 battlenetAccountId, std::shared_ptr<WorldSocket> sock, AccountTypes sec, uint8 expansion, time_t mute_time,
-    std::string os, LocaleConstant locale, uint32 recruiter, bool isARecruiter, std::string&& battlenetAccountName):
+    std::string os, LocaleConstant locale, uint32 recruiter, bool isARecruiter, AuthFlags flag, std::string&& battlenetAccountName):
+
     m_muteTime(mute_time),
     m_timeOutTime(0),
     AntiDOS(this),
@@ -128,20 +130,22 @@ WorldSession::WorldSession(uint32 id, std::string&& name, uint32 battlenetAccoun
     m_sessionDbcLocale(sWorld->GetAvailableDbcLocale(locale)),
     m_sessionDbLocaleIndex(locale),
     m_latency(0),
+    m_clientTimeDelay(0),
     _tutorialsChanged(TUTORIALS_FLAG_NONE),
     _filterAddonMessages(false),
     recruiterId(recruiter),
     isRecruiter(isARecruiter),
+    atAuthFlag(flag),
     _RBACData(NULL),
     expireTime(60000), // 1 min after socket loss, session is deleted
     forceExit(false),
     m_currentBankerGUID(),
-    _timeSyncClockDeltaQueue(6),
-    _timeSyncClockDelta(0),
-    _battlePetMgr(Trinity::make_unique<BattlePetMgr>(this)),
-    _collectionMgr(Trinity::make_unique<CollectionMgr>(this))
+    _battlePetMgr(std::make_unique<BattlePetMgr>(this)),
+    _collectionMgr(std::make_unique<CollectionMgr>(this))
 {
     memset(_tutorials, 0, sizeof(_tutorials));
+
+    _battlePayMgr = std::make_shared<BattlepayManager>(this);
 
     if (sock)
     {
@@ -541,8 +545,7 @@ void WorldSession::LogoutPlayer(bool save)
         if (!_player->m_InstanceValid && !_player->IsGameMaster())
             _player->TeleportTo(_player->m_homebindMapId, _player->m_homebindX, _player->m_homebindY, _player->m_homebindZ, _player->GetOrientation());
 
-        if (Area* zone = _player->GetZone())
-            sOutdoorPvPMgr->HandlePlayerLeaveZone(_player, zone);
+        sOutdoorPvPMgr->HandlePlayerLeaveZone(_player, _player->GetZoneId());
 
         for (int i=0; i < PLAYER_MAX_BATTLEGROUND_QUEUES; ++i)
         {
@@ -901,12 +904,32 @@ void WorldSession::ProcessQueryCallbacks()
         HandlePlayerLogin(reinterpret_cast<LoginQueryHolder*>(_charLoginCallback.get()));
 }
 
+void WorldSession::RemoveAuthFlag(AuthFlags f)
+{
+    atAuthFlag = AuthFlags(atAuthFlag & ~f);
+    SaveAuthFlag();
+}
+
+void WorldSession::AddAuthFlag(AuthFlags f)
+{
+    atAuthFlag = AuthFlags(atAuthFlag | f);
+    SaveAuthFlag();
+}
+
+void WorldSession::SaveAuthFlag()
+{
+    LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_UPD_AT_AUTH_FLAG);
+    stmt->setUInt16(0, atAuthFlag);
+    stmt->setUInt32(1, GetAccountId());
+    LoginDatabase.Execute(stmt);
+}
+
 TransactionCallback& WorldSession::AddTransactionCallback(TransactionCallback&& callback)
 {
     return _transactionCallbacks.AddCallback(std::move(callback));
 }
 
-void WorldSession::InitWarden(BigNumber* k)
+void WorldSession::InitWarden(SessionKey const& k)
 {
     if (_os == "Win")
     {
@@ -1077,6 +1100,7 @@ void WorldSession::InitializeSessionCallback(LoginDatabaseQueryHolder* realmHold
 
     SendSetTimeZoneInformation();
     SendFeatureSystemStatusGlueScreen();
+    SendDisplayPromo();
     SendClientCacheVersion(sWorld->getIntConfig(CONFIG_CLIENTCACHE_VERSION));
     SendAvailableHotfixes(int32(sWorld->getIntConfig(CONFIG_HOTFIX_CACHE_VERSION)));
     SendTutorialsData();
@@ -1414,6 +1438,7 @@ uint32 WorldSession::DosProtection::GetMaxPacketCounterAllowed(uint16 opcode) co
 WorldSession::DosProtection::DosProtection(WorldSession* s) : Session(s), _policy((Policy)sWorld->getIntConfig(CONFIG_PACKET_SPOOF_POLICY))
 {
 }
+
 
 struct ItemRecovery
 {

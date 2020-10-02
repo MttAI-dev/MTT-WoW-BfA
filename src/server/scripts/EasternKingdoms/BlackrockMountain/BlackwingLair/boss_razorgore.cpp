@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -117,8 +117,8 @@ public:
         void DamageTaken(Unit* /*who*/, uint32& damage) override
         {
             // @todo this is wrong - razorgore should still take damage, he should just nuke the whole room and respawn if he dies during P1
-            if (!secondPhase)
-                damage = 0;
+            //if (!secondPhase)
+                //damage = 0;
         }
 
         void UpdateAI(uint32 diff) override

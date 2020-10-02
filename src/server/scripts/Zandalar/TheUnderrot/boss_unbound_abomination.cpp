@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -299,7 +299,6 @@ struct npc_underrot_blood_visage : public ScriptedAI
 
     void Reset() override
     {
-        me->SetInCombatWithZone();
         me->CastSpell(me, SPELL_BLOOD_CLONE_COSMETIC, true);
     }
 

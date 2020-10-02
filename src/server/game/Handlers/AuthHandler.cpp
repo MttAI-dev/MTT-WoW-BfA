@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,6 +18,7 @@
 #include "WorldSession.h"
 #include "AuthenticationPackets.h"
 #include "BattlenetRpcErrorCodes.h"
+#include "BattlePayMgr.h"
 #include "CharacterTemplateDataStore.h"
 #include "ClientConfigPackets.h"
 #include "GameTime.h"
@@ -39,6 +40,7 @@ void WorldSession::SendAuthResponse(uint32 code, bool queued, uint32 queuePos)
         response.SuccessInfo->ActiveExpansionLevel = GetExpansion();
         response.SuccessInfo->AccountExpansionLevel = GetAccountExpansion();
         response.SuccessInfo->VirtualRealmAddress = realm.Id.GetAddress();
+        response.SuccessInfo->CurrencyID = GetBattlePayMgr()->GetShopCurrency();
         response.SuccessInfo->Time = int32(GameTime::GetGameTime());
 
         // Send current home realm. Also there is no need to send it later in realm queries.
@@ -95,10 +97,11 @@ void WorldSession::SendSetTimeZoneInformation()
 void WorldSession::SendFeatureSystemStatusGlueScreen()
 {
     WorldPackets::System::FeatureSystemStatusGlueScreen features;
-    features.BpayStoreAvailable = false;
+    features.BpayStoreEnabled = sWorld->getBoolConfig(CONFIG_FEATURE_SYSTEM_BPAY_STORE_ENABLED);
+    features.BpayStoreAvailable = sWorld->getBoolConfig(CONFIG_FEATURE_SYSTEM_BPAY_STORE_ENABLED);
+    features.CommerceSystemEnabled = true;
     features.BpayStoreDisabledByParentalControls = false;
     features.CharUndeleteEnabled = sWorld->getBoolConfig(CONFIG_FEATURE_SYSTEM_CHARACTER_UNDELETE_ENABLED);
-    features.BpayStoreEnabled = sWorld->getBoolConfig(CONFIG_FEATURE_SYSTEM_BPAY_STORE_ENABLED);
     features.MaxCharactersPerRealm = sWorld->getIntConfig(CONFIG_CHARACTERS_PER_REALM);
     features.MinimumExpansionLevel = EXPANSION_CLASSIC;
     features.MaximumExpansionLevel = sWorld->getIntConfig(CONFIG_EXPANSION);

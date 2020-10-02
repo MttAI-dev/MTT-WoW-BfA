@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -517,6 +517,34 @@ WorldPacket const* WorldPackets::Guild::GuildPartyState::Write()
 
     return &_worldPacket;
 }
+
+WorldPacket const* WorldPackets::Guild::GuildChallengeUpdated::Write()
+{
+    for (int8 i = 0; i < 6; i++)
+        _worldPacket << CurrentCount[i];
+
+    for (int8 i = 0; i < 6; i++)
+        _worldPacket << MaxCount[i];
+
+    for (int8 i = 0; i < 6; i++)
+        _worldPacket << Gold[i];
+
+    for (int8 i = 0; i < 6; i++)
+        _worldPacket << MaxLevelGold[i];
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Guild::GuildChallengeCompleted::Write()
+{
+    _worldPacket << ChallengeType;
+    _worldPacket << CurrentCount;
+    _worldPacket << MaxCount;
+    _worldPacket << GoldAwarded;
+
+    return &_worldPacket;
+}
+
 
 ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::Guild::GuildRewardItem const& rewardItem)
 {

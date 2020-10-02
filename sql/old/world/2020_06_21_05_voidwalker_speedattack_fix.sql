@@ -1,0 +1,1 @@
+update `creature_template` set `baseattacktime`=2000,`basevariance`=1,`rangevariance`=1 where `entry`=1860;

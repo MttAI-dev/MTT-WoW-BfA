@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1331,54 +1330,48 @@ private:
 };
 
 // Infernal Strike - 189110
-class spell_dh_infernal_strike : public SpellScriptLoader
+// 189110 - Infernal Strike
+class spell_dh_infernal_strike : public SpellScript
 {
-public:
-    spell_dh_infernal_strike() : SpellScriptLoader("spell_dh_infernal_strike") { }
+    PrepareSpellScript(spell_dh_infernal_strike);
 
-    class spell_dh_infernal_strike_SpellScript : public SpellScript
+    bool Validate(SpellInfo const* /*spellInfo*/) override
     {
-        PrepareSpellScript(spell_dh_infernal_strike_SpellScript);
+        if (!sSpellMgr->GetSpellInfo(SPELL_DH_INFERNAL_STRIKE_JUMP))
+            return false;
+        if (!sSpellMgr->GetSpellInfo(SPELL_DH_INFERNAL_STRIKE_DAMAGE))
+            return false;
+        return true;
+    }
 
-        bool Validate(SpellInfo const* /*spellInfo*/) override
+    void HandleOnHit()
+    {
+        Unit* caster = GetCaster();
+        WorldLocation const* dest = GetHitDest();
+        Unit* target = GetHitUnit();
+        if (!caster || !dest || !target)
+            return;
+
+        if (target->IsHostileTo(caster))
         {
-            if (!sSpellMgr->GetSpellInfo(SPELL_DH_INFERNAL_STRIKE_JUMP))
-                return false;
-            if (!sSpellMgr->GetSpellInfo(SPELL_DH_INFERNAL_STRIKE_DAMAGE))
-                return false;
-            return true;
-        }
-
-        void HandleDummy(SpellEffIndex /*effIndex*/)
-        {
-            Unit* caster = GetCaster();
-            WorldLocation const* dest = GetHitDest();
-            if (!caster || !dest)
-                return;
-
             caster->CastSpell(dest->GetPositionX(), dest->GetPositionY(), dest->GetPositionZ(), SPELL_DH_INFERNAL_STRIKE_JUMP, true);
             caster->CastSpell(caster, SPELL_DH_INFERNAL_STRIKE_VISUAL, true);
         }
+    }
 
-        void HandleAfterDamage()
-        {
-            Unit* caster = GetCaster();
-            if (!caster)
-                return;
-
-            caster->m_Events.AddEvent(new event_dh_infernal_strike(caster), caster->m_Events.CalculateTime(750));
-        }
-
-        void Register() override
-        {
-            OnEffectHit += SpellEffectFn(spell_dh_infernal_strike_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
-            OnCast += SpellCastFn(spell_dh_infernal_strike_SpellScript::HandleAfterDamage);
-        }
-    };
-
-    SpellScript* GetSpellScript() const override
+    void HandleAfterDamage()
     {
-        return new spell_dh_infernal_strike_SpellScript();
+        Unit* caster = GetCaster();
+        if (!caster)
+            return;
+
+        caster->m_Events.AddEvent(new event_dh_infernal_strike(caster), caster->m_Events.CalculateTime(750));
+    }
+
+    void Register() override
+    {
+        OnHit += SpellHitFn(spell_dh_infernal_strike::HandleOnHit);        
+        OnCast += SpellCastFn(spell_dh_infernal_strike::HandleAfterDamage);
     }
 };
 
@@ -4096,6 +4089,23 @@ public:
     }
 };
 
+//203720 - Demon Spikes
+class spell_dh_demon_spikes : public SpellScript
+{
+    PrepareSpellScript(spell_dh_demon_spikes);
+    
+    void HandleDummy()
+    {
+        Unit* caster = GetCaster();
+        caster->CastSpell(nullptr, 203819, true);
+    }
+
+    void Register() override
+    {
+        OnCast += SpellCastFn(spell_dh_demon_spikes::HandleDummy);
+    }
+};
+
 void AddSC_demon_hunter_spell_scripts()
 {
     new spell_dh_fel_rush();
@@ -4118,7 +4128,7 @@ void AddSC_demon_hunter_spell_scripts()
     new spell_dh_fel_barrage_damage();
     new spell_dh_fel_barrage_aura();
     new spell_dh_nemesis();
-    new spell_dh_infernal_strike();
+    RegisterSpellScript(spell_dh_infernal_strike);
     new spell_dh_soul_cleave();
     new spell_dh_soul_cleave_damage();
     new spell_dh_fiery_brand();
@@ -4175,6 +4185,7 @@ void AddSC_demon_hunter_spell_scripts()
     new spell_demon_hunter_mana_break();
     new spell_demon_hunter_trail_of_ruin();
     new spell_demon_hunter_unending_hatred();
+    RegisterSpellScript(spell_dh_demon_spikes);
 
     RegisterAreaTriggerAI(at_dh_soul_fragment_havoc);
     RegisterAreaTriggerAI(at_dh_lesser_soul_shard);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -147,6 +147,6 @@ GameObjectPosition IceWallsPositions[] =
     { -8548.13f,   1036.82f,  59.4965f,   5.72583f,   -0.275085f,   0.961420f },
     { -8463.33f,   1032.81f,  59.4733f,   3.8785f,    -0.932886f,   0.360171f },
     { -8570.90f,   1021.26f,  96.2347f,   0.662291f,   0.325127f,   0.945670f },
-};*/
-
+};
+*/
 #endif

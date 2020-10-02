@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,6 +16,7 @@
  */
 
 #include "ArenaHelper.h"
+#include "Arena.h"
 #include "BattlegroundMgr.h"
 #include "BattlegroundAB.h"
 #include "BattlegroundAV.h"
@@ -32,7 +33,12 @@
 #include "BattlegroundTP.h"
 #include "BattlegroundTTP.h"
 #include "BattlegroundTVA.h"
+#include "BattlegroundNNA.h"
+#include "BattlegroundAF.h"
+#include "BattlegroundBRH.h"
+#include "BattlegroundBEG.h"
 #include "BattlegroundWS.h"
+#include "BattlegroundMB.h"
 #include "Common.h"
 #include "Containers.h"
 #include "DatabaseEnv.h"
@@ -173,7 +179,7 @@ void BattlegroundMgr::BuildBattlegroundStatusHeader(WorldPackets::Battleground::
     header->Ticket.Id = ticketId;
     header->Ticket.Type = WorldPackets::LFG::RideType::Battlegrounds;
     header->Ticket.Time = joinTime;
-    header->QueueID = bg->GetQueueId();
+    header->QueueID.push_back(bg->GetQueueId());
     header->RangeMin = bg->GetMinLevel();
     header->RangeMax = bg->GetMaxLevel();
     header->TeamSize = bg->isArena() ? arenaType : 0;
@@ -360,6 +366,21 @@ Battleground* BattlegroundMgr::CreateNewBattleground(BattlegroundTypeId original
         case BATTLEGROUND_TVA:
             bg = new BattlegroundTVA(*(BattlegroundTVA*)bg_template);
             break;
+        case BATTLEGROUND_NNA:
+            bg = new BattlegroundNNA(*(BattlegroundNNA*)bg_template);
+            break;
+		case BATTLEGROUND_AF:
+            bg = new BattlegroundAF(*(BattlegroundAF*)bg_template);
+            break;
+		case BATTLEGROUND_BEG:
+            bg = new BattlegroundBEG(*(BattlegroundBEG*)bg_template);
+            break;
+		case BATTLEGROUND_BRH:
+            bg = new BattlegroundBRH(*(BattlegroundBRH*)bg_template);
+            break;
+		case BATTLEGROUND_MUGAMBALA:
+            bg = new BattlegroundMB(*(BattlegroundMB*)bg_template);
+            break;
         case BATTLEGROUND_RB:
         case BATTLEGROUND_AA:
         default:
@@ -464,6 +485,21 @@ bool BattlegroundMgr::CreateBattleground(BattlegroundTemplate const* bgTemplate)
                 break;
             case BATTLEGROUND_TVA:
                 bg = new BattlegroundTVA;
+                break;
+            case BATTLEGROUND_NNA:
+                bg = new BattlegroundNNA;
+                break;
+			case BATTLEGROUND_AF:
+                bg = new BattlegroundAF;
+                break;
+			case BATTLEGROUND_BEG:
+                bg = new BattlegroundBEG;
+                break;
+			case BATTLEGROUND_BRH:
+                bg = new BattlegroundBRH;
+                break;
+			case BATTLEGROUND_MUGAMBALA:
+                bg = new BattlegroundMB;
                 break;
             default:
                 return false;
@@ -640,13 +676,18 @@ void BattlegroundMgr::SendAreaSpiritHealerQueryOpcode(Player* player, Battlegrou
 bool BattlegroundMgr::IsArenaType(BattlegroundTypeId bgTypeId)
 {
     return bgTypeId == BATTLEGROUND_AA
-            || bgTypeId == BATTLEGROUND_BE
-            || bgTypeId == BATTLEGROUND_NA
-            || bgTypeId == BATTLEGROUND_DS
-            || bgTypeId == BATTLEGROUND_RV
-            || bgTypeId == BATTLEGROUND_RL
-            || bgTypeId == BATTLEGROUND_TTP
-            || bgTypeId == BATTLEGROUND_TVA;
+        || bgTypeId == BATTLEGROUND_BE
+        || bgTypeId == BATTLEGROUND_NA
+        || bgTypeId == BATTLEGROUND_DS
+        || bgTypeId == BATTLEGROUND_RV
+        || bgTypeId == BATTLEGROUND_RL
+        || bgTypeId == BATTLEGROUND_TTP
+        || bgTypeId == BATTLEGROUND_TVA
+        || bgTypeId == BATTLEGROUND_NNA
+		|| bgTypeId == BATTLEGROUND_BEG
+		|| bgTypeId == BATTLEGROUND_BRH
+		|| bgTypeId == BATTLEGROUND_MUGAMBALA
+        || bgTypeId == BATTLEGROUND_AF;
 }
 
 BattlegroundQueueTypeId BattlegroundMgr::BGQueueTypeId(BattlegroundTypeId bgTypeId, uint8 arenaType)
@@ -679,6 +720,10 @@ BattlegroundQueueTypeId BattlegroundMgr::BGQueueTypeId(BattlegroundTypeId bgType
         case BATTLEGROUND_RV:
         case BATTLEGROUND_TTP:
         case BATTLEGROUND_TVA:
+		case BATTLEGROUND_NNA:
+		case BATTLEGROUND_MUGAMBALA:
+        case BATTLEGROUND_AF:
+		case BATTLEGROUND_BEG:
             switch (arenaType)
             {
                 case ArenaType::Arena2v2:
@@ -745,6 +790,10 @@ void BattlegroundMgr::ToggleTesting()
 {
     m_Testing = !m_Testing;
     sWorld->SendWorldText(m_Testing ? LANG_DEBUG_BG_ON : LANG_DEBUG_BG_OFF);
+}
+
+void BattlegroundMgr::InitWargame(Player* player, ObjectGuid opposingPartyMember, uint64 queueID, bool accept)
+{
 }
 
 void BattlegroundMgr::ToggleArenaTesting()

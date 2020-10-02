@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2016 Firestorm Servers <https://firestorm-servers.com>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -28,16 +27,23 @@
 
 enum DataTypes
 {
-    DATA_OOK_OOK   = 1,
-    DATA_HOPTALLUS = 2,
-    DATA_YAN_ZHU   = 3
+    DATA_OOK_OOK         = 1,
+    DATA_HOPTALLUS       = 2,
+    DATA_YAN_ZHU         = 3,
+    DATA_HOPTALLUS_EVENT =4
 };
 
 enum CreaturesIds
 {
-    NPC_OOK_OOK     = 56637,
-    NPC_HOPTALLUS   = 56717,
-    NPC_YAN_ZHU     = 59479
+    NPC_OOK_OOK                = 56637,
+    NPC_BEER_BARREL_BUNNY      = 66215,
+    NPC_HOPTALLUS              = 56717,
+    NPC_YAN_ZHU                = 59479,
+    NPC_ANCESTRAL_BREWMASTER   = 59075, ///< Friendly.
+    NPC_ANCESTRAL_BREWMASTER_1 = 59075,
+    NPC_BLOATED_BREW_ALEMENTAL = 59518,
+    NPC_ANCESTRAL_BREWMASTER_2 = 65375,
+    NPC_ANCESTRAL_BREWMASTER_3 = 65376
 };
 
 #endif // STORMSTOUT_BREWERY_H_

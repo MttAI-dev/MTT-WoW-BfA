@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -24,6 +24,21 @@
 #include "Optional.h"
 #include "UnitDefines.h"
 
+static uint16 const BATTLE_PET_MAX_JOURNAL_PETS = 1000;
+static uint8 const PARTICIPANTS_COUNT           = 2;
+
+enum PetBattleEffectTargetType
+{
+    PET_BATTLE_EFFECT_TARGET_EX_FRONT_PET       = 0,
+    PET_BATTLE_EFFECT_TARGET_EX_AURA            = 1,
+    PET_BATTLE_EFFECT_TARGET_EX_STATE           = 2,
+    PET_BATTLE_EFFECT_TARGET_EX_PET             = 3,
+    PET_BATTLE_EFFECT_TARGET_EX_STAT_CHANGE     = 4,
+    PET_BATTLE_EFFECT_TARGET_EX_TRIGGER_ABILITY = 5,
+    PET_BATTLE_EFFECT_TARGET_EX_ABILITY_CHANGE  = 6,
+    PET_BATTLE_EFFECT_TARGET_EX_NPC_EMOTE       = 7
+};
+
 class BattlePet;
 
 namespace WorldPackets
@@ -36,6 +51,27 @@ namespace WorldPackets
             uint32 CollarID = 0;
             uint8 Index = 0;
             bool Locked = true;
+        };
+
+        class NullSMsg final : public ServerPacket
+        {
+        public:
+            NullSMsg(OpcodeServer opcode) : ServerPacket(opcode, 0) { }
+
+            WorldPacket const* Write() override { return &_worldPacket; }
+        };
+
+        //< CMSG_BATTLE_PET_REQUEST_JOURNAL
+        //< CMSG_BATTLE_PET_REQUEST_JOURNAL_LOCK
+        //< CMSG_PET_BATTLE_FINAL_NOTIFY
+        //< CMSG_JOIN_PET_BATTLE_QUEUE
+        //< CMSG_PET_BATTLE_SCRIPT_ERROR_NOTIFY
+        class NullCmsg final : public ClientPacket
+        {
+        public:
+            NullCmsg(WorldPacket&& packet) : ClientPacket(std::move(packet)) { }
+
+            void Read() override { }
         };
 
         class BattlePetJournal final : public ServerPacket
@@ -144,6 +180,16 @@ namespace WorldPackets
             void Read() override;
 
             ObjectGuid PetGuid;
+        };
+
+        class BattlePetGuidRead final : public ClientPacket
+        {
+        public:
+            BattlePetGuidRead(WorldPacket&& packet) : ClientPacket(std::move(packet)) { }
+
+            void Read() override;
+
+            ObjectGuid BattlePetGUID;
         };
 
         class BattlePetDeleted final : public ServerPacket

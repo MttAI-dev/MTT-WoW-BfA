@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  * Copyright (C) 2016-2019 MagicStorm
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -18,7 +18,7 @@
 
 #include "trial_of_valor.h"
 
-// 209 Trial of Valor area 2
+ // 209 Trial of Valor area 2
 class npc_enter_the_eternal_battlefield : public CreatureScript
 {
 public:

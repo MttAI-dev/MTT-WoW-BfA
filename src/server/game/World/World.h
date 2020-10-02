@@ -1,5 +1,6 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
+ * Copyright (C) Thordekk
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -160,6 +161,7 @@ enum WorldBoolConfigs
     CONFIG_SUPPORT_SUGGESTIONS_ENABLED,
     CONFIG_DBC_ENFORCE_ITEM_ATTRIBUTES,
     CONFIG_PRESERVE_CUSTOM_CHANNELS,
+    CONFIG_ANTICHEAT_ENABLE,
     CONFIG_PDUMP_NO_PATHS,
     CONFIG_PDUMP_NO_OVERWRITE,
     CONFIG_QUEST_IGNORE_AUTO_ACCEPT,
@@ -175,6 +177,8 @@ enum WorldBoolConfigs
     CONFIG_INSTANCES_RESET_ANNOUNCE,
     CONFIG_IP_BASED_ACTION_LOGGING,
     CONFIG_ALLOW_TRACK_BOTH_RESOURCES,
+    CONFIG_CALCULATE_CREATURE_ZONE_AREA_DATA,
+    CONFIG_CALCULATE_GAMEOBJECT_ZONE_AREA_DATA,
     CONFIG_FEATURE_SYSTEM_BPAY_STORE_ENABLED,
     CONFIG_FEATURE_SYSTEM_CHARACTER_UNDELETE_ENABLED,
     CONFIG_FEATURE_SYSTEM_WAR_MODE_ENABLED,
@@ -195,6 +199,8 @@ enum WorldBoolConfigs
     CONFIG_GAME_OBJECT_CHECK_INVALID_POSITION,
     CONFIG_LEGACY_BUFF_ENABLED,
     CONFIG_IGNORE_DUNGEONS_BIND,
+    CONFIG_PURCHASE_SHOP_ENABLED,
+	CONFIG_ARGUSWOW_ENABLE,
     BOOL_CONFIG_VALUE_COUNT
 };
 
@@ -240,6 +246,7 @@ enum WorldIntConfigs
     CONFIG_MIN_PLAYER_NAME,
     CONFIG_MIN_CHARTER_NAME,
     CONFIG_MIN_PET_NAME,
+    CONFIG_PET_BATTLES,
     CONFIG_CHARACTER_CREATING_DISABLED,
     CONFIG_CHARACTER_CREATING_DISABLED_CLASSMASK,
     CONFIG_CHARACTERS_PER_ACCOUNT,
@@ -257,6 +264,7 @@ enum WorldIntConfigs
     CONFIG_CURRENCY_MAX_APEXIS_CRYSTALS,
     CONFIG_CURRENCY_START_JUSTICE_POINTS,
     CONFIG_CURRENCY_MAX_JUSTICE_POINTS,
+    CONFIG_CURRENCY_START_ARTIFACT_KNOWLEDGE,
     CONFIG_CURRENCY_RESET_HOUR,
     CONFIG_CURRENCY_RESET_DAY,
     CONFIG_CURRENCY_RESET_INTERVAL,
@@ -357,7 +365,11 @@ enum WorldIntConfigs
     CONFIG_PRESERVE_CUSTOM_CHANNEL_DURATION,
     CONFIG_PERSISTENT_CHARACTER_CLEAN_FLAGS,
     CONFIG_LFG_OPTIONSMASK,
+    CONFIG_LFG_DEBUG_JOIN,
+    CONFIG_ANTICHEAT_REPORTS_INGAME_NOTIFICATION,
+    CONFIG_ANTICHEAT_MAX_REPORTS_FOR_DAILY_REPORT,
     CONFIG_MAX_INSTANCES_PER_HOUR,
+    CONFIG_ANTICHEAT_DETECTIONS_ENABLED,
     CONFIG_WARDEN_CLIENT_RESPONSE_DELAY,
     CONFIG_WARDEN_CLIENT_CHECK_HOLDOFF,
     CONFIG_WARDEN_CLIENT_FAIL_ACTION,
@@ -399,12 +411,16 @@ enum WorldIntConfigs
     CONFIG_NO_GRAY_AGGRO_ABOVE,
     CONFIG_NO_GRAY_AGGRO_BELOW,
     CONFIG_AUCTION_REPLICATE_DELAY,
+    CONFIG_CHALLENGE_LEVEL_LIMIT,
+    CONFIG_CHALLENGE_LEVEL_MAX,
+    CONFIG_CHALLENGE_LEVEL_STEP,
     CONFIG_AUCTION_SEARCH_DELAY,
     CONFIG_AUCTION_TAINTED_SEARCH_DELAY,
+    CONFIG_WEIGHTED_MYTHIC_KEYSTONE,
+    CONFIG_DUNGEON_ACTIVE_STEP,
     CONFIG_TALENTS_INSPECTING,
     CONFIG_BLACKMARKET_MAXAUCTIONS,
     CONFIG_BLACKMARKET_UPDATE_PERIOD,
-    CONFIG_AZERITE_KNOWLEGE,
     INT_CONFIG_VALUE_COUNT
 };
 
@@ -544,6 +560,10 @@ enum WorldStates
     WS_BG_DAILY_RESET_TIME      = 20003,                     // Next daily BG reset time
     WS_CLEANING_FLAGS           = 20004,                     // Cleaning Flags
     WS_GUILD_DAILY_RESET_TIME   = 20006,                     // Next guild cap reset time
+    WS_CHALLENGE_KEY_RESET_TIME         = 20015,                      // Reset time for Challenge key
+    WS_CHALLENGE_AFFIXE1_RESET_TIME     = 20016,                      // Challenge Affixe 1
+    WS_CHALLENGE_AFFIXE2_RESET_TIME     = 20017,                      // Challenge Affixe 2
+    WS_CHALLENGE_AFFIXE3_RESET_TIME     = 20018,                      // Challenge Affixe 3
     WS_MONTHLY_QUEST_RESET_TIME = 20007,                     // Next monthly reset time
     // Cata specific custom worldstates
     WS_GUILD_WEEKLY_RESET_TIME  = 20050,                     // Next guild week reset time
@@ -571,11 +591,28 @@ private:
 
 typedef std::unordered_map<uint32, WorldSession*> SessionMap;
 
+struct CharacterInfo
+{
+    ObjectGuid::LowType Guid;
+    std::string Name;
+    uint32 GuildId = 0;
+    uint32 AccountId = 0;
+    uint32 BnetAccountId = 0;
+    uint16 ZoneId = 0;
+    uint16 SpecId = 0;
+    uint8 Class = 0;
+    uint8 Race = 0;
+    uint8 Sex = 0;
+    uint8 Level = 0;
+    uint8 RankId = 0;
+    bool IsDeleted = false;
+};
+
 /// The World
 class TC_GAME_API World
 {
     public:
-        Ashamane::AnyData Variables;
+        LatinCore::AnyData Variables;
 
         static World* instance();
 
@@ -781,8 +818,12 @@ class TC_GAME_API World
         void   SetCleaningFlags(uint32 flags) { m_CleaningFlags = flags; }
         void   ResetEventSeasonalQuests(uint16 event_id);
 
+        CharacterInfo const* GetCharacterInfo(ObjectGuid const& guid) const;
+        CharacterInfo const* GetCharacterInfo(std::string name) const;
+
         void ReloadRBAC();
 
+        time_t getNextChallengeKeyReset();
         void RemoveOldCorpses();
 
     protected:
@@ -865,6 +906,7 @@ class TC_GAME_API World
         time_t m_NextRandomBGReset;
         time_t m_NextGuildReset;
         time_t m_NextCurrencyReset;
+        time_t m_NextChallengeKeyReset;
 
         //Player Queue
         Queue m_QueuedPlayer;
@@ -886,6 +928,10 @@ class TC_GAME_API World
         };
         typedef std::unordered_map<uint8, Autobroadcast> AutobroadcastContainer;
         AutobroadcastContainer m_Autobroadcasts;
+
+        std::vector<CharacterInfo*> _characterInfoStore;
+
+        std::unordered_map<std::string, CharacterInfo*> nameMap;
 
         void ProcessQueryCallbacks();
         QueryCallbackProcessor _queryProcessor;

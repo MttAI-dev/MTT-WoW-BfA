@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -411,17 +411,17 @@ inline void Battleground::_ProcessJoin(uint32 diff)
     // Send packet every 10 seconds until the 2nd field reach 0
     if (m_CountdownTimer >= 10000)
     {
-        uint32 countdownMaxForBGType = isArena() ? ARENA_COUNTDOWN_MAX : BATTLEGROUND_COUNTDOWN_MAX;
+        int32 countdownMaxForBGType = isArena() ? ARENA_COUNTDOWN_MAX : BATTLEGROUND_COUNTDOWN_MAX;
 
         WorldPackets::Misc::StartTimer startTimer;
-        startTimer.Type = WorldPackets::Misc::StartTimer::TIMER_TYPE_BATTLEGROUND;
+        startTimer.Type = 0;
         startTimer.TimeLeft = countdownMaxForBGType - (GetElapsedTime() / 1000);
         startTimer.TotalTime = countdownMaxForBGType;
         WorldPacket const* startTimerPacket = startTimer.Write();
 
         for (BattlegroundPlayerMap::const_iterator itr = GetPlayers().begin(); itr != GetPlayers().end(); ++itr)
             if (Player* player = ObjectAccessor::FindPlayer(itr->first))
-                player->SendDirectMessage(startTimerPacket);
+                player->SendDirectMessage(startTimer.Write());
 
         m_CountdownTimer = 0;
     }
@@ -1102,10 +1102,9 @@ void Battleground::AddPlayer(Player* player)
             int32 countdownMaxForBGType = isArena() ? ARENA_COUNTDOWN_MAX : BATTLEGROUND_COUNTDOWN_MAX;
 
             WorldPackets::Misc::StartTimer startTimer;
-            startTimer.Type = WorldPackets::Misc::StartTimer::TIMER_TYPE_BATTLEGROUND;
+            startTimer.Type = 0;
             startTimer.TimeLeft = countdownMaxForBGType - (GetElapsedTime() / 1000);
             startTimer.TotalTime = countdownMaxForBGType;
-
             player->SendDirectMessage(startTimer.Write());
         }
 

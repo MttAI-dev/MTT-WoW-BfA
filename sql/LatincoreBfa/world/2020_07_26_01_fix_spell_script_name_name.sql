@@ -1,0 +1,1 @@
+REPLACE INTO spell_script_names (spell_id, ScriptName) VALUES ('197531', 'spell_dk_bloodworms');

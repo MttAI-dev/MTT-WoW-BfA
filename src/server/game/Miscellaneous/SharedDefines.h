@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -72,12 +72,44 @@ enum Roles
 // loot modes for creatures and gameobjects, bitmask!
 enum LootModes
 {
-    LOOT_MODE_DEFAULT                  = 0x1,
-    LOOT_MODE_HARD_MODE_1              = 0x2,
-    LOOT_MODE_HARD_MODE_2              = 0x4,
-    LOOT_MODE_HARD_MODE_3              = 0x8,
-    LOOT_MODE_HARD_MODE_4              = 0x10,
-    LOOT_MODE_JUNK_FISH                = 0x8000
+    LOOT_MODE_DEFAULT				= 1,
+    LOOT_MODE_HEROIC				= 2,  //LOOT_MODE_HARD_MODE_1
+    LOOT_MODE_10_N                  = 3,
+    LOOT_MODE_25_N					= 4,  //LOOT_MODE_HARD_MODE_2 
+    LOOT_MODE_10_HC                 = 5,
+    LOOT_MODE_25_HC                	= 6,
+    LOOT_MODE_LFR                  	= 7,
+    LOOT_MODE_MYTHIC_KEYSTONE		= 8,  //LOOT_MODE_HARD_MODE_3 
+    LOOT_MODE_40                   	= 9,
+    LOOT_MODE_3_MAN_SCENARIO_HC    	= 11,
+    LOOT_MODE_3_MAN_SCENARIO_N     	= 12,
+    LOOT_MODE_NORMAL_RAID          	= 14,
+    LOOT_MODE_HEROIC_RAID			= 15,
+    LOOT_MODE_MYTHIC_RAID			= 16, //LOOT_MODE_HARD_MODE_4
+    LOOT_MODE_LFR_NEW               = 17,
+    LOOT_MODE_EVENT_RAID            = 18,
+    LOOT_MODE_EVENT_DUNGEON         = 19,
+    LOOT_MODE_EVENT_SCENARIO        = 20,
+    LOOT_MODE_MYTHIC_DUNGEON		= 23,
+    LOOT_MODE_TIMEWALKING           = 24,
+    LOOT_MODE_WORLD_PVP_SCENARIO    = 25,
+    LOOT_MODE_5_MAN_SCENARIO_N      = 26,
+    LOOT_MODE_20_MAN_SCENARIO_N     = 27,
+    LOOT_MODE_PVEVP_SCENARIO        = 29,
+    LOOT_MODE_EVENT_SCENARIO_6      = 30,
+    LOOT_MODE_WORLD_PVP_SCENARIO_2  = 32,
+    LOOT_MODE_TIMEWALKING_RAID      = 33,
+    LOOT_MODE_PVP                   = 34,
+    LOOT_MODE_NORMAL_ISLAND			= 38,
+    LOOT_MODE_HEROIC_ISLAND			= 39,
+    LOOT_MODE_MYTHIC_ISLAND			= 40,
+    LOOT_MODE_PVP_ISLAND            = 45,
+    LOOT_MODE_NORMAL_WARFRONT       = 147,
+    LOOT_MODE_HEROIC_WARFRONT       = 149,
+    LOOT_MODE_LFR_15TH_ANNIVERSARY  = 151,
+    LOOT_MODE_VISIONS_OF_NZOTH      = 152,
+    LOOT_MODE_TEEMING_ISLAND        = 153,
+    LOOT_MODE_JUNK_FISH				= 0x8000,
 };
 
 #define MAX_CHARACTERS_PER_REALM 16
@@ -120,6 +152,8 @@ inline uint32 GetMaxLevelForExpansion(uint32 expansion)
         case EXPANSION_LEGION:
             return 110;
         case EXPANSION_BATTLE_FOR_AZEROTH:
+            return 120;
+        case EXPANSION_SHADOWLANDS:
             return 120;
         default:
             break;
@@ -312,6 +346,13 @@ enum SpellCategory
 {
     SPELL_CATEGORY_FOOD             = 11,
     SPELL_CATEGORY_DRINK            = 59
+};
+
+enum WorgenRacialSpells
+{
+    SPELL_RUNNING_WILD_LEARN        = 94098,
+    SPELL_TWO_FORMS_RACIAL          = 68996,
+    SPELL_ALTERED_FORM_RACIAL       = 97709
 };
 
 const uint32 ItemQualityColors[MAX_ITEM_QUALITY] =
@@ -1214,7 +1255,7 @@ enum SpellEffectName
     SPELL_EFFECT_199                                = 199,
     SPELL_EFFECT_HEAL_BATTLEPET_PCT                 = 200, // NYI
     SPELL_EFFECT_ENABLE_BATTLE_PETS                 = 201, // NYI
-    SPELL_EFFECT_APPLY_AURA_WITH_AMOUNT             = 202,
+    SPELL_EFFECT_202                                = 202,
     SPELL_EFFECT_REMOVE_AURA_2                      = 203,
     SPELL_EFFECT_CHANGE_BATTLEPET_QUALITY           = 204,
     SPELL_EFFECT_LAUNCH_QUEST_CHOICE                = 205,
@@ -1279,7 +1320,7 @@ enum SpellEffectName
     SPELL_EFFECT_REMOVE_GEM                         = 264,
     SPELL_EFFECT_LEARN_AZERITE_ESSENCE_POWER        = 265,
     SPELL_EFFECT_266                                = 266,
-    SPELL_EFFECT_267                                = 267,
+    SPELL_EFFECT_CREATE_CONVERSATION_GLOBAL         = 267,
     SPELL_EFFECT_APPLY_MOUNT_EQUIPMENT              = 268,
     SPELL_EFFECT_UPGRADE_ITEM                       = 269,
     SPELL_EFFECT_270                                = 270,
@@ -2318,9 +2359,9 @@ enum Targets
     TARGET_UNK_115                     = 115,
     TARGET_UNK_116                     = 116,
     TARGET_UNK_117                     = 117,
-    TARGET_UNIT_TARGET_CAN_RAID        = 118,
+    TARGET_UNIT_TARGET_ALLY_OR_RAID    = 118,
     TARGET_UNIT_CASTER_AREA_RAID_DEATH = 119,
-    TARGET_UNIT_CASTER_PET             = 120,
+    TARGET_UNIT_CASTER_AND_SUMMONS     = 120,
     TARGET_UNIT_TARGET_DEAD            = 121,
     TARGET_UNIT_CASTER_AREA_ENEMY      = 122,
     TARGET_UNIT_CASTER_LOOT_RECIPIENTS = 123,
@@ -2331,7 +2372,7 @@ enum Targets
     TARGET_UNK_128                     = 128,
     TARGET_UNIT_CONE_ENTRY_129         = 129,
     TARGET_UNK_130                     = 130,
-    TARGET_UNK_131                     = 131,
+    TARGET_DEST_SUMMONER               = 131,
     TARGET_DEST_TARGET_ALLY            = 132,
     TARGET_UNK_133                     = 133,
     TARGET_UNIT_LINE_ENEMY_134         = 134,
@@ -4799,6 +4840,36 @@ enum ChatMsg : int32
     MAX_CHAT_MSG_TYPE
 };
 
+/// 7.1.5
+enum ToastTypes
+{
+    TOAST_TYPE_ITEM = 0,
+    TOAST_TYPE_CURRENCY = 1,
+    TOAST_TYPE_MONEY = 2,
+};
+
+/// 6.0.3 19116
+enum DisplayToastMethod
+{
+    DISPLAY_TOAST_METHOD_UNK1 = 0,
+    DISPLAY_TOAST_METHOD_LOOT = 1,
+    DISPLAY_TOAST_METHOD_PET_BATTLE_LOOT = 2,
+    DISPLAY_TOAST_METHOD_CURRENCY_OR_ITEM = 3,
+    DISPLAY_TOAST_METHOD_CURRENCY_OR_GOLD = 4,
+    DISPLAY_TOAST_METHOD_LOOT_TOAST_UPGRADE_1 = 5,
+    DISPLAY_TOAST_METHOD_LOOT_TOAST_UPGRADE_2 = 6,
+    DISPLAY_TOAST_METHOD_UNK3 = 7,
+    DISPLAY_TOAST_METHOD_GARRISON_MISSION_BONUS_ROLL_LOOT_2 = 8,
+    DISPLAY_TOAST_METHOD_PVP_FACTION_LOOT_TOAST = 9,
+    DISPLAY_TOAST_METHOD_GARRISON_CACHE = 10,
+    DISPLAT_TOAST_METHOD_UNK4 = 11,
+    DISPLAT_TOAST_METHOD_UNK5 = 12,
+    DISPLAT_TOAST_METHOD_UNK6 = 13,
+    DISPLAT_TOAST_METHOD_UNK7 = 14,
+    DISPLAT_TOAST_METHOD_UNK8 = 15,
+    DISPLAT_TOAST_METHOD_TASK_LOOT = 16
+};
+
 #define GM_SILENCE_AURA 1852
 
 enum ChatFlags
@@ -4893,49 +4964,49 @@ enum SummonCategory
 
 enum class SummonTitle : int32
 {
-    None                = 0,
-    Pet                 = 1,
-    Guardian            = 2,
-    Minion              = 3,
-    Totem               = 4,
-    Companion           = 5,
-    Runeblade           = 6,
-    Construct           = 7,
-    Opponent            = 8,    // Related to phases and DK prequest line (3.3.5a)
-    Vehicle             = 9,
-    Mount               = 10,   // Oculus and Argent Tournament vehicles (3.3.5a)
-    Lightwell           = 11,
-    Butler              = 12,
-    aka                 = 13,
-    Gateway             = 14,
-    Hatred              = 15,
-    Statue              = 16,
-    Spirit              = 17,
-    WarBanner           = 18,
-    Heartwarmer         = 19,
-    HiredBy             = 20,
-    PurchasedBy         = 21,
-    Pride               = 22,
-    TwistedImage        = 23,
-    NoodleCart          = 24,
-    InnerDemon          = 25,
-    Bodyguard           = 26,
-    Name                = 27,
-    Squire              = 28,
-    Champion            = 29,
-    TheBetrayer         = 30,
-    EruptingReflection  = 31,
-    HopelessReflection  = 32,
+    None = 0,
+    Pet = 1,
+    Guardian = 2,
+    Minion = 3,
+    Totem = 4,
+    Companion = 5,
+    Runeblade = 6,
+    Construct = 7,
+    Opponent = 8,    // Related to phases and DK prequest line (3.3.5a)
+    Vehicle = 9,
+    Mount = 10,   // Oculus and Argent Tournament vehicles (3.3.5a)
+    Lightwell = 11,
+    Butler = 12,
+    aka = 13,
+    Gateway = 14,
+    Hatred = 15,
+    Statue = 16,
+    Spirit = 17,
+    WarBanner = 18,
+    Heartwarmer = 19,
+    HiredBy = 20,
+    PurchasedBy = 21,
+    Pride = 22,
+    TwistedImage = 23,
+    NoodleCart = 24,
+    InnerDemon = 25,
+    Bodyguard = 26,
+    Name = 27,
+    Squire = 28,
+    Champion = 29,
+    TheBetrayer = 30,
+    EruptingReflection = 31,
+    HopelessReflection = 32,
     MalignantReflection = 33,
-    WailingReflection   = 34,
-    Assistant           = 35,
-    Enforcer            = 36,
-    Recruit             = 37,
-    Admirer             = 38,
-    EvilTwin            = 39,
-    Greed               = 40,
-    LostMind            = 41,
-    ServantOfNZoth      = 44
+    WailingReflection = 34,
+    Assistant = 35,
+    Enforcer = 36,
+    Recruit = 37,
+    Admirer = 38,
+    EvilTwin = 39,
+    Greed = 40,
+    LostMind = 41,
+    ServantOfNZoth = 44
 };
 
 enum EventId
@@ -5127,9 +5198,12 @@ enum BattlegroundTypeId : uint32
     BATTLEGROUND_SS_VS_TM       = 789, // Southshore vs. Tarren Mill
     BATTLEGROUND_SMALL_D        = 803, // Small Battleground D
     BATTLEGROUND_BRH            = 808, // Black Rook Hold Arena
-    // 809 = "New Nagrand Arena (Legion)"
+    BATTLEGROUND_NNA            = 809, // "New Nagrand Arena (Legion)"
     BATTLEGROUND_AF             = 816, // Ashamane's Fall
-    // 844 = "New Blade's Edge Arena (Legion)"
+    BATTLEGROUND_BEG            = 844, //New Blade's Edge Arena (Legion)
+    BATTLEGROUND_MUGAMBALA      = 903, //New Arena BFA Mugambala 
+    BATTLEGROUND_HOOK_POINT     = 897,
+    BATTLEGROUND_THE_ROBODROME  = 1025,
 };
 
 #define MAX_BATTLEGROUND_TYPE_ID 845
@@ -5386,6 +5460,28 @@ enum VoidTransferError
     VOID_TRANSFER_ERROR_TRANSFER_UNKNOWN  = 9
 };
 
+enum ChallengeMode
+{
+    CHALLENGE_NOT_IN_TIMER  = 0,
+    CHALLENGE_TIMER_LEVEL_1 = 1,
+    CHALLENGE_TIMER_LEVEL_2 = 2,
+    CHALLENGE_TIMER_LEVEL_3 = 3,
+
+    GOB_CHALLENGER_DOOR = 239408,
+    GOB_CHALLENGER_DOOR_LINE235 = 239323,
+    GO_FONT_OF_POWER = 246779,
+
+    SPELL_CHALLENGER_MIGHT = 206150,
+    SPELL_CHALLENGER_BURDEN = 206151
+};
+
+enum TimerType : uint32
+{
+    WORLD_TIMER_TYPE_PVP            = 0,
+    WORLD_TIMER_TYPE_CHALLENGE_MODE = 1,
+    WORLD_TIMER_TIMER_TYPE_PROVING_GROUND = 2,
+};
+
 #define CURRENCY_PRECISION 100
 
 enum PartyResult
@@ -5429,6 +5525,14 @@ enum DiminishingLevels
     DIMINISHING_LEVEL_IMMUNE        = 3,
     DIMINISHING_LEVEL_4             = 3,
     DIMINISHING_LEVEL_TAUNT_IMMUNE  = 4
+};
+
+enum WeaponAttackType : uint8
+{
+    BASE_ATTACK   = 0,
+    OFF_ATTACK    = 1,
+    RANGED_ATTACK = 2,
+    MAX_ATTACK
 };
 
 enum TokenResult
@@ -5478,6 +5582,7 @@ enum Tutorials : uint8
 */
 
 #define MAX_ACCOUNT_TUTORIAL_VALUES 8
+#define CURRENCY_PRECISION 100
 
 enum RaidGroupReason
 {
@@ -6647,6 +6752,21 @@ enum SpecialSpells : uint32
 {
     SPELL_MERCENARY_CONTRACT_HORDE      = 193472,
     SPELL_MERCENARY_CONTRACT_ALLIANCE   = 193475,
+};
+
+enum class MountResult : uint32
+{
+    InvalidMountee = 0,
+    TooFarAway     = 1,
+    AlreadyMounted = 2,
+    NotMountable   = 3,
+    NotYourPet     = 4,
+    Other          = 5,
+    Looting        = 6,
+    RaceCantMount  = 7,
+    Shapeshifted   = 8,
+    ForcedDismount = 9,
+    Ok             = 10 // never sent
 };
 
 #endif

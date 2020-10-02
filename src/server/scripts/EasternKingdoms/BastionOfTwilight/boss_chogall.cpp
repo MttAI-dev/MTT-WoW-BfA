@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  * Copyright (C) 2008-2014 Forgotten Lands <http://www.forgottenlands.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -44,6 +44,9 @@ enum spell_c
     SPELL_SHADOW_ORDER                    = 81556,
     SPELL_EMPOWERED_SHADOW                = 81572,
     SPELL_BLAZE_AURA                      = 81536,
+    SPELL_CORRUPTION_MALFORMATION_VEHICLE = 82125,
+    SPELL_CORRUPTION_MALFORMATION_DUMMY   = 82167,
+    SPELL_CORRUPTION_ABSOLUTE_VISUAL      = 82193,
 
     // P2 - 25% PV
     SPELL_DARKENED_CREATIONS              = 82433,
@@ -61,10 +64,14 @@ enum spell_c
     SPELL_DEBILITING_BEAM                 = 82411,
 
     // Trash HM
-    SPELL_SHADOW_SHELL                    = 93311,
-    SPELL_SHADOW_POWER                    = 93301,
-    SPELL_FIRE_SHELL                      = 93276,
-    SPELL_FIRE_POWER                      = 93245,
+    SPELL_SHADOW_SHELL                     = 93311,
+    SPELL_SHADOW_POWER                     = 93301,
+    SPELL_FIRE_SHELL                       = 93276,
+    SPELL_CORRUPTION_OF_THE_OLD_GOD_VISUAL = 82356,
+    SPELL_FIRE_POWER                       = 93245,
+    SPELL_FLAME_ORDERS_SUM_4               = 87582,
+    SPELL_SHADOW_BOLT                      = 82151,
+    SPELL_SHADOW_ORDERS_SUM_4              = 87583,
 };
 
 enum Nums
@@ -86,10 +93,15 @@ enum events
     EVENT_FURY_OF_CHOGALL,
     EVENT_FLAME_ORDERS,
     EVENT_SHADOW_ORDERS,
+    EVENT_SHADOW_BOLT,
     EVENT_CORRUPTING_ADHERENT,
     EVENT_SUMMON_CORRUPTING_ADHERENT,
     EVENT_FESTER_BLOOD,
     EVENT_DARKENED_CREATIONS,
+    EVENT_DEPRAVITY,
+    EVENT_CORRUPTING_CRASH,
+    EVENT_SPILLED_BLOOD,
+    EVENT_ORDER_SUM,
 };
 
 /**************
@@ -844,19 +856,426 @@ public:
     }
 };
 
+class npc_chogall_corrupting_adherent : public CreatureScript
+{
+public:
+    npc_chogall_corrupting_adherent() : CreatureScript("npc_chogall_corrupting_adherent") { }
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_chogall_corrupting_adherentAI(creature);
+    }
+
+    struct npc_chogall_corrupting_adherentAI : public ScriptedAI
+    {
+        npc_chogall_corrupting_adherentAI(Creature* pCreature) : ScriptedAI(pCreature)
+        {
+            me->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_KNOCK_BACK, true);
+            me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_GRIP, true);
+            me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_STUN, true);
+            me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_FEAR, true);
+            me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_ROOT, true);
+            me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_FREEZE, true);
+            me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_POLYMORPH, true);
+            me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_HORROR, true);
+            me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_SAPPED, true);
+            me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_CHARM, true);
+            me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_DISORIENTED, true);
+            me->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_CONFUSE, true);
+            pInstance = pCreature->GetInstanceScript();
+        }
+
+        InstanceScript* pInstance;
+        EventMap events;
+
+        void IsSummonedBy(Unit* owner)
+        {
+            events.ScheduleEvent(EVENT_DEPRAVITY, urand(19000, 21000));
+            events.ScheduleEvent(EVENT_CORRUPTING_CRASH, urand(5000, 8000));
+        }
+
+        void Reset()
+        {
+            events.Reset();
+        }
+
+       /* void SpellHit(Unit* caster, SpellInfo const* spell)
+        {
+            if (me->GetCurrentSpell(CURRENT_GENERIC_SPELL))
+                if (me->GetCurrentSpell(CURRENT_GENERIC_SPELL)->m_spellInfo->Id == SPELL_DEPRAVITY ||
+                    me->GetCurrentSpell(CURRENT_GENERIC_SPELL)->m_spellInfo->Id == SPELL_DEPRAVITY_25 ||
+                    me->GetCurrentSpell(CURRENT_GENERIC_SPELL)->m_spellInfo->Id == SPELL_DEPRAVITY_10H ||
+                    me->GetCurrentSpell(CURRENT_GENERIC_SPELL)->m_spellInfo->Id == SPELL_DEPRAVITY_25H)
+                    for (uint8 i = 0; i < 3; ++i)
+                        if (spell->Effects[i]->Effect == SPELL_EFFECT_INTERRUPT_CAST)
+                            me->InterruptSpell(CURRENT_GENERIC_SPELL);
+        }*/
+
+        void DamageTaken(Unit* /*who*/, uint32& damage)
+        {
+            if (damage >= me->GetHealth())
+            {
+                damage = 0;
+                me->SetReactState(REACT_PASSIVE);
+                me->AttackStop();
+                events.Reset();
+                me->AddUnitFlag(UnitFlags(UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE));
+                me->SetStandState(UNIT_STAND_STATE_DEAD);
+                me->SetHealth(me->GetMaxHealth());
+                me->RemoveAllAuras();
+                events.ScheduleEvent(EVENT_SPILLED_BLOOD, 2000);
+            }
+        }
+
+        void JustSummoned(Creature* summon)
+        {
+            DoZoneInCombat(summon);
+        }
+
+        void UpdateAI(uint32 diff)
+        {
+            if (!UpdateVictim())
+                return;
+
+            events.Update(diff);
+
+            if (me->HasUnitState(UNIT_STATE_CASTING))
+                return;
+
+            while (uint32 eventId = events.ExecuteEvent())
+            {
+                switch (eventId)
+                {
+                case EVENT_SPILLED_BLOOD:
+                    DoCast(me, SPELL_SPILLED_BLOOD_OF_THE_OLD_GOD);
+                    break;
+                case EVENT_DEPRAVITY:
+                    DoCast(me, SPELL_DEPRAVITY);
+                    events.ScheduleEvent(EVENT_DEPRAVITY, urand(12000, 13000));
+                    break;
+                case EVENT_CORRUPTING_CRASH:
+                    Unit* pTarget = CheckPlayersInRange(RAID_MODE<uint8>(4, 8), 20.0f, 50.0f);
+                    if (!pTarget)
+                        pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 0.0f, true);
+                    DoCast(pTarget, SPELL_CORRUPTING_CRASH);
+                    events.ScheduleEvent(EVENT_CORRUPTING_CRASH, urand(12000, 15000));
+                    break;
+                }
+            }
+            DoMeleeAttackIfReady();
+        }
+    private:
+        Unit* CheckPlayersInRange(uint8 playersMin, float rangeMin, float rangeMax)
+        {
+            Map* map = me->GetMap();
+            if (map && map->IsDungeon())
+            {
+                std::list<Player*> PlayerList;
+                Map::PlayerList const& Players = map->GetPlayers();
+                for (Map::PlayerList::const_iterator itr = Players.begin(); itr != Players.end(); ++itr)
+                {
+                    if (Player* player = itr->GetSource())
+                    {
+                        float distance = player->GetDistance(me->GetPositionX(), me->GetPositionY(), me->GetPositionZ());
+                        if (rangeMin > distance || distance > rangeMax)
+                            continue;
+                        PlayerList.push_back(player);
+                    }
+                }
+
+                if (PlayerList.empty())
+                    return NULL;
+
+                size_t size = PlayerList.size();
+                if (size < playersMin)
+                    return NULL;
+
+               // return SelectRandomContainerElement(PlayerList);
+            }
+            return NULL;
+        }
+    };
+};
+
+class npc_chogall_corruption : public CreatureScript
+{
+public:
+    npc_chogall_corruption() : CreatureScript("npc_chogall_corruption") { }
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_chogall_corruptionAI(creature);
+    }
+
+    struct npc_chogall_corruptionAI : public Scripted_NoMovementAI
+    {
+        npc_chogall_corruptionAI(Creature* pCreature) : Scripted_NoMovementAI(pCreature)
+        {
+            me->AddUnitFlag(UnitFlags(UNIT_FLAG_NON_ATTACKABLE));
+            me->AddUnitFlag(UnitFlags(UNIT_FLAG_NOT_SELECTABLE));
+            me->SetReactState(REACT_PASSIVE);
+        }
+
+        void IsSummonedBy(Unit* owner)
+        {
+            DoCast(me, SPELL_CORRUPTION_OF_THE_OLD_GOD_VISUAL);
+        }
+
+        void Reset()
+        {
+        }
+
+        void JustDied(Unit* killer)
+        {
+        }
+
+        void UpdateAI(uint32 diff)
+        {
+        }
+    };
+};
+
+class npc_chogall_fire_portal : public CreatureScript
+{
+public:
+    npc_chogall_fire_portal() : CreatureScript("npc_chogall_fire_portal") { }
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_chogall_fire_portalAI(creature);
+    }
+
+    struct npc_chogall_fire_portalAI : public Scripted_NoMovementAI
+    {
+        npc_chogall_fire_portalAI(Creature* pCreature) : Scripted_NoMovementAI(pCreature)
+        {
+            me->AddUnitFlag(UnitFlags(UNIT_FLAG_NON_ATTACKABLE));
+            me->AddUnitFlag(UnitFlags(UNIT_FLAG_NOT_SELECTABLE));
+            me->SetReactState(REACT_PASSIVE);
+        }
+
+        EventMap events;
+
+        void IsSummonedBy(Unit* owner)
+        {
+            events.RescheduleEvent(EVENT_ORDER_SUM, 3000);
+        }
+
+        void Reset()
+        {
+        }
+
+        void UpdateAI(uint32 diff)
+        {
+            events.Update(diff);
+
+            if (me->HasUnitState(UNIT_STATE_CASTING))
+                return;
+
+            if (uint32 eventId = events.ExecuteEvent())
+            {
+                switch (eventId)
+                {
+                case EVENT_ORDER_SUM:
+                    DoCast(me, SPELL_FLAME_ORDERS_SUM_4);
+                    break;
+                }
+            }
+        }
+
+    };
+};
+
+class npc_chogall_blood_of_the_old_god : public CreatureScript
+{
+public:
+    npc_chogall_blood_of_the_old_god() : CreatureScript("npc_chogall_blood_of_the_old_god") { }
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_chogall_blood_of_the_old_godAI(creature);
+    }
+
+    struct npc_chogall_blood_of_the_old_godAI : public ScriptedAI
+    {
+        npc_chogall_blood_of_the_old_godAI(Creature* pCreature) : ScriptedAI(pCreature)
+        {
+            me->SetSpeed(MOVE_RUN, 0.5f);
+            me->SetSpeed(MOVE_WALK, 0.5f);
+            instance = pCreature->GetInstanceScript();
+        }
+
+        InstanceScript* instance;
+
+        void IsSummonedBy(Unit* owner)
+        {
+        }
+
+        void Reset()
+        {
+        }
+
+
+        void UpdateAI(uint32 diff)
+        {
+            if (instance && instance->GetBossState(DATA_CHOGALL) != IN_PROGRESS)
+                me->DespawnOrUnsummon();
+
+            if (!UpdateVictim())
+                return;
+
+            DoMeleeAttackIfReady();
+        }
+    };
+};
+
+class npc_chogall_malformation : public CreatureScript
+{
+public:
+    npc_chogall_malformation() : CreatureScript("npc_chogall_malformation") { }
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_chogall_malformationAI(creature);
+    }
+
+    struct npc_chogall_malformationAI : public Scripted_NoMovementAI
+    {
+        npc_chogall_malformationAI(Creature* pCreature) : Scripted_NoMovementAI(pCreature)
+        {
+            me->AddUnitFlag(UnitFlags(UNIT_FLAG_NON_ATTACKABLE));
+            me->AddUnitFlag(UnitFlags(UNIT_FLAG_NOT_SELECTABLE));
+            instance = pCreature->GetInstanceScript();
+        }
+
+        InstanceScript* instance;
+        EventMap events;
+
+        void IsSummonedBy(Unit* owner)
+        {
+            DoZoneInCombat(me);
+            events.RescheduleEvent(EVENT_SHADOW_BOLT, 2000);
+        }
+
+        void Reset()
+        {
+        }
+
+        void JustDied(Unit* killer)
+        {
+            me->DespawnOrUnsummon();
+        }
+
+        void UpdateAI(uint32 diff)
+        {
+            if (instance && instance->GetBossState(DATA_CHOGALL) != IN_PROGRESS)
+            {
+                if (Unit* pPlayer = me->GetVehicleBase())
+                {
+                    pPlayer->RemoveAurasDueToSpell(SPELL_CORRUPTION_ACCELERATED);
+                    pPlayer->RemoveAurasDueToSpell(SPELL_CORRUPTION_SICKNESS);
+                    pPlayer->RemoveAurasDueToSpell(SPELL_CORRUPTION_MALFORMATION_VEHICLE);
+                    pPlayer->RemoveAurasDueToSpell(SPELL_CORRUPTION_MALFORMATION_DUMMY);
+                    pPlayer->RemoveAurasDueToSpell(SPELL_CORRUPTION_ABSOLUTE);
+                    pPlayer->RemoveAurasDueToSpell(SPELL_CORRUPTION_ABSOLUTE_VISUAL);
+                }
+                me->DespawnOrUnsummon();
+            }
+
+            if (!UpdateVictim())
+                return;
+
+            events.Update(diff);
+
+            if (me->HasUnitState(UNIT_STATE_CASTING))
+                return;
+
+            if (uint32 eventId = events.ExecuteEvent())
+            {
+                switch (eventId)
+                {
+                case EVENT_SHADOW_BOLT:
+                    me->CastCustomSpell(SPELL_SHADOW_BOLT, SPELLVALUE_MAX_TARGETS, 1, 0, false);
+                    events.RescheduleEvent(EVENT_SHADOW_BOLT, 10000);
+                    break;
+                }
+            }
+        }
+    };
+};
+
+class npc_chogall_shadow_portal : public CreatureScript
+{
+public:
+    npc_chogall_shadow_portal() : CreatureScript("npc_chogall_shadow_portal") { }
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_chogall_shadow_portalAI(creature);
+    }
+
+    struct npc_chogall_shadow_portalAI : public Scripted_NoMovementAI
+    {
+        npc_chogall_shadow_portalAI(Creature* pCreature) : Scripted_NoMovementAI(pCreature)
+        {
+            me->AddUnitFlag(UnitFlags(UNIT_FLAG_NON_ATTACKABLE));
+            me->AddUnitFlag(UnitFlags(UNIT_FLAG_NOT_SELECTABLE));
+            me->SetReactState(REACT_PASSIVE);
+        }
+
+        EventMap events;
+
+        void IsSummonedBy(Unit* owner)
+        {
+            events.RescheduleEvent(EVENT_ORDER_SUM, 3000);
+        }
+
+        void Reset()
+        {
+        }
+
+        void JustDied(Unit* killer)
+        {
+        }
+
+        void UpdateAI(uint32 diff)
+        {
+            events.Update(diff);
+
+            if (me->HasUnitState(UNIT_STATE_CASTING))
+                return;
+
+            if (uint32 eventId = events.ExecuteEvent())
+            {
+                switch (eventId)
+                {
+                case EVENT_ORDER_SUM:
+                    DoCast(me, SPELL_SHADOW_ORDERS_SUM_4);
+                    break;
+                }
+            }
+        }
+    };
+};
+
 void AddSC_boss_chogall()
 {
     new boss_chogall();
+    new npc_chogall_fire_portal();
     new npc_spilled_blood();
+    new npc_darkened_creation();
+    new npc_spiked_tentacle();
+    new npc_chogall_corruption();
+    new npc_chogall_shadow_portal();
+    new npc_chogall_malformation();
+    new npc_chogall_blood_of_the_old_god();
     new spell_whorshipping();
     new spell_depravity();
     new spell_sprayed_corruption();
     new spell_spilled_blood_of_the_old_god();
     new spell_corrupting_crash();
     new spell_corruption_of_the_old_god();
-    new npc_darkened_creation();
     new spell_debilitating_beam();
     new spell_corruption_accelerated();
-    new spell_corruption_sickness();
-    new npc_spiked_tentacle();
+    new spell_corruption_sickness();   
 }

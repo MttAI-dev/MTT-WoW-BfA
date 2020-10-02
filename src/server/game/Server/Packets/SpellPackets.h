@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -998,6 +998,28 @@ namespace WorldPackets
 
             uint32 TeleportSpellID;
             uint32 LoadingScreenID;
+        };
+
+        class MountResult final : public ServerPacket
+        {
+        public:
+            MountResult() : ServerPacket(SMSG_MOUNT_RESULT, 4) { }
+
+            WorldPacket const* Write() override;
+
+            uint32 Result = 0;
+        };
+
+        class UpdateSpellVisual final : public ClientPacket
+        {
+        public:
+            UpdateSpellVisual(WorldPacket&& packet) : ClientPacket(CMSG_UPDATE_SPELL_VISUAL, std::move(packet)) { }
+
+            void Read() override;
+
+            int32 SpellID = 0;
+            int32 SpellXSpellVisualId = 0;
+            ObjectGuid TargetGUID;
         };
     }
 }

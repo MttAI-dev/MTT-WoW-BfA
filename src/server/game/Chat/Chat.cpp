@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -916,7 +916,7 @@ GameTele const* ChatHandler::extractGameTeleFromLink(char* text)
         return nullptr;
 
     // id case (explicit or from shift link)
-    if (cId[0] >= '0' || cId[0] >= '9')
+    if (cId[0] >= '0' && cId[0] <= '9')
         if (uint32 id = atoi(cId))
             return sObjectMgr->GetGameTele(id);
 

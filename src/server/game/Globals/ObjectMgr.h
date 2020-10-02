@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -644,7 +644,7 @@ struct RepRewardRate
     float spellRate;
 };
 
-struct ReputationOnKillEntry
+struct RewardOnKillEntry
 {
     uint32 RepFaction1;
     uint32 RepFaction2;
@@ -655,6 +655,12 @@ struct ReputationOnKillEntry
     bool IsTeamAward1;
     bool IsTeamAward2;
     bool TeamDependent;
+    uint32 CurrencyId1;
+    uint32 CurrencyId2;
+    uint32 CurrencyId3;
+    int32 CurrencyCount1;
+    int32 CurrencyCount2;
+    int32 CurrencyCount3;
 };
 
 struct RepSpilloverTemplate
@@ -924,6 +930,16 @@ struct DungeonEncounter
 typedef std::list<DungeonEncounter const*> DungeonEncounterList;
 typedef std::unordered_map<uint64, DungeonEncounterList> DungeonEncounterContainer;
 
+struct DungeonCreditEncounter
+{
+    DungeonCreditEncounter(uint32 _dbcEntry, uint32 _creditEntry)
+        : dbcEntry(_dbcEntry), creditEntry(_creditEntry) { }
+    uint32 dbcEntry;
+    uint32 creditEntry;
+};
+
+typedef std::unordered_map<uint32, DungeonCreditEncounter*> DungeonCreditEncounterMap;
+
 struct TerrainSwapInfo
 {
     uint32 Id;
@@ -1018,7 +1034,7 @@ class TC_GAME_API ObjectMgr
         typedef std::unordered_map<uint64, AccessRequirement*> AccessRequirementContainer;
 
         typedef std::unordered_map<uint32, RepRewardRate > RepRewardRateContainer;
-        typedef std::unordered_map<uint32, ReputationOnKillEntry> RepOnKillContainer;
+        typedef std::unordered_map<uint32, RewardOnKillEntry> RewOnKillContainer;
         typedef std::unordered_map<uint32, RepSpilloverTemplate> RepSpilloverTemplateContainer;
 
         typedef std::unordered_map<uint32, PointOfInterest> PointOfInterestContainer;
@@ -1149,10 +1165,10 @@ class TC_GAME_API ObjectMgr
             return nullptr;
         }
 
-        ReputationOnKillEntry const* GetReputationOnKilEntry(uint32 id) const
+        RewardOnKillEntry const* GetRewardOnKillEntry(uint32 id) const
         {
-            RepOnKillContainer::const_iterator itr = _repOnKillStore.find(id);
-            if (itr != _repOnKillStore.end())
+            RewOnKillContainer::const_iterator itr = _rewOnKillStore.find(id);
+            if (itr != _rewOnKillStore.end())
                 return &itr->second;
             return nullptr;
         }
@@ -1293,6 +1309,7 @@ class TC_GAME_API ObjectMgr
         void LoadPointOfInterestLocales();
         void LoadInstanceTemplate();
         void LoadInstanceEncounters();
+        uint32 GetDungeonEncounterID(uint32 creatureEntry);
         void LoadMailLevelRewards();
         void LoadVehicleTemplateAccessories();
         void LoadVehicleAccessories();
@@ -1318,7 +1335,7 @@ class TC_GAME_API ObjectMgr
         void LoadSkillTiers();
 
         void LoadReputationRewardRate();
-        void LoadReputationOnKill();
+        void LoadRewardOnKill();
         void LoadReputationSpilloverTemplate();
 
         void LoadPointsOfInterest();
@@ -1358,12 +1375,8 @@ class TC_GAME_API ObjectMgr
 
         void LoadInstanceDifficultyMultiplier();
 
-        std::set<uint32> GetItemBonusTree(uint32 ItemID, ItemContext itemContext, uint32 ownerLevel, int32 levelBonus, int32 needLevel);
-        std::set<uint32> GetItemBonusForLevel(uint32 itemID, ItemContext itemContext, int32 needLevel);
-        uint32 GetItemBonusLevel(uint32 ItemID, uint32 ownerLevel, uint8& quality, std::set<uint32>& bonusListIDs);
-
         void InitializeQueriesData(QueryDataGroup mask);
-
+        
 
         std::string GeneratePetName(uint32 entry);
         uint32 GetBaseXP(uint8 level);
@@ -1391,8 +1404,7 @@ class TC_GAME_API ObjectMgr
         template<HighGuid type>
         inline ObjectGuidGeneratorBase& GetGenerator()
         {
-            static_assert(ObjectGuidTraits<type>::SequenceSource.HasFlag(ObjectGuidSequenceSource::Global)
-                || ObjectGuidTraits<type>::SequenceSource.HasFlag(ObjectGuidSequenceSource::Realm),
+            static_assert(ObjectGuidTraits<type>::SequenceSource.HasFlag(ObjectGuidSequenceSource::Global | ObjectGuidSequenceSource::Realm),
                 "Only global guid can be generated in ObjectMgr context");
             return GetGuidSequenceGenerator<type>();
         }
@@ -1404,6 +1416,7 @@ class TC_GAME_API ObjectMgr
         uint64 GenerateVoidStorageItemId();
         uint64 GenerateCreatureSpawnId();
         uint64 GenerateGameObjectSpawnId();
+        uint64 ScenarioGuidId();
 
         typedef std::multimap<int32, uint32> ExclusiveQuestGroups;
         typedef std::pair<ExclusiveQuestGroups::const_iterator, ExclusiveQuestGroups::const_iterator> ExclusiveQuestGroupsBounds;
@@ -1717,14 +1730,15 @@ class TC_GAME_API ObjectMgr
         uint64 _voidItemId;
         uint64 _creatureSpawnId;
         uint64 _gameObjectSpawnId;
-
+        uint64 _scenarioGuidId;
+        
         // first free low guid for selected guid type
         template<HighGuid high>
         inline ObjectGuidGeneratorBase& GetGuidSequenceGenerator()
         {
             auto itr = _guidGenerators.find(high);
             if (itr == _guidGenerators.end())
-                itr = _guidGenerators.insert(std::make_pair(high, Trinity::make_unique<ObjectGuidGenerator<high>>())).first;
+                itr = _guidGenerators.insert(std::make_pair(high, std::make_unique<ObjectGuidGenerator<high>>())).first;
 
             return *itr->second;
         }
@@ -1749,10 +1763,11 @@ class TC_GAME_API ObjectMgr
         AreaTriggerScriptContainer _areaTriggerScriptStore;
         AccessRequirementContainer _accessRequirementStore;
         DungeonEncounterContainer _dungeonEncounterStore;
+        DungeonCreditEncounterMap _DungeonCreditEncounters;
         std::unordered_map<uint32, WorldSafeLocsEntry> _worldSafeLocs;
 
         RepRewardRateContainer _repRewardRateStore;
-        RepOnKillContainer _repOnKillStore;
+        RewOnKillContainer _rewOnKillStore;
         RepSpilloverTemplateContainer _repSpilloverTemplateStore;
 
         GossipMenusContainer _gossipMenusStore;

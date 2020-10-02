@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -49,13 +49,15 @@ void EventMap::ScheduleEvent(uint32 eventId, Milliseconds const& minTime, Millis
 
 void EventMap::ScheduleEvent(uint32 eventId, uint32 time, uint16 group /*= 0*/, uint16 phase /*= 0*/)
 {
+    uint64 eventValue = eventId;
+
     if (group && group < 16)
-        eventId |= (1LL << (group + 31));
+        eventValue |= (1LL << (group + 31));
 
     if (phase && phase < 16)
-        eventId |= (1LL << (phase + 47));
+        eventValue |= (1LL << (phase + 47));
 
-    _eventMap.insert(EventStore::value_type(_time + time, eventId));
+    _eventMap.insert(EventStore::value_type(_time + time, eventValue));
 }
 
 void EventMap::RescheduleEvent(uint32 eventId, Milliseconds const& minTime, Milliseconds const& maxTime, uint16 group /*= 0*/, uint16 phase /*= 0*/)
@@ -164,6 +166,31 @@ void EventMap::CancelEventGroup(uint16 group)
             ++itr;
     }
 }
+
+void EventMap::PauseEvent(uint32 eventId)
+    {
+    for (EventStore::iterator itr = _eventMap.begin(); itr != _eventMap.end();)
+            //for (const_iterator itr = begin(); itr != end(); ++itr)
+        {
+        if (eventId == (itr->second & 0x0000FFFF))
+             {
+            _pausedEvents[eventId] = itr->first - GetTimer();
+            itr = _eventMap.erase(itr);
+                        //itr = erase(itr);
+                return;
+            }
+         }
+     }
+
+void EventMap::ContinueEvent(uint32 eventId)
+ {
+    std::map<uint32 /*eventId*/, uint32 /*timeLeft*/>::iterator itr = _pausedEvents.find(eventId);
+    if (itr == _pausedEvents.end())
+         return;
+    
+        RescheduleEvent(eventId, itr->second);
+    _pausedEvents.erase(itr);
+    }
 
 uint32 EventMap::GetNextEventTime(uint32 eventId) const
 {

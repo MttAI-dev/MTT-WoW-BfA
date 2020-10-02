@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  * Copyright (C) 2010-2011 Trinity <http://www.projecttrinity.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -74,7 +74,7 @@ public:
                 uiEncounter[i] = NOT_STARTED;
         }
 
-        bool IsEncounterInProgress() const override
+        bool IsEncounterInProgress() const override 
         {
             for (uint8 i=0; i < ENCOUNTERS; ++i)
             {
@@ -256,7 +256,7 @@ public:
                SaveToDB();
         }
 
-        uint32 GetData(uint32 type) const override
+        uint32 GetData(uint32 type) const override 
         {
             switch (type)
             {

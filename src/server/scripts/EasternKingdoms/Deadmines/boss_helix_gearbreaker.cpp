@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -217,11 +217,13 @@ public:
                 switch (eventId)
                 {
                     case EVENT_THROW_BOMB:
+                        me->RemoveUnitFlag(UNIT_FLAG_NOT_SELECTABLE);
                         if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 150, true))
                             me->CastSpell(target, SPELL_THROW_BOMB, TRIGGERED_IGNORE_CASTER_MOUNTED_OR_ON_VEHICLE);
                         events.ScheduleEvent(EVENT_THROW_BOMB, 3000);
                         break;
                     case EVENT_CHEST_BOMB:
+                        me->RemoveUnitFlag(UNIT_FLAG_NOT_SELECTABLE);
                         if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 150, true))
                         {
                             me->TextEmote(CHEST_BOMB, target, true);

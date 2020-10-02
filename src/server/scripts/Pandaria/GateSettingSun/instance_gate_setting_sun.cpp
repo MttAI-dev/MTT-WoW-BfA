@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2016 Firestorm Servers <https://firestorm-servers.com>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -323,12 +322,16 @@ public:
                     if (GetBossState(DATA_GADOK) != DONE)
                         return;
 
-                    DoOnPlayers([](Player* player)
+                    Map::PlayerList const &PlayerList = instance->GetPlayers();
+                    for (Map::PlayerList::const_iterator it = PlayerList.begin(); it != PlayerList.end(); ++it)
                     {
-                        player->SendCinematicStart(CINEMATIC_SETTING_SUN);
-                        PhasingHandler::AddPhase(player, 50);
-                        player->NearTeleportTo(1370.0f, 2283.6f, 402.328f, 2.70f);
-                    });
+                        if (Player* player = it->GetSource())
+                        {
+                            player->SendCinematicStart(CINEMATIC_SETTING_SUN);
+                            PhasingHandler::AddPhase(player, 50);
+                            player->NearTeleportTo(1370.0f, 2283.6f, 402.328f, 2.70f);
+                        }
+                    }
 
                     cinematicTimer = 100;
                     dataStorage[type] = data;

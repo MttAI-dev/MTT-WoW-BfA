@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,6 +22,15 @@ WorldPacket const* WorldPackets::Garrison::GarrisonCreateResult::Write()
 {
     _worldPacket << uint32(Result);
     _worldPacket << uint32(GarrSiteLevelID);
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Garrison::CreateShipmentResponse::Write()
+{
+    _worldPacket << ShipmentID;
+    _worldPacket << ShipmentRecID;
+    _worldPacket << Result;
 
     return &_worldPacket;
 }
@@ -246,6 +255,11 @@ void WorldPackets::Garrison::GarrisonPurchaseBuilding::Read()
     _worldPacket >> NpcGUID;
     _worldPacket >> PlotInstanceID;
     _worldPacket >> BuildingID;
+}
+
+void WorldPackets::Garrison::CreateShipment::Read()
+{
+    _worldPacket >> NpcGUID >> Count;
 }
 
 WorldPacket const* WorldPackets::Garrison::GarrisonPlaceBuildingResult::Write()
@@ -525,6 +539,119 @@ WorldPacket const* WorldPackets::Garrison::GarrisonFollowerChangeXP::Write()
     _worldPacket << Unk;
     _worldPacket << OldFollower;
     _worldPacket << NewFollower;
+
+    return &_worldPacket;
+}
+
+void WorldPackets::Garrison::GarrisonGenerateRecruits::Read()
+{
+    _worldPacket >> NpcGUID;
+    _worldPacket >> TraitID;
+    _worldPacket >> AbiltyID;
+}
+
+WorldPacket const* WorldPackets::Garrison::GarrisonOpenTalentNpc::Write()
+{
+    _worldPacket << NpcGUID;
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Garrison::GarrisonOpenRecruitmentNpc::Write()
+{
+    _worldPacket << NpcGUID;
+    _worldPacket << Unk1;
+    //_worldPacket << Unk2;
+    //_worldPacket << Unk3;
+    if (followers.empty())
+    {
+        for (uint8 l_Itr = 0; l_Itr < 3; ++l_Itr)
+        {
+            GarrisonFollower follower;
+            InsertGarrisonFollower(_worldPacket, follower);
+        }
+    }
+    else
+    {
+        for (GarrisonFollower follower : followers)
+        {
+            InsertGarrisonFollower(_worldPacket, follower);
+        }
+    }
+    _worldPacket << CanRecruitFollower;
+    _worldPacket << Unk4;
+    return &_worldPacket;
+}
+
+void WorldPackets::Garrison::GarrisonRecruitsFollower::Read()
+{
+    _worldPacket >> NpcGUID;
+    _worldPacket >> FollowerID;
+}
+
+WorldPacket const* WorldPackets::Garrison::GarrisonRecruitFollowerResult::Write()
+{
+    _worldPacket << resultID;
+
+    if (followers.empty())
+    {
+        for (uint8 l_Itr = 0; l_Itr < 3; ++l_Itr)
+        {
+            GarrisonFollower follower;
+            InsertGarrisonFollower(_worldPacket, follower);
+        }
+    }
+    else
+    {
+        for (GarrisonFollower follower : followers)
+        {
+            InsertGarrisonFollower(_worldPacket, follower);
+        }
+    }
+
+    return &_worldPacket;
+}
+
+WorldPacket WorldPackets::Garrison::InsertGarrisonFollower(WorldPacket& worldPacket, WorldPackets::Garrison::GarrisonFollower follower)
+{
+    worldPacket << follower.DbID;
+    worldPacket << follower.GarrFollowerID;
+    worldPacket << follower.Quality;
+    worldPacket << follower.FollowerLevel;
+    worldPacket << follower.ItemLevelWeapon;
+    worldPacket << follower.ItemLevelArmor;
+    worldPacket << follower.Xp;
+    worldPacket << follower.Durability;
+    worldPacket << follower.CurrentBuildingID;
+
+    worldPacket << follower.CurrentMissionID;
+    worldPacket << uint32(follower.AbilityID.size());
+    worldPacket << follower.ZoneSupportSpellID;
+    worldPacket << follower.FollowerStatus;
+
+    for (auto it = follower.AbilityID.begin(); it != follower.AbilityID.end(); it++)
+        worldPacket << int32(((const GarrAbilityEntry*)*it)->ID);
+
+    worldPacket << follower.CustomName;
+    return worldPacket;
+}
+
+void WorldPackets::Garrison::GarrisonSetFollowerInactive::Read()
+{
+    _worldPacket >> followerDBID;
+    desActivate = _worldPacket.ReadBit();
+}
+
+WorldPacket const* WorldPackets::Garrison::GarrisonFollowerChangedStatus::Write()
+{
+    _worldPacket << resultID;
+
+    if (!followers.empty())
+    {
+        for (GarrisonFollower follower : followers)
+        {
+            InsertGarrisonFollower(_worldPacket, follower);
+        }
+    }
 
     return &_worldPacket;
 }

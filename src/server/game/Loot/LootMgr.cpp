@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,6 +26,7 @@
 #include "ObjectMgr.h"
 #include "Player.h"
 #include "Random.h"
+#include "ChallengeModeMgr.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "World.h"
@@ -316,7 +317,7 @@ bool LootStoreItem::IsValid(LootStore const& store, uint32 entry) const
             ItemTemplate const* proto = sObjectMgr->GetItemTemplate(itemid);
             if (!proto)
             {
-                TC_LOG_ERROR("sql.sql", "Table '%s' Entry %d Item %d: item entry not listed in `item_template` - skipped", store.GetName(), entry, itemid);
+                TC_LOG_ERROR("sql.sql", "Table '%s' Entry %d Item %d: item does not exist - skipped", store.GetName(), entry, itemid);
                 return false;
             }
         }
@@ -1219,4 +1220,300 @@ void LoadLootTables()
     LoadLootTemplates_Spell();
 
     LoadLootTemplates_Reference();
+}
+
+//void LootTemplate::ProcessOploteChest(Loot& loot) const
+//{
+//    Player const* lootOwner = loot.GetLootOwner();
+//    LootStoreItemList ItemPossibleDrops;
+//    LootStoreItemList OtherPossibleDrops;
+//
+//    LootStoreItemList tempDrops = Entries;
+//    for (LootGroups::const_iterator i = AutoGroups.begin(); i != AutoGroups.end(); ++i)
+//    {
+//        std::copy(i->ExplicitlyChanced.begin(), i->ExplicitlyChanced.end(), std::back_inserter(tempDrops));
+//        std::copy(i->EqualChanced.begin(), i->EqualChanced.end(), std::back_inserter(tempDrops));
+//    }
+//
+//    loot.AddLegendaryItemToDrop(); //Generate Loot Legendary Item
+//
+//    // Rolling non-grouped items
+//    for (LootStoreItemList::const_iterator i = tempDrops.begin(); i != tempDrops.end(); ++i)
+//    {
+//        bool _delete = false;
+//        if(i->needs_quest) //Don`t add quest item
+//        {
+//            OtherPossibleDrops.push_back(*i);
+//            _delete = true;
+//        }
+//
+//        if (!CheckItemCondition(lootOwner, i->itemid, i->type))
+//            _delete = true;
+//
+//        if (i->type == LOOT_ITEM_TYPE_ITEM)
+//        {
+//            if (ItemTemplate const* _proto = sObjectMgr->GetItemTemplate(i->itemid))
+//            {
+//                if(!lootOwner->CanGetItemForLoot(_proto, loot._specCheck))
+//                    _delete = true;
+//
+//                if(_proto->GetId() == 138019)
+//                    _delete = true;
+//
+//                if (!_delete && (_proto->IsOtherDrops() || _proto->IsRecipe()))
+//                {
+//                    _delete = true;
+//                    if (_proto->GetItemNameDescriptionID() != 13219) // Only CA delete from loot
+//                        OtherPossibleDrops.push_back(*i);
+//                }
+//            }
+//            else
+//                _delete = true;
+//        }
+//
+//        if (i->type == LOOT_ITEM_TYPE_CURRENCY)
+//        {
+//            OtherPossibleDrops.push_back(*i);
+//            _delete = true;
+//        }
+//
+//        if (i->mincountOrRef < 0 && i->type == LOOT_ITEM_TYPE_ITEM)              // References processing
+//            _delete = true;
+//
+//        if (!_delete)
+//            ItemPossibleDrops.push_back(*i);
+//    }
+//
+//    if (!ItemPossibleDrops.empty()) // If nothing selected yet - an item is taken from equal-chanced part
+//    {
+//        LootStoreItemList::iterator itr = ItemPossibleDrops.begin();
+//        std::advance(itr, irand(0, ItemPossibleDrops.size()-1));
+//        LootStoreItem* item = &*itr;
+//        loot.AddItem(*item);
+//    }
+//
+//    uint32 addCA = sChallengeModeMgr->GetCAForOplote(loot._challengeLevel);
+//    if (addCA)
+//    {
+//        LootStoreItem item = LootStoreItem(addCA, LOOT_ITEM_TYPE_ITEM, 0.0f, 0, 0, 1, 1);
+//        loot.AddItem(item);
+//    }
+//
+//    uint32 countBigCA = 0;
+//    uint32 addBigCA = sChallengeModeMgr->GetBigCAForOplote(loot._challengeLevel, countBigCA);
+//    if (addBigCA)
+//    {
+//        LootStoreItem item = LootStoreItem(addBigCA, LOOT_ITEM_TYPE_ITEM, 0.0f, 0, 0, countBigCA, countBigCA);
+//        loot.AddItem(item);
+//    }
+//
+//    LootStoreItem item = LootStoreItem(sWorld->getIntConfig(CONFIG_CHALLENGE_ADD_ITEM), (LootItemType)sWorld->getIntConfig(CONFIG_CHALLENGE_ADD_ITEM_TYPE), 0.0f, 0, 0, sWorld->getIntConfig//(CONFIG_CHALLENGE_ADD_ITEM_COUNT), sWorld->getIntConfig(CONFIG_CHALLENGE_ADD_ITEM_COUNT));
+//    loot.AddItem(item);
+//
+//    for (LootStoreItemList::const_iterator i = OtherPossibleDrops.begin(); i != OtherPossibleDrops.end(); ++i)
+//    {
+//        if (!loot.AllowedForPlayer(lootOwner, i->itemid, i->type, i->needs_quest))
+//            continue;
+//
+//        if (!i->Roll(false))
+//            continue;
+//
+//        loot.AddItem(*i);
+//    }
+//
+//    if (loot._challengeLevel > 2) // Prevent bug with 1 level key Oo
+//    {
+//        const_cast<Player*>(lootOwner)->m_challengeKeyInfo.Level = loot._challengeLevel - 1;
+//        loot.AddItem(LootStoreItem(158923, LOOT_ITEM_TYPE_ITEM, 0.0f, 0, 0, 1, 1));
+//    }
+//}
+//
+//void LootTemplate::ProcessChallengeChest(Loot& loot, uint32 lootId, ChallengeModeMgr* _challenge) const
+//{
+//    // TC_LOG_DEBUG(LOG_FILTER_LOOT, "ProcessChallengeChest Entries %u AutoGroups %u PersonalGroups %u", Entries.size(), AutoGroups.size(), PersonalGroups.size());
+//
+//    Player const* lootOwner = loot.GetLootOwner();
+//    LootStoreItemList ItemPossibleDrops;
+//    LootStoreItemList OtherPossibleDrops;
+//
+//    loot.AddLegendaryItemToDrop(); //Generate Loot Legendary Item
+//
+//    // Rolling non-grouped items
+//    for (LootStoreItemList::const_iterator i = Entries.begin(); i != Entries.end(); ++i)
+//    {
+//        bool _delete = false;
+//        if (i->needs_quest) //Don`t add quest item
+//        {
+//            OtherPossibleDrops.push_back(*i);
+//            _delete = true;
+//        }
+//
+//        if (!CheckItemCondition(lootOwner, i->itemid, i->type))
+//            _delete = true;
+//
+//        if (i->type == LOOT_ITEM_TYPE_ITEM)
+//        {
+//            if (ItemTemplate const* _proto = sObjectMgr->GetItemTemplate(i->itemid))
+//            {
+//                if (!lootOwner->CanGetItemForLoot(_proto, loot._specCheck))
+//                    _delete = true;
+//
+//                if (!_delete && (_proto->IsOtherDrops() || _proto->IsRecipe()))
+//                {
+//                    _delete = true;
+//                    if (_proto->GetItemNameDescriptionID() != 13219) // Only CA delete from loot
+//                        OtherPossibleDrops.push_back(*i);
+//                }
+//            }
+//            else
+//                _delete = true;
+//        }
+//        if (i->type == LOOT_ITEM_TYPE_CURRENCY)
+//        {
+//            OtherPossibleDrops.push_back(*i);
+//            _delete = true;
+//        }
+//
+//        if (i->mincountOrRef < 0 && i->type == LOOT_ITEM_TYPE_ITEM)              // References processing
+//            _delete = true;
+//
+//        if (!_delete)
+//            ItemPossibleDrops.push_back(*i);
+//    }
+//
+//    // TC_LOG_DEBUG(LOG_FILTER_LOOT, "ProcessChallengeChest ItemPossibleDrops %i", ItemPossibleDrops.size());
+//
+//    if (!ItemPossibleDrops.empty()) // If nothing selected yet - an item is taken from equal-chanced part
+//    {
+//        uint32 allItemCount = _challenge->GetItemCount(lootOwner->GetGUID());
+//        Trinity::Containers::RandomResize(ItemPossibleDrops, _challenge->GetItemCount(lootOwner->GetGUID()));
+//
+//        for (auto const& item : ItemPossibleDrops)
+//        {
+//            loot.AddItem(item);
+//          // sLog->outWarden("Player %s on map %u looted item %u from: challenge chest (Level %u, LevelBonus %u, ChallengeFinishTime %u) allItemCount %u ItemPossibleDrops %u",
+//          // lootOwner->GetName(), lootOwner->GetMapId(), item.itemid, _challenge->GetChallengeLevel() - _challenge->GetLevelBonus(), _challenge->GetLevelBonus(), _challenge->GetChallengeTimer(), allItemCount, //ItemPossibleDrops.size());
+//        }
+//    }
+//
+//    // TC_LOG_DEBUG(LOG_FILTER_LOOT, "ProcessChallengeChest OtherPossibleDrops %i", OtherPossibleDrops.size());
+//
+//    // TC_LOG_DEBUG(LOG_FILTER_LOOT, "ProcessChallengeChest loot.items %i", loot.items.size());
+//    uint32 addCA = 0;
+//    if (_challenge->_complete)
+//        addCA = sChallengeModeMgr->GetCAForLoot(_challenge, lootId);
+//
+//    if (addCA)
+//    {
+//        LootStoreItem item = LootStoreItem(addCA, LOOT_ITEM_TYPE_ITEM, 0.0f, 0, 0, 1, 1);
+//        loot.AddItem(item);
+//    }
+//
+//    uint32 addBigCA = 0;
+//    uint32 countBigCA = 0;
+//    if (_challenge->_complete)
+//        addBigCA = sChallengeModeMgr->GetBigCAForLoot(_challenge, lootId, countBigCA);
+//
+//    if (addBigCA && countBigCA)
+//    {
+//        LootStoreItem item = LootStoreItem(addBigCA, LOOT_ITEM_TYPE_ITEM, 0.0f, 0, 0, countBigCA, countBigCA);
+//        loot.AddItem(item);
+//    }
+//
+//    for (LootStoreItemList::const_iterator i = OtherPossibleDrops.begin(); i != OtherPossibleDrops.end(); ++i)
+//    {
+//        // TC_LOG_DEBUG(LOG_FILTER_LOOT, "ProcessChallengeChest OtherPossibleDrops itemid %i chance %f", i->itemid, i->chance);
+//
+//        if (!loot.AllowedForPlayer(lootOwner, i->itemid, i->type, i->needs_quest))
+//            continue;
+//
+//        if (!i->Roll(false))
+//            continue;                                         // Bad luck for the entry
+//
+//        loot.AddItem(*i);                                 // Chance is already checked, just add
+//
+//        // TC_LOG_DEBUG(LOG_FILTER_LOOT, "ProcessChallengeChest AddItem itemid %i", i->itemid);
+//    }
+//
+//    loot.generateMoneyLoot(900000, 1500000, lootOwner->GetMap()->IsDungeon());
+//
+//    if (!const_cast<Player*>(lootOwner)->m_challengeKeyInfo.IsActive() && !sChallengeModeMgr->HasOploteLoot(lootOwner->GetGUID()))
+//    {
+//        const_cast<Player*>(lootOwner)->m_challengeKeyInfo.Level = _challenge->GetChallengeLevel() - 1;
+//        LootStoreItem item = LootStoreItem(158923, LOOT_ITEM_TYPE_ITEM, 0.0f, 0, 0, 1, 1);
+//        loot.AddItem(item);
+//    }
+//}
+
+void LootTemplate::FillAutoAssignationLoot(std::unordered_map<uint32, std::vector<int32>>& itemList, Player* player, bool isBGReward /*= false*/) const
+{
+    for (LootStoreItemList::const_iterator itra = Entries.begin(); itra != Entries.end(); ++itra)
+    {
+        LootStoreItem* itema = *itra;
+        if (!itema)
+            continue;
+
+        if (!itema->reference)
+        {
+            if (ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itema->itemid))
+                itemList[itema->itemid] = itema->bonus;
+        }
+        else
+        {
+            LootTemplate const* lootTemplate = LootTemplates_Reference.GetLootFor(itema->reference);
+            if (!lootTemplate)
+                continue;
+
+            if (!lootTemplate->Entries.empty())
+            {
+                for (LootStoreItemList::const_iterator itrb = lootTemplate->Entries.begin(); itrb != lootTemplate->Entries.end(); ++itrb)
+                {
+                    LootStoreItem* itemb = *itrb;
+                    if (!itemb)
+                        continue;
+                    if (ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemb->itemid))
+                        itemList[itemb->itemid] = itemb->bonus;
+                }
+            }
+            else if (!lootTemplate->Groups.empty())
+            {
+                for (LootGroups::const_iterator i = lootTemplate->Groups.begin(); i != lootTemplate->Groups.end(); ++i)
+                {
+                    if (LootGroup* groupLoot = *i)
+                    {
+                        if (!groupLoot)
+                            continue;
+
+                        LootStoreItemList* groupList = groupLoot->GetEqualChancedItemList();
+                        if (!groupList->empty())
+                        {
+                            for (LootStoreItemList::const_iterator itrc = groupList->begin(); itrc != groupList->end(); ++itrc)
+                            {
+                                LootStoreItem* itemc = *itrc;
+                                if (!itemc)
+                                    continue;
+
+                                if (ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemc->itemid))
+                                    itemList[itemc->itemid] = itemc->bonus;
+                            }
+                        }
+
+                        groupList = groupLoot->GetExplicitlyChancedItemList();
+                        if (!groupList->empty())
+                        {
+                            for (LootStoreItemList::const_iterator itrd = groupList->begin(); itrd != groupList->end(); ++itrd)
+                            {
+                                LootStoreItem* itemd = *itrd;
+                                if (!itemd)
+                                    continue;
+
+                                if (ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemd->itemid))
+                                    itemList[itemd->itemid] = itemd->bonus;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

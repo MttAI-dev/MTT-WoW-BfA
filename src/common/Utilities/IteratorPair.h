@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -44,6 +44,12 @@ namespace Trinity
 
     namespace Containers
     {
+        template<typename iterator>
+        constexpr Trinity::IteratorPair<iterator> MakeIteratorPair(std::pair<iterator, iterator> iterators)
+        {
+            return iterators;
+        }
+
         template<class M>
         inline auto MapEqualRange(M& map, typename M::key_type const& key) -> IteratorPair<decltype(map.begin())>
         {

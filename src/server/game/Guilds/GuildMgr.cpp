@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -61,6 +61,11 @@ ObjectGuid::LowType GuildMgr::GenerateGuildId()
 }
 
 // Guild collection
+GuildChallengeRewardData const& GuildMgr::GetGuildChallengeRewardData() const
+{
+    return _challengeRewardData;
+}
+
 Guild* GuildMgr::GetGuildById(ObjectGuid::LowType guildId) const
 {
     GuildContainer::const_iterator itr = GuildStore.find(guildId);

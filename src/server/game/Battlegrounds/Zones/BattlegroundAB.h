@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -114,7 +114,7 @@ enum BG_AB_Timers
 enum BG_AB_Score
 {
     BG_AB_WARNING_NEAR_VICTORY_SCORE    = 1200,
-    BG_AB_MAX_TEAM_SCORE                = 1600
+    BG_AB_MAX_TEAM_SCORE                = 1500
 };
 
 /* do NOT change the order, else wrong behaviour */

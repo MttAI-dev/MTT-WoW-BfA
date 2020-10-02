@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -2327,6 +2327,68 @@ public:
     uint32 _raceId;
 };
 
+// 144152 - Moira Thaurissan
+class npc_moira_thaurissan_bfa  : public ScriptedAI
+{
+public:
+    enum
+    {
+        QUEST_FER_THE_ALLIANCE = 51486
+    };
+
+    npc_moira_thaurissan_bfa(Creature* creature) : ScriptedAI(creature) { }
+
+    void sQuestAccept(Player* player, Quest const* quest) override
+    {
+        if (quest->ID == QUEST_FER_THE_ALLIANCE)
+		{
+            player->TeleportTo(0, -8177.66f, 792.195f, 73.9964f, 0.781548f);
+        }
+    }
+};
+
+/*######
+## npc_lunaclaw_spirit
+######*/
+
+enum
+{
+    QUEST_BODY_HEART_A = 6001,
+    QUEST_BODY_HEART_H = 6002,
+
+    TEXT_ID_DEFAULT = 4714,
+    TEXT_ID_PROGRESS = 4715
+};
+
+#define GOSSIP_ITEM_GRANT   "You have thought well, spirit. I ask you to grant me the strength of your body and the strength of your heart."
+
+class npc_lunaclaw_spirit : public CreatureScript
+{
+public:
+    npc_lunaclaw_spirit() : CreatureScript("npc_lunaclaw_spirit") { }
+
+    bool OnGossipHello(Player* player, Creature* creature) override
+    {
+        if (player->GetQuestStatus(QUEST_BODY_HEART_A) == QUEST_STATUS_INCOMPLETE || player->GetQuestStatus(QUEST_BODY_HEART_H) == QUEST_STATUS_INCOMPLETE)
+            AddGossipItemFor(player, GOSSIP_ICON_CHAT, GOSSIP_ITEM_GRANT, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
+
+            SendGossipMenuFor(player, TEXT_ID_DEFAULT, creature->GetGUID());
+        return true;
+    }
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    {
+        player->PlayerTalkClass->ClearMenus();
+        if (action == GOSSIP_ACTION_INFO_DEF + 1)
+        {
+            SendGossipMenuFor(player, TEXT_ID_PROGRESS, creature->GetGUID());
+            player->AreaExploredOrEventHappens(player->GetTeam() == ALLIANCE ? QUEST_BODY_HEART_A : QUEST_BODY_HEART_H);
+        }
+        return true;
+    }
+};
+
+
 void AddSC_npcs_special()
 {
     new npc_air_force_bots();
@@ -2353,4 +2415,6 @@ void AddSC_npcs_special()
     new npc_allied_race_infos("npc_allied_race_infos_tauren", 28);
     new npc_allied_race_infos("npc_allied_race_infos_voidelf", 29);
     new npc_allied_race_infos("npc_allied_race_infos_draenei", 30);
+    RegisterCreatureAI(npc_moira_thaurissan_bfa);
+    new npc_lunaclaw_spirit();
 }

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1594,12 +1594,64 @@ class spell_gen_ribbon_pole_dancer_check : public SpellScriptLoader
         }
 };
 
+// Hallowen: Q29075 Q29376
+enum hallow
+{
+    GO_THE_WICKERMAN = 180433, //The Wickerman
+    GO_WICKERMAN_EMBER = 180437, //Wickerman Ember
+    GO_TORCH = 208186,
+    Q29075 = 29075,
+    Q29376 = 29376,
+};
+
+enum evens
+{
+    ENABLE_WICKERMAN = 1,
+    END_BURN_WICKERMAN = 2,
+};
+
+class spell_hallowen_torch_wickerman : public SpellScriptLoader
+{
+public:
+    spell_hallowen_torch_wickerman() : SpellScriptLoader("spell_hallowen_torch_wickerman") { }
+
+    class sspell_hallowen_torch_wickerman_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(sspell_hallowen_torch_wickerman_SpellScript);
+
+        void HandleOnHit(SpellEffIndex /*effIndex*/)
+        {
+            if (Player* _player = GetCaster()->ToPlayer())
+            {
+                if (GameObject* go = _player->FindNearestGameObject(GO_THE_WICKERMAN, 100.0f))
+                {
+//                    go->AI()->DoAction(ENABLE_WICKERMAN);
+            //        go->AI()->SetGUID(_player->GetGUID(), 0);
+                }
+            }
+        }
+
+        void Register() override
+        {
+            OnEffectLaunchTarget += SpellEffectFn(sspell_hallowen_torch_wickerman_SpellScript::HandleOnHit, EFFECT_0, SPELL_EFFECT_DUMMY);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new sspell_hallowen_torch_wickerman_SpellScript();
+    }
+};
+
+
+
 void AddSC_holiday_spell_scripts()
 {
     // Love is in the Air
     new spell_love_is_in_the_air_romantic_picnic();
     // Hallow's End
     new spell_hallow_end_candy();
+    new spell_hallowen_torch_wickerman();
     new spell_hallow_end_candy_pirate();
     new spell_hallow_end_trick();
     new spell_hallow_end_trick_or_treat();

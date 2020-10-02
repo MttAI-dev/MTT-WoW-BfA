@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -60,4 +60,9 @@ int64 DB2FileSystemSource::GetFileSize() const
 char const* DB2FileSystemSource::GetFileName() const
 {
     return _fileName.c_str();
+}
+
+DB2EncryptedSectionHandling DB2FileSystemSource::HandleEncryptedSection(DB2SectionHeader const& /*sectionHeader*/) const
+{
+    return DB2EncryptedSectionHandling::Skip;
 }

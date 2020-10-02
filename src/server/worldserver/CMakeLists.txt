@@ -1,4 +1,4 @@
-# This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+# Copyright (C) 2020 LatinCoreTeam
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -43,28 +43,13 @@ endif()
 
 set_target_properties(worldserver PROPERTIES LINK_FLAGS "${worldserver_LINK_FLAGS}")
 
-if (WITH_CPR)
-    target_link_libraries(worldserver
-      PRIVATE
-        trinity-core-interface
-      PUBLIC
-        scripts
-        game
-        readline
-        duktape
-        dukglue
-        ${CPR_LIBRARIES})
-else()
-    target_link_libraries(worldserver
-      PRIVATE
-        trinity-core-interface
-      PUBLIC
-        scripts
-        game
-        readline
-        duktape
-        dukglue)
-endif()
+target_link_libraries(worldserver
+  PRIVATE
+    trinity-core-interface
+  PUBLIC
+    scripts
+    game
+    readline)
 
 CollectIncludeDirectories(
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -72,22 +57,11 @@ CollectIncludeDirectories(
   # Exclude
   ${CMAKE_CURRENT_SOURCE_DIR}/PrecompiledHeaders)
 
-if (WITH_CPR)
-    target_include_directories(worldserver
-      PUBLIC
-        ${PUBLIC_INCLUDES}
-        ${DUKGLUE_HEADERS}
-        ${CPR_INCLUDE_DIRS}
-      PRIVATE
-        ${CMAKE_CURRENT_BINARY_DIR})
-else()
-    target_include_directories(worldserver
-      PUBLIC
-        ${PUBLIC_INCLUDES}
-        ${DUKGLUE_HEADERS}
-      PRIVATE
-        ${CMAKE_CURRENT_BINARY_DIR})
-endif()
+target_include_directories(worldserver
+  PUBLIC
+    ${PUBLIC_INCLUDES}
+  PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR})
 
 set_target_properties(worldserver
     PROPERTIES

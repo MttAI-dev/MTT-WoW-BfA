@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -279,6 +279,117 @@ class achievement_killed_exp_or_honor_target : public AchievementCriteriaScript
         }
 };
 
+class achievement_a_test_of_valor : public AchievementCriteriaScript
+{
+public:
+    achievement_a_test_of_valor() : AchievementCriteriaScript("achievement_a_test_of_valor") { }
+
+    bool OnCheck(Player* source, Unit* /*target*/) override
+    {
+        if (source->GetQuestStatus(32474) == QUEST_STATUS_INCOMPLETE || source->GetQuestStatus(32476) == QUEST_STATUS_INCOMPLETE)
+            return true;
+
+        return false;
+    }
+};
+
+//BG: Deepwind Gorge. Achiev: Weighed Down
+class achievement_weighed_down : public AchievementCriteriaScript
+{
+public:
+    achievement_weighed_down() : AchievementCriteriaScript("achievement_weighed_down") {}
+
+    bool OnCheck(Player* player, Unit* target) override
+    {
+        if (!player)
+            return false;
+
+        if (target->HasAura(140876))
+            return true;
+
+        if (AchievementEntry const* achiev = sAchievementStore.LookupEntry(8355))
+            if (!player->HasAchieved(8355))
+                player->CompletedAchievement(achiev);
+
+        return false;
+    }
+};
+
+//37930
+class achievement_kill_antoran_demons : public AchievementCriteriaScript
+{
+public:
+    achievement_kill_antoran_demons() : AchievementCriteriaScript("achievement_kill_antoran_demons") { }
+
+    bool OnCheck(Player* source, Unit* target) override
+    {
+        if (!target)
+            return false;
+
+        if (auto cre = target->ToCreature())
+            if (cre->GetMapId() == 1669 && cre->GetCreatureType() == CREATURE_TYPE_DEMON)
+                return true;
+
+        return false;
+    }
+};
+
+//24823
+class achievement_almost_blink_luck : public AchievementCriteriaScript
+{
+public:
+    achievement_almost_blink_luck() : AchievementCriteriaScript("achievement_almost_blink_luck") { }
+
+    bool OnCheck(Player* source, Unit* target) override
+    {
+        if (!source)
+            return false;
+
+        if (source->HasAura(65607))
+          //  if (IsEventActive(24))
+                return true;
+
+        return false;
+    }
+};
+
+//17836
+class achievement_master_of_the_molten_flow : public AchievementCriteriaScript
+{
+public:
+    achievement_master_of_the_molten_flow() : AchievementCriteriaScript("achievement_master_of_the_molten_flow") { }
+
+    bool OnCheck(Player* source, Unit* target) override
+    {
+        if (!target)
+            return false;
+
+        if (auto npc = target->ToCreature())
+            if (npc->IsAIEnabled && npc->AI()->GetData(1))
+                return true;
+
+        return false;
+    }
+};
+
+//19825
+class achievement_run_with_the_wind : public AchievementCriteriaScript
+{
+public:
+    achievement_run_with_the_wind() : AchievementCriteriaScript("achievement_run_with_the_wind") { }
+
+    bool OnCheck(Player* source, Unit* target) override
+    {
+        if (!source)
+            return false;
+
+        if (source->HasAura(125146))
+            return true;
+
+        return false;
+    }
+};
+
 void AddSC_achievement_scripts()
 {
     new achievement_resilient_victory();
@@ -299,4 +410,10 @@ void AddSC_achievement_scripts()
     new achievement_not_even_a_scratch();
     new achievement_flirt_with_disaster_perf_check();
     new achievement_killed_exp_or_honor_target();
+    new achievement_a_test_of_valor();
+    new achievement_weighed_down();
+    new achievement_kill_antoran_demons();
+    new achievement_almost_blink_luck();
+    new achievement_master_of_the_molten_flow();
+    new achievement_run_with_the_wind();
 }

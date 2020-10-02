@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -58,6 +57,8 @@ enum ShamanSpells
     SPELL_SHAMAN_CRASHING_STORM_DUMMY                       = 192246,
     SPELL_SHAMAN_CRASHING_STORM_AT                          = 210797,
     SPELL_SHAMAN_CRASHING_STORM_DAMAGE                      = 210801,
+    SPELL_SHAMAN_CARESS_OF_THE_TIDEMOTHER                   = 207354,
+    SPELL_SHAMAN_CARESS_OF_THE_TIDEMOTHER_AURA              = 209950,
     SPELL_SHAMAN_DOOM_WINDS                                 = 204945,
     SPELL_SHAMAN_EARTHBIND_FOR_EARTHGRAB_TOTEM              = 116947,
     SPELL_SHAMAN_EARTHEN_RAGE_DAMAGE                        = 170379,
@@ -931,35 +932,40 @@ class spell_sha_glyph_of_healing_wave : public SpellScriptLoader
 // 5394 - Healing Stream Totem
 class spell_sha_healing_stream_totem : public SpellScriptLoader
 {
-    public:
-        spell_sha_healing_stream_totem() : SpellScriptLoader("spell_sha_healing_stream_totem") { }
+public:
+    spell_sha_healing_stream_totem() : SpellScriptLoader("spell_sha_healing_stream_totem") { }
 
-        class spell_sha_healing_stream_totem_AuraScript : public AuraScript
-        {
-            PrepareAuraScript(spell_sha_healing_stream_totem_AuraScript);
+    class spell_sha_healing_stream_totem_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_sha_healing_stream_totem_SpellScript);
 
-            bool Validate(SpellInfo const* /*spellInfo*/) override
-            {
-                return sSpellMgr->GetSpellInfo(SPELL_SHAMAN_TOTEM_HEALING_STREAM_HEAL) != nullptr;
+        void HandleAfterCast() {
+
+            Unit* caster = GetCaster();
+            if (!caster)
+                return;
+
+            if (caster->HasAura(SPELL_SHAMAN_CARESS_OF_THE_TIDEMOTHER)) {
+                AuraEffect* auraeffx = caster->GetAura(SPELL_SHAMAN_CARESS_OF_THE_TIDEMOTHER)->GetEffect(EFFECT_0);
+                int32 amount = auraeffx->GetAmount();
+                CustomSpellValues values;
+                values.AddSpellMod(SPELLVALUE_BASE_POINT0, amount);
+                caster->CastCustomSpell(SPELL_SHAMAN_CARESS_OF_THE_TIDEMOTHER_AURA, values, caster, TRIGGERED_FULL_MASK);
             }
-
-            void HandleDummy(AuraEffect const* aurEff)
-            {
-                if (Creature* waterTotem = GetTarget()->GetMap()->GetCreature(GetTarget()->m_SummonSlot[3]))
-                    waterTotem->CastSpell((Unit*)nullptr, SPELL_SHAMAN_TOTEM_HEALING_STREAM_HEAL, TRIGGERED_FULL_MASK, nullptr, aurEff, GetTarget()->GetGUID());
-            }
-
-            void Register() override
-            {
-                OnEffectPeriodic += AuraEffectPeriodicFn(spell_sha_healing_stream_totem_AuraScript::HandleDummy, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
-            }
-        };
-
-        AuraScript* GetAuraScript() const override
-        {
-            return new spell_sha_healing_stream_totem_AuraScript();
         }
+
+        void Register() override
+        {
+            AfterCast += SpellCastFn(spell_sha_healing_stream_totem_SpellScript::HandleAfterCast);
+        }
+
+    };
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_sha_healing_stream_totem_SpellScript();
+    }
 };
+
 
 //192077 - Wind Rush Totem
 class spell_sha_wind_rush_totem : public SpellScriptLoader
@@ -3742,6 +3748,83 @@ public:
     }
 };
 
+// Summon Fire, Earth & Storm Elemental  - Called By 198067 Fire Elemental, 198103 Earth Elemental, 192249 Storm Elemental
+class spell_shaman_generic_summon_elemental : public SpellScriptLoader
+{
+public:
+    spell_shaman_generic_summon_elemental() : SpellScriptLoader("spell_shaman_generic_summon_elemental") { }
+
+    enum Spells
+    {
+        PrimalElementalist = 117013,
+        SummonFireElemental = 198067,
+        SummonFireElementalTriggered = 188592,
+        SummonPrimalElementalistFireElemental = 118291,
+        SummonEarthElemental = 198103,
+        SummonEarthElementalTriggered = 188616,
+        SummonPrimalElementalistEarthElemental = 118323,
+        SummonStormElemental = 192249,
+        SummonStormElementalTriggered = 157299,
+        SummonPrimalElementalistStormElemental = 157319,
+    };
+
+    class spell_shaman_generic_summon_elemental_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_shaman_generic_summon_elemental_SpellScript);
+
+        bool Validate(SpellInfo const* /*spellInfo*/) override
+        {
+            return ValidateSpellInfo
+            ({
+                PrimalElementalist,
+                SummonFireElemental,
+                SummonFireElementalTriggered,
+                SummonPrimalElementalistFireElemental,
+                SummonEarthElemental,
+                SummonEarthElementalTriggered,
+                SummonPrimalElementalistEarthElemental,
+                SummonStormElemental,
+                SummonStormElementalTriggered,
+                SummonPrimalElementalistStormElemental,
+                });
+        }
+        void HandleSummon(SpellEffIndex /*p_EffIndex*/)
+        {
+            uint32 triggerSpell;
+
+            switch (GetSpellInfo()->Id)
+            {
+            case SummonFireElemental:
+                triggerSpell = (GetCaster()->HasAura(PrimalElementalist)) ? SummonPrimalElementalistFireElemental : SummonFireElementalTriggered;
+                break;
+            case SummonEarthElemental:
+                triggerSpell = (GetCaster()->HasAura(PrimalElementalist)) ? SummonPrimalElementalistEarthElemental : SummonEarthElementalTriggered;
+                break;
+            case SummonStormElemental:
+                triggerSpell = (GetCaster()->HasAura(PrimalElementalist)) ? SummonPrimalElementalistStormElemental : SummonStormElementalTriggered;
+                break;
+            default:
+                triggerSpell = 0;
+                break;
+            }
+
+            if (triggerSpell)
+                GetCaster()->CastSpell(GetCaster(), triggerSpell, true);
+        }
+
+        void Register()
+        {
+            OnEffectHitTarget += SpellEffectFn(spell_shaman_generic_summon_elemental_SpellScript::HandleSummon, EFFECT_0, SPELL_EFFECT_DUMMY);
+        }
+
+    };
+
+    SpellScript* GetSpellScript() const
+    {
+        return new spell_shaman_generic_summon_elemental_SpellScript;
+    }
+};
+
 void AddSC_shaman_spell_scripts()
 {
     new at_sha_earthquake_totem();
@@ -3821,6 +3904,9 @@ void AddSC_shaman_spell_scripts()
     RegisterAreaTriggerAI(at_sha_crashing_storm);
     RegisterCreatureAI(npc_feral_spirit);
     RegisterAreaTriggerAI(at_sha_voodoo_totem);
+	
+	///Spell Implemented Shaman 
+	new spell_shaman_generic_summon_elemental();
 }
 
 void AddSC_npc_totem_scripts()

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1051,6 +1051,9 @@ bool Aura::IsDeathPersistent() const
 
 bool Aura::CanBeSaved() const
 {
+    if (m_spellInfo->HasAura(SPELL_AURA_ENABLE_EXTRA_TALENT))
+        return false;
+
     if (IsPassive())
         return false;
 
@@ -1427,9 +1430,32 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                 }
                 break;
             case SPELLFAMILY_ROGUE:
-                // Remove Vanish on stealth remove
-                if (GetId() == 1784)
-                    target->RemoveAurasWithFamily(SPELLFAMILY_ROGUE, flag128(0x0000800, 0, 0, 0), target->GetGUID());
+            {
+                switch (GetId())
+                {
+                case 1784:  // Stealth
+                {
+                    caster->RemoveAurasDueToSpell(158185);
+                    break;
+                }
+                case 11327: // Vanish
+                {
+                    if (removeMode != AURA_REMOVE_BY_EXPIRE)
+                        break;
+
+                    if (Player* player = caster->ToPlayer())
+                    {
+                        caster->GetSpellHistory()->ResetCooldown(1784, false);
+                        caster->CastSpell(caster, 1784, true);
+                    }
+                    break;
+                }
+                default:
+                    break;
+                }
+                break;
+            }
+            default:
                 break;
         }
     }
@@ -1437,6 +1463,76 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
     // mods at aura apply or remove
     switch (GetSpellInfo()->SpellFamilyName)
     {
+    case SPELLFAMILY_ROGUE:
+    {
+        if (!caster)
+            return;
+
+        switch (GetId())
+        {
+       
+        case 1784:   // Stealth
+        case 11327:  // Vanish
+        {
+            if (!apply && (removeMode == AURA_REMOVE_BY_INTERRUPT || removeMode == AURA_REMOVE_BY_DEFAULT))
+            {
+                if (caster->HasAura(108208))
+                    caster->CastSpell(caster, 115192, true);
+            }
+            if (caster->HasAura(231718)) // Shadowstrike (lvl 2)
+            {
+                if (apply)
+                {
+                    caster->AddAura(245623, caster);
+                }
+                else
+                {
+                    if (!caster->HasAura(1784) && !caster->HasAura(11327))
+                    {
+                        caster->RemoveAurasDueToSpell(245623);
+                    }
+                }
+            }
+        }
+        case 115192: // Subterfuge
+        case 185313: // Shadowdance (Shapeshift)
+        {
+            bool removeTalentAura = false;
+
+            if (apply)
+            {
+                caster->AddAura(158188, caster);
+            }
+            else
+            {
+                if (!caster->HasAura(1784) && !caster->HasAura(11327) && !caster->HasAura(185313))
+                {
+                    removeTalentAura = true;
+
+                    if (!caster->HasAura(115192))
+                        caster->RemoveAurasDueToSpell(158188);
+                }
+            }
+
+            if (caster->HasAura(108209)) // Shadow Focus
+            {
+                if (apply)
+                {
+                    caster->AddAura(112942, caster);
+                }
+                else if (removeTalentAura)
+                {
+                    caster->RemoveAurasDueToSpell(112942);
+                }
+            }
+
+            break;
+        }
+        default:
+            break;
+        }
+        break;
+    }
         case SPELLFAMILY_HUNTER:
             switch (GetId())
             {
@@ -2382,7 +2478,7 @@ void UnitAura::FillTargetMap(std::unordered_map<Unit*, uint32>& targets, Unit* c
 
         std::deque<Unit*> units;
         // non-area aura
-        if (effect->Effect == SPELL_EFFECT_APPLY_AURA)
+        if (effect->Effect == SPELL_EFFECT_APPLY_AURA || effect->Effect == SPELL_EFFECT_202)
         {
             units.push_back(GetUnitOwner());
         }
@@ -2396,6 +2492,7 @@ void UnitAura::FillTargetMap(std::unordered_map<Unit*, uint32>& targets, Unit* c
                 {
                     case SPELL_EFFECT_APPLY_AREA_AURA_PARTY:
                     case SPELL_EFFECT_APPLY_AREA_AURA_RAID:
+                    case SPELL_EFFECT_APPLY_AREA_AURA_PARTY_NONRANDOM:
                     {
                         units.push_back(GetUnitOwner());
                         Trinity::AnyGroupedUnitInObjectRangeCheck u_check(GetUnitOwner(), GetUnitOwner(), radius, effect->Effect == SPELL_EFFECT_APPLY_AREA_AURA_RAID, m_spellInfo->HasAttribute(SPELL_ATTR3_ONLY_TARGET_PLAYERS));
@@ -2426,6 +2523,12 @@ void UnitAura::FillTargetMap(std::unordered_map<Unit*, uint32>& targets, Unit* c
                         if (Unit* owner = GetUnitOwner()->GetCharmerOrOwner())
                             if (GetUnitOwner()->IsWithinDistInMap(owner, radius))
                                 units.push_back(owner);
+                        break;
+                    }
+                    case SPELL_EFFECT_APPLY_AURA_ON_PET:
+                    {
+                        if (Unit* pet = ObjectAccessor::GetUnit(*GetUnitOwner(), GetUnitOwner()->GetPetGUID()))
+                            units.push_back(pet);
                         break;
                     }
                 }
@@ -2501,5 +2604,23 @@ void DynObjAura::FillTargetMap(std::unordered_map<Unit*, uint32>& targets, Unit*
             else
                 targets[unit] = 1 << effect->EffectIndex;
         }
+    }
+}
+
+void Aura::CallScriptEffectHealAbsorbHandlers(AuraEffect* aurEff, AuraApplication const* aurApp, HealInfo &healInfo, uint32 & absorbAmount, bool& defaultPrevented)
+{
+    for (auto scritr = m_loadedScripts.begin(); scritr != m_loadedScripts.end(); ++scritr)
+    {
+        (*scritr)->_PrepareScriptCall(AURA_SCRIPT_HOOK_EFFECT_ABSORB, aurApp);
+        auto effEndItr = (*scritr)->OnEffectHealAbsorb.end(), effItr = (*scritr)->OnEffectHealAbsorb.begin();
+        for (; effItr != effEndItr; ++effItr)
+
+            if (effItr->IsEffectAffected(m_spellInfo, aurEff->GetEffIndex()))
+                effItr->Call(*scritr, aurEff, healInfo, absorbAmount);
+
+        if (!defaultPrevented)
+            defaultPrevented = (*scritr)->_IsDefaultActionPrevented();
+
+        (*scritr)->_FinishScriptCall();
     }
 }

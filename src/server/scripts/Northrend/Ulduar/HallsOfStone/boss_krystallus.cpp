@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -43,10 +43,10 @@ enum Yells
 enum Events
 {
     EVENT_BOULDER_TOSS                          = 1,
-    EVENT_GROUND_SPIKE,
-    EVENT_GROUND_SLAM,
-    EVENT_STOMP,
-    EVENT_SHATTER
+    EVENT_GROUND_SPIKE                          = 2,
+    EVENT_GROUND_SLAM                           = 3,
+    EVENT_STOMP                                 = 4,
+    EVENT_SHATTER                               = 5
 };
 
 class boss_krystallus : public CreatureScript

@@ -1,0 +1,1 @@
+UPDATE trinity_string SET content_default = '%s (Entry: %u) - |cffffffff|Hcreature:%s|h[X:%f Y:%f Z:%f MapId:%u]|h|r' WHERE entry = 515;

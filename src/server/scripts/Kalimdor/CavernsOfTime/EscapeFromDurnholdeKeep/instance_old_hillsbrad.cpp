@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -84,10 +84,11 @@ public:
 
         void UpdateQuestCredit()
         {
-            DoOnPlayers([](Player* player)
-            {
-                player->KilledMonsterCredit(LODGE_QUEST_TRIGGER);
-            });
+            Map::PlayerList const& players = instance->GetPlayers();
+
+            for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+                if (Player* player = itr->GetSource())
+                    player->KilledMonsterCredit(LODGE_QUEST_TRIGGER);
         }
 
         void OnCreatureCreate(Creature* creature) override

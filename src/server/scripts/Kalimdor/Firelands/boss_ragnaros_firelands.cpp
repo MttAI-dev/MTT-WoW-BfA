@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+* Copyright (C) 2020 LatinCoreTeam
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -515,6 +515,8 @@ class boss_ragnaros_firelands: public CreatureScript
 
                     for (auto creature: creaturesToDespawn)
                         creature->DespawnOrUnsummon();
+                    me->RemoveUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
+                    me->RemoveUnitFlag(UNIT_FLAG_NOT_SELECTABLE);
                 }
 
                 void EnterCombat(Unit* /*who*/) override

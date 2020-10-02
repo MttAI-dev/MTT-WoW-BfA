@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -263,17 +263,17 @@ void Object::BuildDestroyUpdateBlock(UpdateData* data) const
     data->AddDestroyObject(GetGUID());
 }
 
-void Object::BuildOutOfRangeUpdateBlock(UpdateData* data) const
-{
-    data->AddOutOfRangeGUID(GetGUID());
-}
-
 ByteBuffer Object::PrepareValuesUpdateBuffer() const
 {
     ByteBuffer buffer(500, ByteBuffer::Reserve{});
     buffer << uint8(UPDATETYPE_VALUES);
     buffer << GetGUID();
     return buffer;
+}
+
+void Object::BuildOutOfRangeUpdateBlock(UpdateData* data) const
+{
+    data->AddOutOfRangeGUID(GetGUID());
 }
 
 void Object::DestroyForPlayer(Player* target) const
@@ -849,13 +849,11 @@ void MovementInfo::OutDebug()
 
 WorldObject::WorldObject(bool isWorldObject) : WorldLocation(), LastUsedScriptID(0),
 m_name(""), m_isActive(false), m_isWorldObject(isWorldObject), m_zoneScript(NULL),
-m_transport(NULL), m_currMap(NULL), m_InstanceId(0),
+m_transport(NULL), m_zoneId(0), m_areaId(0), m_staticFloorZ(VMAP_INVALID_HEIGHT), m_currMap(NULL), m_InstanceId(0),
 _dbPhase(0), m_visibleBySummonerOnly(false), m_notifyflags(0), m_executed_notifies(0)
 {
     m_serverSideVisibility.SetValue(SERVERSIDE_VISIBILITY_GHOST, GHOST_VISIBILITY_ALIVE | GHOST_VISIBILITY_GHOST);
     m_serverSideVisibilityDetect.SetValue(SERVERSIDE_VISIBILITY_GHOST, GHOST_VISIBILITY_ALIVE);
-
-    m_area = nullptr;
 }
 
 void WorldObject::SetWorldObject(bool on)
@@ -928,6 +926,28 @@ void WorldObject::CleanupsBeforeDelete(bool /*finalCleanup*/)
         transport->RemovePassenger(this);
 }
 
+void WorldObject::UpdatePositionData()
+{
+    PositionFullTerrainStatus data;
+    GetMap()->GetFullTerrainStatusForPosition(_phaseShift, GetPositionX(), GetPositionY(), GetPositionZ(), data);
+    ProcessPositionDataChanged(data);
+}
+
+void WorldObject::ProcessPositionDataChanged(PositionFullTerrainStatus const& data)
+{
+    m_zoneId = m_areaId = data.areaId;
+    if (AreaTableEntry const* area = sAreaTableStore.LookupEntry(m_areaId))
+        if (area->ID)
+            m_zoneId = area->ID;
+    m_staticFloorZ = data.floorZ;
+}
+
+void WorldObject::AddToWorld()
+{
+    Object::AddToWorld();
+    GetMap()->GetZoneAndAreaId(_phaseShift, m_zoneId, m_areaId, GetPositionX(), GetPositionY(), GetPositionZ());
+}
+
 void WorldObject::RemoveFromWorld()
 {
     if (!IsInWorld())
@@ -936,38 +956,6 @@ void WorldObject::RemoveFromWorld()
     DestroyForNearbyPlayers();
 
     Object::RemoveFromWorld();
-}
-
-uint32 WorldObject::GetAreaId() const
-{
-    if (!GetArea())
-        return GetAreaIdFromPosition();
-
-    return GetArea()->GetId();
-}
-
-uint32 WorldObject::GetZoneId() const
-{
-    if (!GetZone())
-        return GetZoneIdFromPosition();
-
-    return GetZone()->GetId();
-}
-
-uint32 WorldObject::GetAreaIdFromPosition() const
-{
-    return GetMap()->GetAreaId(GetPhaseShift(), m_positionX, m_positionY, m_positionZ);
-}
-
-uint32 WorldObject::GetZoneIdFromPosition() const
-{
-    return GetMap()->GetZoneId(GetPhaseShift(), m_positionX, m_positionY, m_positionZ);
-}
-
-void WorldObject::GetZoneAndAreaId(uint32& zoneid, uint32& areaid) const
-{
-    zoneid = GetZoneId();
-    areaid = GetAreaId();
 }
 
 bool WorldObject::IsInWorldPvpZone() const
@@ -1921,8 +1909,8 @@ void WorldObject::SetZoneScript()
                 m_zoneScript = bf;
             else if (ZoneScript* out = sOutdoorPvPMgr->GetZoneScript(GetZoneId()))
                 m_zoneScript = out;
-            else if (Area* area = GetArea())
-                m_zoneScript = area->GetZoneScript();
+            else
+                m_zoneScript = sScriptMgr->GetZoneScript(sObjectMgr->GetScriptIdForZone(GetZoneId()));
         }
     }
 }
@@ -2460,7 +2448,7 @@ float NormalizeZforCollision(WorldObject* obj, float x, float y, float z)
                 return z;
         }
         LiquidData liquid_status;
-        ZLiquidStatus res = obj->GetMap()->getLiquidStatus(obj->GetPhaseShift(), x, y, z, MAP_ALL_LIQUIDS, &liquid_status);
+        ZLiquidStatus res = obj->GetMap()->GetLiquidStatus(obj->GetPhaseShift(), x, y, z, MAP_ALL_LIQUIDS, &liquid_status);
         if (res && liquid_status.level > helper) // water must be above ground
         {
             if (liquid_status.level > z) // z is underwater
@@ -2549,6 +2537,16 @@ void WorldObject::PlayDirectSound(uint32 soundId, Player* target /*= nullptr*/)
         target->SendDirectMessage(WorldPackets::Misc::PlaySound(GetGUID(), soundId).Write());
     else
         SendMessageToSet(WorldPackets::Misc::PlaySound(GetGUID(), soundId).Write(), true);
+}
+
+void WorldObject::PlayObjectSound(uint32 soundId, Unit* target /*= nullptr*/, Position* pos /*= nullptr*/)
+{
+    WorldPackets::Misc::PlayObjectSound playObjectSound;
+    playObjectSound.SoundKitID = soundId;
+    playObjectSound.SourceObjectGUID = GetGUID();
+    playObjectSound.TargetObjectGUID = target ? target->GetGUID() : GetGUID();
+    playObjectSound.Position = pos ? *pos : GetPosition();
+    SendMessageToSet(playObjectSound.Write(), true);
 }
 
 void WorldObject::PlayDirectMusic(uint32 musicId, Player* target /*= nullptr*/)
@@ -2687,6 +2685,13 @@ ObjectGuid WorldObject::GetTransGUID() const
     if (GetTransport())
         return GetTransport()->GetGUID();
     return ObjectGuid::Empty;
+}
+
+float WorldObject::GetFloorZ() const
+{
+    if (!IsInWorld())
+        return m_staticFloorZ;
+    return std::max<float>(m_staticFloorZ, GetMap()->GetGameObjectFloor(GetPhaseShift(), GetPositionX(), GetPositionY(), GetPositionZ()));
 }
 
 template TC_GAME_API void WorldObject::GetGameObjectListWithEntryInGrid(std::list<GameObject*>&, uint32, float) const;

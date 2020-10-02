@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -42,7 +42,7 @@
 #define PET_XP_FACTOR 0.05f
 
 Pet::Pet(Player* owner, PetType type) :
-    Guardian(NULL, owner, true), m_removed(false),
+    Guardian(NULL, owner, true), m_removed(false), m_owner(owner),
     m_petType(type), m_duration(0), m_loading(false), m_groupUpdateMask(0),
     m_declinedname(NULL), m_petSpecialization(0)
 {
@@ -87,6 +87,13 @@ void Pet::AddToWorld()
         GetCharmInfo()->SetIsAtStay(false);
         GetCharmInfo()->SetIsFollowing(false);
         GetCharmInfo()->SetIsReturning(false);
+    }
+
+    // Hack fix for Soul link, we need to buff pet and player if player has a talent
+    if (m_owner->ToPlayer() && m_owner->ToPlayer()->HasSpell(108415))
+    {
+        m_owner->CastSpell(m_owner, 108446, true);
+        m_owner->CastSpell(this, 108446, true);
     }
 }
 
@@ -523,7 +530,7 @@ void Pet::setDeathState(DeathState s)                       // overwrite virtual
             SetDynamicFlags(UNIT_DYNFLAG_NONE);
             RemoveUnitFlag(UNIT_FLAG_SKINNABLE);
 
-            //SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED);
+            //SetUnitFlags(UnitFlags(UNIT_FLAG_STUNNED);
         }
     }
     else if (getDeathState() == ALIVE)
@@ -784,6 +791,7 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
 
     SetMeleeDamageSchool(SpellSchools(cinfo->dmgschool));
 
+    SetModifierValue(UNIT_MOD_ARMOR, BASE_VALUE, stats->BaseArmor);
 
     //scale
     CreatureFamilyEntry const* cFamily = sCreatureFamilyStore.LookupEntry(cinfo->family);
@@ -919,7 +927,7 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
                 case 29264: // Feral Spirit
                 {
                     // wolf attack speed is 1.5s
-                    SetBaseAttackTime(BASE_ATTACK, cinfo->BaseAttackTime);
+                  //  SetBaseAttackTime(BASE_ATTACK, cinfo->BaseAttackTime);
 
                     SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float((petlevel * 4 - petlevel)));
                     SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float((petlevel * 4 + petlevel)));
@@ -938,7 +946,7 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
                 }
                 case 27829: // Ebon Gargoyle
                 {
-                    SetBonusDamage(int32(GetOwner()->GetTotalAttackPowerValue(BASE_ATTACK) * 0.5f));
+                    SetBonusDamage(int32(GetOwner()->GetTotalAttackPowerValue(BASE_ATTACK) * 0.1f));
                     SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float(petlevel - (petlevel / 4)));
                     SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float(petlevel + (petlevel / 4)));
                     break;
@@ -953,7 +961,7 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
                 }
                 case 98035: // Dreadstalkers
                 {
-                    SetBaseAttackTime(BASE_ATTACK, cinfo->BaseAttackTime);
+                   // SetBaseAttackTime(BASE_ATTACK, cinfo->BaseAttackTime);
 
                     SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, float((petlevel * 4 - petlevel)));
                     SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, float((petlevel * 4 + petlevel)));
@@ -1640,7 +1648,7 @@ void Pet::CastPetAuras(bool current)
     if (!IsPermanentPetFor(owner))
         return;
 
-    for (auto itr = owner->m_petAuras.begin(); itr != owner->m_petAuras.end();)
+    for (PetAuraSet::const_iterator itr = owner->m_petAuras.begin(); itr != owner->m_petAuras.end();)
     {
         PetAura const* pa = *itr;
         ++itr;
@@ -1672,7 +1680,7 @@ bool Pet::IsPetAura(Aura const* aura)
     Player* owner = GetOwner();
 
     // if the owner has that pet aura, return true
-    for (auto itr = owner->m_petAuras.begin(); itr != owner->m_petAuras.end(); ++itr)
+    for (PetAuraSet::const_iterator itr = owner->m_petAuras.begin(); itr != owner->m_petAuras.end(); ++itr)
     {
         if ((*itr)->GetAura(GetEntry()) == aura->GetId())
             return true;

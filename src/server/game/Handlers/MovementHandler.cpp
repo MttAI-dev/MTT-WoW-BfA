@@ -1,5 +1,6 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
+ * Copyright (C) Thordekk
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,6 +16,7 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "AnticheatMgr.h"
 #include "WorldSession.h"
 #include "Battleground.h"
 #include "Common.h"
@@ -25,7 +27,6 @@
 #include "InstanceSaveMgr.h"
 #include "Log.h"
 #include "MapManager.h"
-#include "MiscPackets.h"
 #include "MovementPackets.h"
 #include "ObjectMgr.h"
 #include "Opcodes.h"
@@ -36,9 +37,7 @@
 #include "WaypointMovementGenerator.h"
 #include "SpellMgr.h"
 
-#include <boost/accumulators/statistics/variance.hpp>
-#include <boost/accumulators/accumulators.hpp>
-#include <boost/accumulators/statistics.hpp>
+#define MOVEMENT_PACKET_TIME_DELAY 0
 
 void WorldSession::HandleMoveWorldportAckOpcode(WorldPackets::Movement::WorldPortResponse& /*packet*/)
 {
@@ -208,7 +207,9 @@ void WorldSession::HandleMoveWorldportAck()
         _player->RemoveAurasByType(SPELL_AURA_MOUNTED);
 
     // update zone immediately, otherwise leave channel will cause crash in mtmap
-    GetPlayer()->UpdateArea(GetPlayer()->GetAreaIdFromPosition());
+    uint32 newzone, newarea;
+    GetPlayer()->GetZoneAndAreaId(newzone, newarea);
+    GetPlayer()->UpdateZone(newzone, newarea);
 
     // honorless target
     if (GetPlayer()->pvpInfo.IsHostile)
@@ -275,11 +276,14 @@ void WorldSession::HandleMoveTeleportAck(WorldPackets::Movement::MoveTeleportAck
     WorldLocation const& dest = plMover->GetTeleportDest();
 
     plMover->UpdatePosition(dest, true);
-    plMover->UpdateArea(plMover->GetAreaIdFromPosition());
     plMover->SetFallInformation(0, GetPlayer()->GetPositionZ());
+	
+    uint32 newzone, newarea;
+    plMover->GetZoneAndAreaId(newzone, newarea);
+    plMover->UpdateZone(newzone, newarea);
 
     // new zone
-    if (old_zone != plMover->GetZoneId())
+    if (old_zone != newzone)
     {
         // honorless target
         if (plMover->pvpInfo.IsHostile)
@@ -395,17 +399,16 @@ void WorldSession::HandleMovementOpcode(OpcodeClient opcode, MovementInfo& movem
         plrMover->SetInWater(!plrMover->IsInWater() || plrMover->GetMap()->IsUnderWater(plrMover->GetPhaseShift(), movementInfo.pos.GetPositionX(), movementInfo.pos.GetPositionY(), movementInfo.pos.GetPositionZ()));
     }
 
+    if (plrMover)
+        sAnticheatMgr->StartHackDetection(plrMover, movementInfo, opcode);
+
+    uint32 mstime = GameTime::GetGameTimeMS();
+    /*----------------------*/
+    if (m_clientTimeDelay == 0)
+        m_clientTimeDelay = mstime - movementInfo.time;
+
     /* process position-change */
-    int64 movementTime = (int64)movementInfo.time + _timeSyncClockDelta;
-    if (_timeSyncClockDelta == 0 || movementTime < 0 || movementTime > 0xFFFFFFFF)
-    {
-        TC_LOG_WARN("misc", "The computed movement time using clockDelta is erronous. Using fallback instead");
-        movementInfo.time = GameTime::GetGameTimeMS();
-    }
-    else
-    {
-        movementInfo.time = (uint32)movementTime;
-    }
+    movementInfo.time = movementInfo.time + m_clientTimeDelay + MOVEMENT_PACKET_TIME_DELAY;
 
     movementInfo.guid = mover->GetGUID();
     mover->m_movementInfo = movementInfo;
@@ -440,23 +443,7 @@ void WorldSession::HandleMovementOpcode(OpcodeClient opcode, MovementInfo& movem
 
         plrMover->UpdateFallInformationIfNeed(movementInfo, opcode);
 
-        // TODO : Fix GetMap()->GetMinHeight for Vash'jir
-        float minHeight = -500.0f;
-        switch (plrMover->GetAreaId())
-        {
-            case 4815:
-            case 4816:
-            case 5144:
-            case 5145:
-            case 5146:
-                minHeight = -2000.0f;
-                break;
-            default:
-                minHeight = plrMover->GetMap()->GetMinHeight(movementInfo.pos.GetPositionX(), movementInfo.pos.GetPositionY());
-                break;
-        }
-
-        if (movementInfo.pos.GetPositionZ() < minHeight)
+        if (movementInfo.pos.GetPositionZ() < plrMover->GetMap()->GetMinHeight(plrMover->GetPhaseShift(), movementInfo.pos.GetPositionX(), movementInfo.pos.GetPositionY()))
         {
             if (!(plrMover->GetBattleground() && plrMover->GetBattleground()->HandlePlayerUnderMap(_player)))
             {
@@ -612,7 +599,7 @@ void WorldSession::HandleMoveApplyMovementForceAck(WorldPackets::Movement::MoveA
         return;
     }
 
-    //moveApplyMovementForceAck.Ack.Status.time += m_clientTimeDelay + MOVEMENT_PACKET_TIME_DELAY;
+    moveApplyMovementForceAck.Ack.Status.time += m_clientTimeDelay + MOVEMENT_PACKET_TIME_DELAY;
 
     WorldPackets::Movement::MoveUpdateApplyMovementForce updateApplyMovementForce;
     updateApplyMovementForce.Status = &moveApplyMovementForceAck.Ack.Status;
@@ -634,7 +621,7 @@ void WorldSession::HandleMoveRemoveMovementForceAck(WorldPackets::Movement::Move
         return;
     }
 
-    //moveRemoveMovementForceAck.Ack.Status.time += m_clientTimeDelay + MOVEMENT_PACKET_TIME_DELAY;
+    moveRemoveMovementForceAck.Ack.Status.time += m_clientTimeDelay + MOVEMENT_PACKET_TIME_DELAY;
 
     WorldPackets::Movement::MoveUpdateRemoveMovementForce updateRemoveMovementForce;
     updateRemoveMovementForce.Status = &moveRemoveMovementForceAck.Ack.Status;
@@ -676,7 +663,7 @@ void WorldSession::HandleMoveSetModMovementForceMagnitudeAck(WorldPackets::Movem
         }
     }
 
-    //setModMovementForceMagnitudeAck.Ack.Status.time += m_clientTimeDelay + MOVEMENT_PACKET_TIME_DELAY;
+    setModMovementForceMagnitudeAck.Ack.Status.time += m_clientTimeDelay + MOVEMENT_PACKET_TIME_DELAY;
 
     WorldPackets::Movement::MoveUpdateSpeed updateModMovementForceMagnitude(SMSG_MOVE_UPDATE_MOD_MOVEMENT_FORCE_MAGNITUDE);
     updateModMovementForceMagnitude.Status = &setModMovementForceMagnitudeAck.Ack.Status;
@@ -686,40 +673,6 @@ void WorldSession::HandleMoveSetModMovementForceMagnitudeAck(WorldPackets::Movem
 
 void WorldSession::HandleMoveTimeSkippedOpcode(WorldPackets::Movement::MoveTimeSkipped& /*moveTimeSkipped*/)
 {
-    // implementation of the technique described here: https://web.archive.org/web/20180430214420/http://www.mine-control.com/zack/timesync/timesync.html
-    // to reduce the skew induced by dropped TCP packets that get resent.
-
-    using namespace boost::accumulators;
-
-    accumulator_set<uint32, features<tag::mean, tag::median, tag::variance(lazy)> > latencyAccumulator;
-
-    for (auto pair : _timeSyncClockDeltaQueue)
-        latencyAccumulator(pair.second);
-
-    uint32 latencyMedian = static_cast<uint32>(std::round(median(latencyAccumulator)));
-    uint32 latencyStandardDeviation = static_cast<uint32>(std::round(sqrt(variance(latencyAccumulator))));
-
-    accumulator_set<int64, features<tag::mean> > clockDeltasAfterFiltering;
-    uint32 sampleSizeAfterFiltering = 0;
-    for (auto pair : _timeSyncClockDeltaQueue)
-    {
-        if (pair.second < latencyStandardDeviation + latencyMedian) {
-            clockDeltasAfterFiltering(pair.first);
-            sampleSizeAfterFiltering++;
-        }
-    }
-
-    if (sampleSizeAfterFiltering != 0)
-    {
-        int64 meanClockDelta = static_cast<int64>(std::round(mean(clockDeltasAfterFiltering)));
-        if (std::abs(meanClockDelta - _timeSyncClockDelta) > 25)
-            _timeSyncClockDelta = meanClockDelta;
-    }
-    else if (_timeSyncClockDelta == 0)
-    {
-        std::pair<int64, uint32> back = _timeSyncClockDeltaQueue.back();
-        _timeSyncClockDelta = back.first;
-    }
 }
 
 void WorldSession::HandleMoveSplineDoneOpcode(WorldPackets::Movement::MoveSplineDone& moveSplineDone)
@@ -749,7 +702,28 @@ void WorldSession::HandleMoveSplineDoneOpcode(WorldPackets::Movement::MoveSpline
                 TaxiPathNodeEntry const* node = flight->GetPath()[flight->GetCurrentNode()];
                 flight->SkipCurrentNode();
 
-                GetPlayer()->TeleportTo(curDestNode->ContinentID, node->Loc.X, node->Loc.Y, node->Loc.Z, GetPlayer()->GetOrientation());
+                switch (GetPlayer()->GetMapId())
+                {
+                case 1152:
+                case 1153:
+                case 1158:
+                case 1159:
+                case 1330:
+                case 1331:
+                    if (curDestNode->ContinentID == MAP_DRAENOR)
+                    {
+                        GetPlayer()->SeamlessTeleportToMap(MAP_DRAENOR);
+                        GetPlayer()->CleanupAfterTaxiFlight();
+                        GetPlayer()->SetFallInformation(0, GetPlayer()->GetPositionZ());
+                        if (GetPlayer()->pvpInfo.IsHostile)
+                            GetPlayer()->CastSpell(GetPlayer(), 2479, true);
+                    }
+                        GetPlayer()->SeamlessTeleportToMap(MAP_DRAENOR);
+                    break;
+                default:
+                    GetPlayer()->TeleportTo(curDestNode->ContinentID, node->Loc.X, node->Loc.Y, node->Loc.Z, GetPlayer()->GetOrientation());
+                    break;
+                }
             }
         }
 
@@ -764,4 +738,17 @@ void WorldSession::HandleMoveSplineDoneOpcode(WorldPackets::Movement::MoveSpline
     GetPlayer()->SetFallInformation(0, GetPlayer()->GetPositionZ());
     if (GetPlayer()->pvpInfo.IsHostile)
         GetPlayer()->CastSpell(GetPlayer(), 2479, true);
+    switch (GetPlayer()->GetMapId())
+    {
+    case 1152:
+    case 1153:
+    case 1158:
+    case 1159:
+    case 1330:
+    case 1331:
+        GetPlayer()->SeamlessTeleportToMap(MAP_DRAENOR);
+        break;
+    default:
+        break;
+    }
 }

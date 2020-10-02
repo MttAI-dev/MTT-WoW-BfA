@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,6 +27,7 @@ enum BroadcastTextIds
 
 enum TrinityStrings
 {
+    LANG_NONE                           = 0,
     // for chat commands
     LANG_SELECT_CHAR_OR_CREATURE        = 1,
     LANG_SELECT_CREATURE                = 2,
@@ -223,6 +224,31 @@ enum TrinityStrings
     //                                    185 not used
     LANG_TRANSPORT_POSITION             = 186,
     // Room for more level 1              187-199 not used
+	
+	 // Battle For Gilneas
+    LANG_BG_BG_START_TWO_MINUTES       = 1250,
+    LANG_BG_BG_START_ONE_MINUTE        = 1251,
+    LANG_BG_BG_START_HALF_MINUTE       = 1252,
+    LANG_BG_BG_HAS_BEGUN               = 1253,
+
+    LANG_BG_BG_ALLY                    = 1254,
+    LANG_BG_BG_HORDE                   = 1255,
+    LANG_BG_BG_NODE_LIGHTHOUSE         = 1256,
+    LANG_BG_BG_NODE_WATERWORKS         = 1257,
+    LANG_BG_BG_NODE_MINE               = 1258,
+    LANG_BG_BG_NODE_TAKEN              = 1259,
+    LANG_BG_BG_NODE_DEFENDED           = 1260,
+    LANG_BG_BG_NODE_ASSAULTED          = 1261,
+    LANG_BG_BG_NODE_CLAIMED            = 1262,
+    LANG_BG_BG_A_NEAR_VICTORY          = 1263,
+    LANG_BG_BG_H_NEAR_VICTORY          = 1264,
+    LANG_BG_AB_START_TWO_MINUTES       = 754,
+    LANG_BG_AB_START_ONE_MINUTE        = 661,
+    LANG_BG_AB_START_HALF_MINUTE       = 662,
+    LANG_BG_AB_HAS_BEGUN               = 663,
+    LANG_BG_AB_A_NEAR_VICTORY          = 664,
+    LANG_BG_AB_H_NEAR_VICTORY          = 665,
+    LANG_BG_MARK_BY_MAIL               = 666,
 
     // level 2 chat
     LANG_NO_SELECTION                   = 200,
@@ -1146,5 +1172,7 @@ enum TrinityStrings
 
     LANG_DEBUG_LFG_ON                             = 11024,
     LANG_DEBUG_LFG_OFF                            = 11025,
+
+    LANG_BATTLE_PAY_ERROR_BAGS_FULL               = 11500,
 };
 #endif

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -117,7 +117,7 @@ class TC_GAME_API Aura
 {
     friend Aura* Unit::_TryStackingOrRefreshingExistingAura(SpellInfo const* newAura, uint32 effMask, Unit* caster, int32 *baseAmount, Item* castItem, ObjectGuid casterGUID, bool resetPeriodicTimer, ObjectGuid castItemGuid, uint32 castItemId, int32 castItemLevel);
     public:
-        Ashamane::AnyData Variables;
+        LatinCore::AnyData Variables;
 
         typedef std::map<ObjectGuid, AuraApplication*> ApplicationMap;
 
@@ -138,6 +138,7 @@ class TC_GAME_API Aura
         uint32 GetCastItemId() const { return m_castItemId; }
         int32 GetCastItemLevel() const { return m_castItemLevel; }
         uint32 GetSpellXSpellVisualId() const { return m_spellXSpellVisualId; }
+        void SetSpellXSpellVisualId(uint32 visual) { m_spellXSpellVisualId = visual; }
         Unit* GetCaster() const;
         WorldObject* GetOwner() const { return m_owner; }
         Unit* GetUnitOwner() const { ASSERT(GetType() == UNIT_AURA_TYPE); return (Unit*)m_owner; }
@@ -279,6 +280,7 @@ class TC_GAME_API Aura
         void CallScriptEffectAfterManaShieldHandlers(AuraEffect* aurEff, AuraApplication const* aurApp, DamageInfo & dmgInfo, uint32 & absorbAmount);
         void CallScriptEffectSplitHandlers(AuraEffect* aurEff, AuraApplication const* aurApp, DamageInfo & dmgInfo, uint32 & splitAmount);
         void CallScriptEffectCalcCritChanceHandlers(AuraEffect const* aurEff, AuraApplication const* aurApp, Unit* victim, float& chance);
+        void CallScriptEffectHealAbsorbHandlers(AuraEffect* aurEff, AuraApplication const* aurApp, HealInfo & healInfo, uint32 & absorbAmount, bool & defaultPrevented);
         // Spell Proc Hooks
         bool CallScriptCheckProcHandlers(AuraApplication const* aurApp, ProcEventInfo& eventInfo);
         bool CallScriptCheckEffectProcHandlers(AuraEffect const* aurEff, AuraApplication const* aurApp, ProcEventInfo& eventInfo);
@@ -312,7 +314,7 @@ class TC_GAME_API Aura
         ObjectGuid const m_castItemGuid;                    // it is NOT safe to keep a pointer to the item because it may get deleted
         uint32 m_castItemId;
         int32 m_castItemLevel;
-        uint32 const m_spellXSpellVisualId;
+        uint32 m_spellXSpellVisualId;
         time_t const m_applyTime;
         WorldObject* const m_owner;
 

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -105,6 +105,15 @@ struct  npc_nathanos_team_meeting : public ScriptedAI
     {
         Talk(0);
         player->SummonGameObject(GOB_BLIGHTCALLER_EASY_DEATH, 1577.965f, -4455.622f, 16.55939f, 0.f, QuaternionData(0.f, 0.f, 0.f, 1.f), 0, true);
+    }
+    
+    void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 /*gossipListId*/)
+    {
+        if (player->getLevel() >= 110)
+        {
+            player->CastSpell(player, 263948);
+            player->ForceCompleteQuest(50769);
+        }
     }
 };
 

@@ -1,6 +1,6 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
- *
+ * Copyright (C)Latin Core Team
+ * Thordekk
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
@@ -154,11 +154,13 @@ void WorldPackets::Battleground::BattlemasterJoinArenaSkirmish::Read()
 ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::Battleground::BattlefieldStatusHeader const& header)
 {
     data << header.Ticket;
-    data << uint64(header.QueueID);
+    data << uint32(header.QueueID.size());
     data << uint8(header.RangeMin);
     data << uint8(header.RangeMax);
     data << uint8(header.TeamSize);
     data << uint32(header.InstanceID);
+    for (uint64 queueID : header.QueueID)
+        data << uint64(queueID);
     data.WriteBit(header.RegisteredMatch);
     data.WriteBit(header.TournamentRules);
     data.FlushBits();
@@ -307,17 +309,40 @@ WorldPacket const* WorldPackets::Battleground::RatedBattleFieldInfo::Write()
     for (RatedInfo& info : Infos)
     {
         _worldPacket << uint32(info.ArenaPersonalRating);
-        _worldPacket << uint32(20);
+        _worldPacket << uint32(info.ArenaMatchMakerRating);
         _worldPacket << uint32(info.SeasonGames);
         _worldPacket << uint32(info.SeasonWins);
-        _worldPacket << uint32(21);
-        _worldPacket << uint32(22);
+        _worldPacket << uint32(info.PrevWeekGames);
+        _worldPacket << uint32(info.PrevWeekWins);
         _worldPacket << uint32(info.WeekGames);
         _worldPacket << uint32(info.WeekWins);
         _worldPacket << uint32(info.BestRatingOfWeek);
         _worldPacket << uint32(info.ProjectedConquestCap);
         _worldPacket << uint32(info.BestRatingOfSeason);
+        _worldPacket << uint32(info.Ranking);
+        _worldPacket << uint32(info.WeekWins);
     }
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Battleground::ConquestFormulaConstants::Write()
+{
+    _worldPacket << uint32(PvpMinCPPerWeek);
+    _worldPacket << uint32(PvpMaxCPPerWeek);
+    _worldPacket << uint32(PvpCPBaseCoefficient);
+    _worldPacket << float(PvpCPExpCoefficient);
+    _worldPacket << float(PvpCPNumerator);
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Battleground::SendPvpBrawlInfo::Write()
+{
+    _worldPacket << uint32(BrawlType);
+    _worldPacket << int32(TimeToEnd);
+    _worldPacket.FlushBits();
+    _worldPacket.WriteBit(IsActive);
 
     return &_worldPacket;
 }

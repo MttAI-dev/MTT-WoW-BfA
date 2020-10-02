@@ -1,4 +1,4 @@
-# This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+# Copyright (C) 2020 LatinCoreTeam
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -31,11 +31,6 @@ if(SERVERS)
   add_subdirectory(rapidjson)
   add_subdirectory(efsw)
   add_subdirectory(protobuf)
-  add_subdirectory(duktape)
-
-  if (WITH_CPR)
-    add_subdirectory(cpr)
-  endif(WITH_CPR)
 endif()
 
 if(TOOLS)

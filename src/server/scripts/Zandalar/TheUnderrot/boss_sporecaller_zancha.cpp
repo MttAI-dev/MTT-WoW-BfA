@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -85,6 +85,11 @@ struct boss_sporecaller_zancha : public BossAI
 
         if (IsHeroic())
             events.ScheduleEvent(SPELL_VOLATILE_POD, 20s);
+    }
+    void JustDied(Unit* killer) override
+    {
+        BossAI::JustDied(killer);
+        instance->SetBossState(DATA_SPORECALLER_ZANCHA, DONE);
     }
 
     void DoAction(int32 action) override

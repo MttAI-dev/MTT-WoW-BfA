@@ -1,0 +1,1 @@
+UPDATE `areatrigger_template` SET `ScriptName`='at_mage_frozen_orb' WHERE (`Id`='12740');

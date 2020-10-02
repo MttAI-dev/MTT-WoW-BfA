@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,6 +27,18 @@
 #include "Player.h"
 #include "World.h"
 #include "WorldPacket.h"
+
+inline Guild* _GetPlayerGuild(WorldSession* session, bool sendError = false)
+{
+    if (ObjectGuid::LowType guildId = session->GetPlayer()->GetGuildId())
+        if (Guild* guild = sGuildMgr->GetGuildById(guildId))
+            return guild;
+
+    if (sendError)
+        Guild::SendCommandResult(session, GUILD_COMMAND_CREATE_GUILD, ERR_GUILD_PLAYER_NOT_IN_GUILD);
+
+    return nullptr;
+}
 
 void WorldSession::HandleGuildQueryOpcode(WorldPackets::Guild::QueryGuildInfo& query)
 {
@@ -451,11 +463,11 @@ void WorldSession::HandleGuildRequestPartyState(WorldPackets::Guild::RequestGuil
         guild->HandleGuildPartyRequest(this);
 }
 
-void WorldSession::HandleGuildChallengeUpdateRequest(WorldPackets::Guild::GuildChallengeUpdateRequest& /*packet*/)
-{
-    if (Guild* guild = _player->GetGuild())
-        guild->HandleGuildRequestChallengeUpdate(this);
-}
+///void WorldSession::HandleGuildChallengeUpdateRequest(WorldPackets::Guild::GuildChallengeUpdateRequest& /*packet*/)
+///{
+///    if (Guild* guild = _player->GetGuild())
+///        guild->HandleGuildRequestChallengeUpdate(this);
+///}
 
 void WorldSession::HandleDeclineGuildInvites(WorldPackets::Guild::DeclineGuildInvites& packet)
 {
@@ -510,6 +522,11 @@ void WorldSession::HandleGuildReplaceGuildMaster(WorldPackets::Guild::GuildRepla
         guild->HandleSetNewGuildMaster(this, "", true);
 }
 
+//void WorldSession::HandleGuildRequestChallengeUpdate(WorldPackets::Guild::GuildChallengeUpdateRequest& /*packet*/)
+//{
+//    if (Guild* guild = _GetPlayerGuild(this))
+//        guild->SendGuildChallengeUpdated(this);
+//}
 void WorldSession::HandleGuildSetGuildMaster(WorldPackets::Guild::GuildSetGuildMaster& packet)
 {
     if (Guild* guild = GetPlayer()->GetGuild())

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -578,13 +578,10 @@ void PoolMgr::LoadFromDB()
             Field* fields = result->Fetch();
 
             uint32 pool_id = fields[0].GetUInt32();
-            if (pool_id >= MAX_DB_POOL_ID)
-            {
-                TC_LOG_ERROR("sql.sql", "`pool_template` has pool id (%u) superior than max db pool id (%u), skipped.", pool_id, MAX_DB_POOL_ID);
-                continue;
-            }
 
-            AddPoolTemplate(pool_id, fields[1].GetUInt32());
+            PoolTemplateData& pPoolTemplate = mPoolTemplate[pool_id];
+            pPoolTemplate.MaxLimit  = fields[1].GetUInt32();
+
             ++count;
         }
         while (result->NextRow());
@@ -703,7 +700,14 @@ void PoolMgr::LoadFromDB()
                     continue;
                 }
 
-                AddGameObjectToPool(pool_id, guid, chance);
+                PoolTemplateData* pPoolTemplate = &mPoolTemplate[pool_id];
+                PoolObject plObject = PoolObject(guid, chance);
+                PoolGroup<GameObject>& gogroup = mPoolGameobjectGroups[pool_id];
+                gogroup.SetPoolId(pool_id);
+                gogroup.AddEntry(plObject, pPoolTemplate->MaxLimit);
+                SearchPair p(guid, pool_id);
+                mGameobjectSearchMap.insert(p);
+
                 ++count;
             }
             while (result->NextRow());
@@ -938,34 +942,6 @@ void PoolMgr::LoadFromDB()
 
         }
     }
-}
-
-void PoolMgr::AddPoolTemplate(uint32 pool_id, uint32 maxLimit)
-{
-    PoolTemplateData& pPoolTemplate = mPoolTemplate[pool_id];
-    pPoolTemplate.MaxLimit = maxLimit;
-}
-
-void PoolMgr::AddGameObjectToPool(uint32 pool_id, ObjectGuid::LowType guid, uint32 chance)
-{
-    PoolTemplateData* pPoolTemplate = &mPoolTemplate[pool_id];
-    PoolObject plObject = PoolObject(guid, chance);
-    PoolGroup<GameObject>& gogroup = mPoolGameobjectGroups[pool_id];
-    gogroup.SetPoolId(pool_id);
-    gogroup.AddEntry(plObject, pPoolTemplate->MaxLimit);
-    SearchPair p(guid, pool_id);
-    mGameobjectSearchMap.insert(p);
-}
-
-void PoolMgr::AddPoolToPool(uint32 mother_pool_id, uint32 pool_id, uint32 chance)
-{
-    PoolTemplateData* pPoolTemplateMother = &mPoolTemplate[mother_pool_id];
-    PoolObject plObject = PoolObject(pool_id, chance);
-    PoolGroup<Pool>& plgroup = mPoolPoolGroups[mother_pool_id];
-    plgroup.SetPoolId(mother_pool_id);
-    plgroup.AddEntry(plObject, pPoolTemplateMother->MaxLimit);
-    SearchPair p(pool_id, mother_pool_id);
-    mPoolSearchMap.insert(p);
 }
 
 void PoolMgr::LoadQuestPools()

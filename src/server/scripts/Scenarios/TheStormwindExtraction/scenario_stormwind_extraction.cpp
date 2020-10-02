@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -195,9 +195,7 @@ struct scenario_stormwind_extraction : public InstanceScript
                 {
                     escapeStockade->RemoveUnitFlag(UNIT_FLAG_NOT_SELECTABLE);
 
-                    //DoSendScenarioEvent(SCENARIO_EVENT_PRISON_ESCAPE);
-
-                    // TEMP FIX
+                    // TEMP FIX.
                     if (ScenarioStepEntry const* step = sScenarioStepStore.LookupEntry(3731))
                         if (Creature* thalyssra = GetThalyssra())
                             thalyssra->GetScenario()->SetStep(step);

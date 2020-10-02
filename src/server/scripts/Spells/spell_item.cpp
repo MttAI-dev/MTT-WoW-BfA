@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -4561,47 +4561,38 @@ class spell_item_world_queller_focus : public SpellScriptLoader
         }
 };
 
+//the mount doesnt walk in water more since 8.2 its a normal mount
 // 118089 - Azure Water Strider
 // 127271 - Crimson Water Strider
 // 127272 - Orange Water Strider
 // 127274 - Jade Water Strider
 // 127278 - Golden Water Strider
-class spell_item_water_strider : public SpellScriptLoader
+class spell_item_water_strider : public AuraScript
 {
-    public:
-        spell_item_water_strider() : SpellScriptLoader("spell_item_water_strider") { }
+    PrepareAuraScript(spell_item_water_strider);
 
-        class spell_item_water_strider_AuraScript : public AuraScript
-        {
-            PrepareAuraScript(spell_item_water_strider_AuraScript);
-
-            bool Validate(SpellInfo const* /*spell*/) override
+    bool Validate(SpellInfo const* /*spell*/) override
+    {
+        return ValidateSpellInfo(
             {
-                return ValidateSpellInfo(
-                {
-                    SPELL_AZURE_WATER_STRIDER,
-                    SPELL_CRIMSON_WATER_STRIDER,
-                    SPELL_ORANGE_WATER_STRIDER,
-                    SPELL_JADE_WATER_STRIDER,
-                    SPELL_GOLDEN_WATER_STRIDER
-                });
-            }
+                SPELL_AZURE_WATER_STRIDER,
+                SPELL_CRIMSON_WATER_STRIDER,
+                SPELL_ORANGE_WATER_STRIDER,
+                SPELL_JADE_WATER_STRIDER,
+                SPELL_GOLDEN_WATER_STRIDER
+            });
+    }
 
-            void OnRemove(AuraEffect const* /*effect*/, AuraEffectHandleModes /*mode*/)
-            {
-                GetTarget()->RemoveAurasDueToSpell(GetSpellInfo()->GetEffect(EFFECT_1)->TriggerSpell);
-            }
+    void HandleRemove(AuraEffect const* /*effect*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* target = GetTarget();
+        //GetTarget()->RemoveAurasDueToSpell(GetSpellInfo()->GetEffect(EFFECT_1)->TriggerSpell);
+    }
 
-            void Register() override
-            {
-                OnEffectRemove += AuraEffectRemoveFn(spell_item_water_strider_AuraScript::OnRemove, EFFECT_0, SPELL_AURA_MOUNTED, AURA_EFFECT_HANDLE_REAL);
-            }
-        };
-
-        AuraScript* GetAuraScript() const override
-        {
-            return new spell_item_water_strider_AuraScript();
-        }
+    void Register() override
+    {
+        OnEffectRemove += AuraEffectRemoveFn(spell_item_water_strider::HandleRemove, EFFECT_0, SPELL_AURA_MOUNTED, AURA_EFFECT_HANDLE_REAL);
+    }
 };
 
 // 144671 - Brutal Kinship
@@ -4669,141 +4660,6 @@ class aura_item_burning_essence : public AuraScript
     }
 };
 
-// 45051 - Mad Alchemist's Potion (34440)
-class spell_item_mad_alchemists_potion : public SpellScriptLoader
-{
-public:
-    spell_item_mad_alchemists_potion() : SpellScriptLoader("spell_item_mad_alchemists_potion") {}
-
-    class mad_alchemists_potion_SpellScript : public SpellScript
-    {
-        PrepareSpellScript(mad_alchemists_potion_SpellScript);
-
-        void SecondaryEffect()
-        {
-            std::vector<uint32> availableElixirs =
-            {
-                // Battle Elixirs
-                33720, // Onslaught Elixir (28102)
-                54452, // Adept's Elixir (28103)
-                33726, // Elixir of Mastery (28104)
-                28490, // Elixir of Major Strength (22824)
-                28491, // Elixir of Healing Power (22825)
-                28493, // Elixir of Major Frost Power (22827)
-                54494, // Elixir of Major Agility (22831)
-                28501, // Elixir of Major Firepower (22833)
-                28503,// Elixir of Major Shadow Power (22835)
-                38954, // Fel Strength Elixir (31679)
-                // Guardian Elixirs
-                39625, // Elixir of Major Fortitude (32062)
-                39626, // Earthen Elixir (32063)
-                39627, // Elixir of Draenic Wisdom (32067)
-                39628, // Elixir of Ironskin (32068)
-                28502, // Elixir of Major Defense (22834)
-                28514, // Elixir of Empowerment (22848)
-                // Other
-                28489, // Elixir of Camouflage (22823)
-                28496  // Elixir of the Searching Eye (22830)
-            };
-
-            Unit* target = GetCaster();
-
-            if (target->GetPowerType() == POWER_MANA)
-                availableElixirs.push_back(28509); // Elixir of Major Mageblood (22840)
-
-            uint32 chosenElixir = Trinity::Containers::SelectRandomContainerElement(availableElixirs);
-
-            bool useElixir = true;
-
-            SpellGroup chosenSpellGroup = SPELL_GROUP_NONE;
-            if (sSpellMgr->IsSpellMemberOfSpellGroup(chosenElixir, SPELL_GROUP_ELIXIR_BATTLE))
-                chosenSpellGroup = SPELL_GROUP_ELIXIR_BATTLE;
-            if (sSpellMgr->IsSpellMemberOfSpellGroup(chosenElixir, SPELL_GROUP_ELIXIR_GUARDIAN))
-                chosenSpellGroup = SPELL_GROUP_ELIXIR_GUARDIAN;
-            // If another spell of the same group is already active the elixir should not be cast
-            if (chosenSpellGroup != SPELL_GROUP_NONE)
-            {
-                Unit::AuraApplicationMap const& auraMap = target->GetAppliedAuras();
-                for (auto itr = auraMap.begin(); itr != auraMap.end(); ++itr)
-                {
-                    uint32 spellId = itr->second->GetBase()->GetId();
-                    if (sSpellMgr->IsSpellMemberOfSpellGroup(spellId, chosenSpellGroup) && spellId != chosenElixir)
-                    {
-                        useElixir = false;
-                        break;
-                    }
-                }
-            }
-
-            if (useElixir)
-                target->CastSpell(target, chosenElixir, true, GetCastItem());
-        }
-
-        void Register() override
-        {
-            AfterCast += SpellCastFn(mad_alchemists_potion_SpellScript::SecondaryEffect);
-        }
-
-    };
-
-    SpellScript* GetSpellScript() const override
-    {
-        return new mad_alchemists_potion_SpellScript();
-    }
-};
-
-// 53750 - Crazy Alchemist's Potion (40077)
-class spell_item_crazy_alchemists_potion : public SpellScriptLoader
-{
-public:
-    spell_item_crazy_alchemists_potion() : SpellScriptLoader("spell_item_crazy_alchemists_potion") {}
-
-    class crazy_alchemists_potion_SpellScript : public SpellScript
-    {
-        PrepareSpellScript(crazy_alchemists_potion_SpellScript);
-
-        void SecondaryEffect()
-        {
-            std::vector<uint32> availableElixirs =
-            {
-                43185, // Runic Healing Potion (33447)
-                53750, // Crazy Alchemist's Potion (40077)
-                53761, // Powerful Rejuvenation Potion (40087)
-                53762, // Indestructible Potion (40093)
-                53908, // Potion of Speed (40211)
-                53909, // Potion of Wild Magic (40212)
-                53910, // Mighty Arcane Protection Potion (40213)
-                53911, // Mighty Fire Protection Potion (40214)
-                53913, // Mighty Frost Protection Potion (40215)
-                53914, // Mighty Nature Protection Potion (40216)
-                53915  // Mighty Shadow Protection Potion (40217)
-            };
-
-            Unit* target = GetCaster();
-
-            if (!target->IsInCombat())
-                availableElixirs.push_back(53753); // Potion of Nightmares (40081)
-            if (target->GetPowerType() == POWER_MANA)
-                availableElixirs.push_back(43186); // Runic Mana Potion(33448)
-
-            uint32 chosenElixir = Trinity::Containers::SelectRandomContainerElement(availableElixirs);
-
-            target->CastSpell(target, chosenElixir, true, GetCastItem());
-        }
-
-        void Register() override
-        {
-            AfterCast += SpellCastFn(crazy_alchemists_potion_SpellScript::SecondaryEffect);
-        }
-
-    };
-
-    SpellScript* GetSpellScript() const override
-    {
-        return new crazy_alchemists_potion_SpellScript();
-    }
-};
-
 // 277253 - Heart of Azeroth
 class spell_item_heart_of_azeroth : public AuraScript
 {
@@ -4835,6 +4691,160 @@ class spell_item_heart_of_azeroth : public AuraScript
     {
         OnEffectApply += AuraEffectApplyFn(spell_item_heart_of_azeroth::SetEquippedFlag, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
         OnEffectRemove += AuraEffectRemoveFn(spell_item_heart_of_azeroth::ClearEquippedFlag, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+uint32 RandomMorphs[16] =
+{
+    30089,
+    30096,
+    30084,
+    29907,
+    19840,
+    30085,
+    30086,
+    29909,
+    30094,
+    30093,
+    29908,
+    30088,
+    7614,
+    30092,
+    30095,
+    11670
+};
+
+// 74589
+class spell_item_faded_wizard_hat : public AuraScript
+{
+    PrepareAuraScript(spell_item_faded_wizard_hat);
+
+    void OnApply(AuraEffect const*, AuraEffectHandleModes /*mode*/)
+    {
+        GetCaster()->SetDisplayId(RandomMorphs[urand(0, 15)]);
+    }
+
+    void Register() override
+    {
+        OnEffectApply += AuraEffectApplyFn(spell_item_faded_wizard_hat::OnApply, EFFECT_0, SPELL_AURA_TRANSFORM, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+uint32 MaleModels[] = { 20122, 20124, 20130, 20131, 20132, 20133, 20134, 20756, 20757, 20758, 20759 };
+class spell_item_demon_hunters_aspect : public AuraScript
+{
+    PrepareAuraScript(spell_item_demon_hunters_aspect);
+
+    void OnApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        if (Unit* player = GetTarget()->ToPlayer())
+        {
+            if (player->getGender() == GENDER_MALE)
+                player->SetDisplayId(MaleModels[urand(0, 10)]);
+            else
+                player->SetDisplayId(20126);
+        }
+    }
+
+    void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        if (Unit* player = GetTarget()->ToPlayer())
+            player->SetDisplayId(player->GetNativeDisplayId());
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectRemoveFn(spell_item_demon_hunters_aspect::OnApply, EFFECT_0, SPELL_AURA_TRANSFORM, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_item_demon_hunters_aspect::OnRemove, EFFECT_0, SPELL_AURA_TRANSFORM, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
+// Item 10721: Gnomish Harm Prevention Belt 
+// 13234 - Harm Prevention Belt
+enum HarmPreventionBelt
+{
+    SPELL_FORCEFIELD_COLLAPSE = 13235
+};
+
+class spell_item_harm_prevention_belt : public SpellScriptLoader
+{
+public:
+    spell_item_harm_prevention_belt() : SpellScriptLoader("spell_item_harm_prevention_belt") { }
+
+    class spell_item_harm_prevention_belt_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(spell_item_harm_prevention_belt_AuraScript);
+
+        bool Validate(SpellInfo const* /*spellInfo*/) override
+        {
+            if (!sSpellMgr->GetSpellInfo(SPELL_FORCEFIELD_COLLAPSE))
+                return false;
+            return true;
+        }
+
+        void HandleProc(ProcEventInfo& /*eventInfo*/)
+        {
+            GetTarget()->CastSpell((Unit*)nullptr, SPELL_FORCEFIELD_COLLAPSE, true);
+        }
+
+        void Register() override
+        {
+            OnProc += AuraProcFn(spell_item_harm_prevention_belt_AuraScript::HandleProc);
+        }
+    };
+
+    AuraScript* GetAuraScript() const override
+    {
+        return new spell_item_harm_prevention_belt_AuraScript();
+    }
+};
+
+// spell 188021 -  Avalanche Elixir
+enum AvalancheElixir
+{
+    SPELL_AVALANCHE_ELIXIR_BUFF = 188414,
+    SPELL_AVALANCHE_ELIXIR      = 188021
+};
+
+class aura_item_avalanche_elixir : public AuraScript
+{
+    PrepareAuraScript(aura_item_avalanche_elixir);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo({ SPELL_AVALANCHE_ELIXIR_BUFF, SPELL_AVALANCHE_ELIXIR });
+    }
+
+    void HandleEffectPeriodic(AuraEffect const* aurEff)
+    {
+        if (Player* target = GetTarget()->ToPlayer())
+            if (target->HasAura(SPELL_AVALANCHE_ELIXIR) && target->IsFalling())
+            {
+                target->RemoveAurasDueToSpell(SPELL_AVALANCHE_ELIXIR);
+                target->CastSpell(target, SPELL_AVALANCHE_ELIXIR_BUFF, true);
+            }
+    }
+
+    void Register() override
+    {
+        OnEffectPeriodic += AuraEffectPeriodicFn(aura_item_avalanche_elixir::HandleEffectPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+    }
+};
+
+//54814 Talisman of Flame Ascendancy
+class talisman_of_flame_ascendancy : public ItemScript
+{
+public:
+    talisman_of_flame_ascendancy() : ItemScript("talisman_of_flame_ascendancy") { }
+    
+    bool OnUse(Player* plr, Item* /*item*/, SpellCastTargets const& targets, ObjectGuid /*castId*/) override
+    {
+        if (plr->GetQuestStatus(25310) == QUEST_STATUS_INCOMPLETE && plr->GetAreaId() == 4998)
+        {
+            if (plr->FindNearestCreature(139643, 25.0f, true))
+                plr->CastSpell(nullptr, 75554);
+        }
+        return true;
     }
 };
 
@@ -4873,6 +4883,7 @@ void AddSC_item_spell_scripts()
     new spell_item_flask_of_the_north();
     new spell_item_frozen_shadoweave();
     new spell_item_gnomish_death_ray();
+    new spell_item_harm_prevention_belt();
     new spell_item_heartpierce<SPELL_INVIGORATION_ENERGY, SPELL_INVIGORATION_MANA, SPELL_INVIGORATION_RAGE, SPELL_INVIGORATION_RP>("spell_item_heartpierce");
     new spell_item_heartpierce<SPELL_INVIGORATION_ENERGY_HERO, SPELL_INVIGORATION_MANA_HERO, SPELL_INVIGORATION_RAGE_HERO, SPELL_INVIGORATION_RP_HERO>("spell_item_heartpierce_hero");
     new spell_item_crystal_spire_of_karabor();
@@ -4952,12 +4963,12 @@ void AddSC_item_spell_scripts()
     new spell_item_talisman_of_ascendance();
     new spell_item_battle_trance();
     new spell_item_world_queller_focus();
-    new spell_item_water_strider();
+    RegisterAuraScript(spell_item_water_strider);
     new spell_item_brutal_kinship();
     RegisterAuraScript(aura_item_burning_essence);
-
-    new spell_item_mad_alchemists_potion();
-    new spell_item_crazy_alchemists_potion();
-
     RegisterAuraScript(spell_item_heart_of_azeroth);
+    RegisterAuraScript(spell_item_demon_hunters_aspect);
+    RegisterAuraScript(spell_item_faded_wizard_hat);
+    RegisterAuraScript(aura_item_avalanche_elixir);
+    new talisman_of_flame_ascendancy();
 }

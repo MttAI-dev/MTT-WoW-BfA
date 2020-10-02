@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+* Copyright (C) 2020 LatinCoreTeam
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -19,6 +19,7 @@
 #include "GameObject.h"
 #include "GameObjectAI.h"
 #include "ObjectAccessor.h"
+#include "ObjectMgr.h"
 #include "Player.h"
 #include "ScriptedCreature.h"
 #include "ScriptedEscortAI.h"
@@ -27,6 +28,7 @@
 #include "ScriptMgr.h"
 #include "TemporarySummon.h"
 #include "Vehicle.h"
+#include "PhasingHandler.h"
 
 enum eTiragardeQuests
 {
@@ -634,17 +636,21 @@ public:
     }
 };
 
-// 137009
+// 122370
 class npc_cyrus_crestfall : public ScriptedAI
 {
 public:
     npc_cyrus_crestfall(Creature* creature) : ScriptedAI(creature) { }
 
-    void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 /*gossipListId*/) override
+    void sGossipSelect(Player* plr, uint32 /*menuId*/, uint32 /*gossipListId*/) override
     {
-        player->KilledMonsterCredit(137009);
-        player->PlayConversation(7653);
-        CloseGossipMenuFor(player);
+		if (plr->GetQuestStatus(QUEST_THE_OLD_KNIGHT) == QUEST_STATUS_INCOMPLETE)
+		{
+            plr->KilledMonsterCredit(122370);
+			plr->KilledMonsterCredit(137009);
+			plr->PlayConversation(7653);
+			CloseGossipMenuFor(plr);
+		}
     }
 };
 
@@ -683,6 +689,8 @@ public:
     {
         if (quest->ID == QUEST_NATION_DIVIDED)
             player->CastSpell(player, SPELL_SCENE_NATION_DIVIDED, true);
+        else if (quest->ID == 47099)
+            player->CastSpell(player, 247528, true);   
     }
 
     void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 /*gossipListId*/) override
@@ -728,7 +736,7 @@ public:
         if (quest->ID == QUEST_LOVESICK_ID)
         {
             me->DestroyForPlayer(player);
-            player->CastSpell(nullptr, SPELL_SUMMON_FLYNN_ESCORT_ID, true);
+            player->CastSpell(player, SPELL_SUMMON_FLYNN_ESCORT_ID, true);
         }
     }
 };
@@ -741,8 +749,8 @@ public:
 
     enum
     {
-        NPC_FLYNN_ENTRY = 126158,
-        SPELL_LOVESTRUCK = 245526,
+        NPC_FLYNN_ENTRY    = 126158,
+        SPELL_LOVESTRUCK   = 245526,
         SPELL_BROKEN_HEART = 250911
     };
 
@@ -1124,6 +1132,64 @@ public:
     }
 };
 
+// 142721 - Ralston Karn 
+class npc_ralston_karn  : public ScriptedAI
+{
+public:
+    enum
+    {
+        QUEST_TO_THE_FRONT            = 53194,
+        NPC_YVERA_DAWNWING_KILLCREDIT = 143380,
+        SPELL_TELEPORT_TO_STROMGARDE  = 279518
+    };
+
+    npc_ralston_karn(Creature* creature) : ScriptedAI(creature) { }
+
+    void sQuestAccept(Player* player, Quest const* quest) override
+    {
+        if (quest->ID == QUEST_TO_THE_FRONT)
+		{
+            player->KilledMonsterCredit(NPC_YVERA_DAWNWING_KILLCREDIT);
+            player->CastSpell(player, SPELL_TELEPORT_TO_STROMGARDE);
+        }
+    }
+};
+
+class boralus_harbor : public PlayerScript
+{
+public:
+    boralus_harbor() : PlayerScript("boralus_harbor") { }
+
+    uint32 timer = 100;
+
+    void OnUpdate(Player* plr, uint32 diff) override
+    {
+        if (timer <= diff && plr->GetZoneId() == 8717 || plr->GetZoneId() == 8567 && plr->GetPhaseShift().HasPhase(180))
+        {            
+            PhasingHandler::RemovePhase(plr, 180, true);
+            if (plr->HasAura(78517))
+                plr->RemoveAura(78517);
+        }
+        else
+            timer -= diff;
+    }
+};
+
+class old_knight_check : public PlayerScript
+{
+public:
+    old_knight_check() : PlayerScript("old_knight_check") { }
+
+    void OnLogin(Player* plr, bool /*firstLogin*/)
+    {        
+        if (plr->GetZoneId() == 8717 || plr->GetZoneId() == 8567 && plr->GetQuestStatus(QUEST_THE_OLD_KNIGHT) != QUEST_STATUS_REWARDED && plr->getLevel() >= 110 && plr->GetTeam() == ALLIANCE && plr->GetQuestStatus(QUEST_GET_YOUR_BEARINGS) == QUEST_STATUS_REWARDED)
+        {
+            if (const Quest* qu = sObjectMgr->GetQuestTemplate(QUEST_THE_OLD_KNIGHT))
+                plr->AddQuest(qu, nullptr);
+        }
+    }
+};
+
 void AddSC_zone_tiragarde_sound()
 {
     RegisterCreatureAI(npc_jaina_boralus_intro);
@@ -1155,4 +1221,7 @@ void AddSC_zone_tiragarde_sound()
     RegisterCreatureAI(npc_penny_hardwick);
     RegisterCreatureAI(npc_penny_hardwick_escort);
     RegisterCreatureAI(npc_riding_macaw_patrol);
+    RegisterCreatureAI(npc_ralston_karn);
+    RegisterPlayerScript(boralus_harbor);
+    RegisterPlayerScript(old_knight_check);
 }

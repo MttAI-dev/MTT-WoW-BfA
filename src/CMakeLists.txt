@@ -1,4 +1,4 @@
-# This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+# Copyright (C) 2020 LatinCoreTeam
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -14,10 +14,6 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/common/Debugging/WheatyExceptionReport.h
   )
 endif(WIN32)
-
-if (WITH_CPR)
-    add_definitions(-DWITH_CPR)
-endif(WITH_CPR)
 
 add_subdirectory(genrev)
 add_subdirectory(common)

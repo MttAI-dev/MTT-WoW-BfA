@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -414,20 +414,20 @@ TempSummon* Transport::SummonPassenger(uint32 entry, Position const& pos, TempSu
             {
                 switch (SummonTitle(properties->Title))
                 {
-                    case SummonTitle::Minion:
-                    case SummonTitle::Guardian:
-                    case SummonTitle::Runeblade:
+                case SummonTitle::Minion:
+                case SummonTitle::Guardian:
+                case SummonTitle::Runeblade:
                         mask = UNIT_MASK_GUARDIAN;
                         break;
-                    case SummonTitle::Totem:
-                    case SummonTitle::Lightwell:
+                case SummonTitle::Totem:
+                case SummonTitle::Lightwell:
                         mask = UNIT_MASK_TOTEM;
                         break;
-                    case SummonTitle::Vehicle:
-                    case SummonTitle::Mount:
+                case SummonTitle::Vehicle:
+                case SummonTitle::Mount:
                         mask = UNIT_MASK_SUMMON;
                         break;
-                    case SummonTitle::Companion:
+                case SummonTitle::Companion:
                         mask = UNIT_MASK_MINION;
                         break;
                     default:

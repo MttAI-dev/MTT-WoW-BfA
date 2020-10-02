@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -74,6 +74,12 @@ struct boss_cragmaw_infested : public BossAI
     {
         if (action == SPELL_TANTRUM)
             events.RescheduleEvent(SPELL_TANTRUM, 1s);
+    }
+
+    void JustDied(Unit* killer) override
+    {
+        BossAI::JustDied(killer);
+        instance->SetBossState(DATA_CRAGMAW_THE_INFESTED, DONE);
     }
 
     void ExecuteEvent(uint32 eventId) override

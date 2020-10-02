@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -24,6 +24,7 @@
 #include "SharedDefines.h"
 #include <list>
 #include <set>
+class ChallengeModeMgr;
 #include <unordered_map>
 #include <vector>
 
@@ -45,6 +46,7 @@ struct TC_GAME_API LootStoreItem
     uint32  mincount;                                       // mincount for drop items
     uint32  maxcount;                                       // max drop count for the item mincount or Ref multiplicator
     ConditionContainer conditions;                               // additional loot condition
+    std::vector<int32> bonus;
 
     // Constructor
     // displayid is filled in IsValid() which must be called after
@@ -111,9 +113,12 @@ class TC_GAME_API LootTemplate
         // Adds an entry to the group (at loading stage)
         void AddEntry(LootStoreItem* item);
         // Rolls for every item in the template and adds the rolled items the the loot
+       // void ProcessOploteChest(Loot& loot) const;
         void Process(Loot& loot, bool rate, uint16 lootMode, uint8 groupId = 0, Player const* player = nullptr, bool specOnly = false) const;
+      //  void ProcessChallengeChest(Loot& loot, uint32 lootId, ChallengeModeMgr* _challenge) const;
         void CopyConditions(const ConditionContainer& conditions);
         void CopyConditions(LootItem* li) const;
+        void FillAutoAssignationLoot(std::unordered_map<uint32, std::vector<int32>>& itemList, Player* player = nullptr, bool isBGReward = false) const;
 
         // True if template includes at least 1 quest drop entry
         bool HasQuestDrop(LootTemplateMap const& store, uint8 groupId = 0) const;

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -249,8 +249,8 @@ public:
         CellCoord cellCoord = Trinity::ComputeCellCoord(object->GetPositionX(), object->GetPositionY());
         Cell cell(cellCoord);
 
-        uint32 zoneId = object->GetZoneId();
-        uint32 areaId = object->GetAreaId();
+        uint32 zoneId, areaId;
+        object->GetZoneAndAreaId(zoneId, areaId);
         uint32 mapId = object->GetMapId();
 
         MapEntry const* mapEntry = sMapStore.LookupEntry(mapId);
@@ -262,7 +262,7 @@ public:
 
         sDB2Manager.Map2ZoneCoordinates(zoneId, zoneX, zoneY);
 
-        Map const* map = object->GetMap();
+        Map* map = object->GetMap();
         float groundZ = map->GetHeight(object->GetPhaseShift(), object->GetPositionX(), object->GetPositionY(), MAX_HEIGHT);
         float floorZ = map->GetHeight(object->GetPhaseShift(), object->GetPositionX(), object->GetPositionY(), object->GetPositionZ());
 
@@ -301,7 +301,7 @@ public:
             zoneX, zoneY, groundZ, floorZ, haveMap, haveVMap, haveMMap);
 
         LiquidData liquidStatus;
-        ZLiquidStatus status = map->getLiquidStatus(object->GetPhaseShift(), object->GetPositionX(), object->GetPositionY(), object->GetPositionZ(), MAP_ALL_LIQUIDS, &liquidStatus);
+        ZLiquidStatus status = map->GetLiquidStatus(object->GetPhaseShift(), object->GetPositionX(), object->GetPositionY(), object->GetPositionZ(), MAP_ALL_LIQUIDS, &liquidStatus);
 
         if (status)
             handler->PSendSysMessage(LANG_LIQUID_STATUS, liquidStatus.level, liquidStatus.depth_level, liquidStatus.entry, liquidStatus.type_flags, status);
@@ -341,17 +341,15 @@ public:
 
     static bool HandleUnAuraCommand(ChatHandler* handler, char const* args)
     {
-        std::string argstr = strtok((char*)args, " ");
-        Unit* target = ObjectAccessor::FindPlayerByName(argstr);
-
+        Unit* target = handler->getSelectedUnit();
         if (!target)
-            target = handler->getSelectedUnit();
-        else
-            argstr = strtok(NULL, " ");
-
-        if (!target)
+        {
+            handler->SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
+            handler->SetSentErrorMessage(true);
             return false;
+        }
 
+        std::string argstr = args;
         if (argstr == "all")
         {
             target->RemoveAllAuras();
@@ -359,7 +357,7 @@ public:
         }
 
         // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
-        uint32 spellId = handler->extractSpellIdFromLink((char*)argstr.c_str());
+        uint32 spellId = handler->extractSpellIdFromLink((char*)args);
         if (!spellId)
             return false;
 
@@ -1043,21 +1041,28 @@ public:
         if (location_str == "inn")
         {
             player->TeleportTo(player->m_homebindMapId, player->m_homebindX, player->m_homebindY, player->m_homebindZ, player->GetOrientation());
+            //clear auras in case player is phase buggued
+            player->RemoveAllAuras();
             return true;
         }
 
         if (location_str == "graveyard")
         {
             player->RepopAtGraveyard();
+            //clear auras in case player is phase buggued
+            player->RemoveAllAuras();
             return true;
         }
 
         if (location_str == "startzone")
         {
             player->TeleportTo(player->GetStartPosition());
+            //clear auras in case player is phase buggued
+            player->RemoveAllAuras();
             return true;
         }
-
+        //clear auras in case player is phase buggued
+        player->RemoveAllAuras();
         //Not a supported argument
         return false;
 
@@ -1270,7 +1275,6 @@ public:
             return false;
 
         uint32 itemId = 0;
-        uint32 itemLevel = 0;
 
         if (args[0] == '[')                                        // [name] manual form
         {
@@ -1329,12 +1333,12 @@ public:
                     bonusListIDs.push_back(atoul(token));
         }
 
-        char const* context = strtok(NULL, " ");
+        /*char const* context = strtok(NULL, " ");
         if (context)
         {
-            std::set<uint32> bonusListIDset = sDB2Manager.GetItemBonusTree(itemId, ItemContext(atoi(context)), itemLevel);
+            std::set<uint32> bonusListIDset = sDB2Manager.GetItemBonusTree(itemId, context);
             bonusListIDs.insert(bonusListIDs.end(), bonusListIDset.begin(), bonusListIDset.end());
-        }
+        }*/
 
         Player* player = handler->GetSession()->GetPlayer();
         Player* playerTarget = handler->getSelectedPlayer();

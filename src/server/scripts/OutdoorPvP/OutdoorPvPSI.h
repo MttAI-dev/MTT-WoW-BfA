@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -58,8 +58,8 @@ class OutdoorPvPSI : public OutdoorPvP
 
         bool SetupOutdoorPvP() override;
 
-        void HandlePlayerEnterZone(Player* player, Area* zone) override;
-        void HandlePlayerLeaveZone(Player* player, Area* zone) override;
+        void HandlePlayerEnterZone(Player* player, uint32 zone) override;
+        void HandlePlayerLeaveZone(Player* player, uint32 zone) override;
 
         bool Update(uint32 diff) override;
 

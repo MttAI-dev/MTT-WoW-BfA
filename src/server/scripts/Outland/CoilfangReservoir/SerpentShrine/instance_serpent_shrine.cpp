@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -125,37 +125,42 @@ class instance_serpent_shrine : public InstanceMapScript
                     else
                         Water = WATERSTATE_FRENZY;
 
-                    DoOnPlayers([this](Player* player)
+                    Map::PlayerList const &PlayerList = instance->GetPlayers();
+                    if (PlayerList.isEmpty())
+                        return;
+                    for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
                     {
-                        if (player->IsAlive() && /*i->GetSource()->GetPositionZ() <= -21.434931f*/player->IsInWater())
+                        if (Player* player = i->GetSource())
                         {
-                            if (Water == WATERSTATE_SCALDING)
+                            if (player->IsAlive() && /*i->GetSource()->GetPositionZ() <= -21.434931f*/player->IsInWater())
                             {
+                                if (Water == WATERSTATE_SCALDING)
+                                {
 
-                                if (!player->HasAura(SPELL_SCALDINGWATER))
-                                {
-                                    player->CastSpell(player, SPELL_SCALDINGWATER, true);
-                                }
-                            } else if (Water == WATERSTATE_FRENZY)
-                            {
-                                //spawn frenzy
-                                if (DoSpawnFrenzy)
-                                {
-                                    if (Creature* frenzy = player->SummonCreature(NPC_COILFANG_FRENZY, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), player->GetOrientation(), TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 2000))
+                                    if (!player->HasAura(SPELL_SCALDINGWATER))
                                     {
-                                        frenzy->Attack(player, false);
-                                        frenzy->SetSwim(true);
-                                        frenzy->SetDisableGravity(true);
+                                        player->CastSpell(player, SPELL_SCALDINGWATER, true);
                                     }
-                                    DoSpawnFrenzy = false;
+                                } else if (Water == WATERSTATE_FRENZY)
+                                {
+                                    //spawn frenzy
+                                    if (DoSpawnFrenzy)
+                                    {
+                                        if (Creature* frenzy = player->SummonCreature(NPC_COILFANG_FRENZY, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), player->GetOrientation(), TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 2000))
+                                        {
+                                            frenzy->Attack(player, false);
+                                            frenzy->SetSwim(true);
+                                            frenzy->SetDisableGravity(true);
+                                        }
+                                        DoSpawnFrenzy = false;
+                                    }
                                 }
                             }
+                            if (!player->IsInWater())
+                                player->RemoveAurasDueToSpell(SPELL_SCALDINGWATER);
                         }
 
-                        if (!player->IsInWater())
-                            player->RemoveAurasDueToSpell(SPELL_SCALDINGWATER);
-                    });
-
+                    }
                     WaterCheckTimer = 500;//remove stress from core
                 }
                 else

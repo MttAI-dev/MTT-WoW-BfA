@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,11 +16,20 @@
  */
 
 #include "ScriptMgr.h"
-#include "Conversation.h"
 #include "Player.h"
 #include "InstanceScript.h"
 #include "seat_of_triumvirate.h"
 
+struct instance_seat_of_triumvirate : public InstanceScript
+{
+    instance_seat_of_triumvirate(InstanceMap* map) : InstanceScript(map)
+    {
+        SetHeaders(DataHeader);
+        SetBossNumber(EncounterCount);
+    }
+};
+
 void AddSC_instance_seat_of_triumvirate()
 {
+    RegisterInstanceScript(instance_seat_of_triumvirate, 1753);
 }

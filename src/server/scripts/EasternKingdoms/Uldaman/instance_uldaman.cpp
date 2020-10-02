@@ -1,5 +1,6 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
+ * Copyright (C) 2006-2007 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,6 +22,8 @@ SD%Complete: 80%
 SDComment: Need some cosmetics updates when archeadas door are closing (Guardians Waypoints).
 SDCategory: Uldaman
 EndScriptData */
+
+//Missing Bosses
 
 #include "ScriptMgr.h"
 #include "Creature.h"

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -38,7 +37,7 @@ public:
     bool Create(uint32 garrSiteId) override;
     void Delete() override;
 
-    bool IsAllowedArea(AreaTableEntry const* area) const override;
+    bool IsAllowedArea(uint32 areaID) const override;
 };
 
 #endif // ClassHall_h__

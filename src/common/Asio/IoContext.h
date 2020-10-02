@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -45,15 +45,10 @@ namespace Trinity
             operator IoContextBaseNamespace::IoContextBase const&() const { return _impl; }
 
             std::size_t run() { return _impl.run(); }
-            bool stopped() { return _impl.stopped(); }
             void stop() { _impl.stop(); }
 
 #if BOOST_VERSION >= 106600
-            void restart() { _impl.restart(); }
-
             boost::asio::io_context::executor_type get_executor() noexcept { return _impl.get_executor(); }
-#else
-            void reset() { _impl.reset(); }
 #endif
 
         private:

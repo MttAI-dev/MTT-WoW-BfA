@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -117,6 +117,8 @@ class TC_GAME_API InstanceSave
            this is cached for the case when those players are offline */
         bool CanReset() const { return m_canReset; }
         void SetCanReset(bool canReset) { m_canReset = canReset; }
+        uint32 GetCompletedEncounterMask() const { return m_completedEncounter; }
+        void SetCompletedEncountersMask(uint32 _mask) { m_completedEncounter = _mask; }
 
         /* currently it is possible to omit this information from this structure
            but that would depend on a lot of things that can easily change in future */
@@ -127,7 +129,7 @@ class TC_GAME_API InstanceSave
         {
             m_toDelete = toDelete;
         }
-
+        time_t m_resetTime;
         typedef std::list<Player*> PlayerListType;
         typedef std::list<Group*> GroupListType;
     private:
@@ -137,13 +139,18 @@ class TC_GAME_API InstanceSave
            /// @todo: Check if maybe it's enough to just store the number of players/groups
         PlayerListType m_playerList;
         GroupListType m_groupList;
-        time_t m_resetTime;
         uint32 m_instanceid;
         uint32 m_mapid;
         Difficulty m_difficulty;
         uint32 m_entranceId;
         bool m_canReset;
         bool m_toDelete;
+        bool m_canBeSave;
+        bool m_perm;
+        bool m_extended;
+        uint32 m_completedEncounter;
+        std::string m_data;
+     
 
         std::mutex _playerListLock;
 };

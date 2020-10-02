@@ -1,6 +1,6 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
- *
+ * Copyright (C) 2020 LatinCoreTeam
+ * Copyright (C) Thordekk
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
@@ -299,7 +299,7 @@ public:
             else if (strncmp(paramStr, "gamemaster", limit) == 0)
                 sWorld->SetPlayerSecurityLimit(SEC_GAMEMASTER);
             else if (strncmp(paramStr, "administrator", limit) == 0)
-                sWorld->SetPlayerSecurityLimit(SEC_ADMINISTRATOR);
+                sWorld->SetPlayerSecurityLimit(SEC_ADMIN);
             else if (strncmp(paramStr, "reset", limit) == 0)
             {
                 sWorld->SetPlayerAmountLimit(sConfigMgr->GetIntDefault("PlayerLimit", 100));
@@ -326,10 +326,28 @@ public:
             case SEC_MODERATOR:
                 secName = "Moderator";
                 break;
+            case SEC_TRIAL_GAMEMASTER:
+                secName = "Trial Gamemaster";
+                break;
             case SEC_GAMEMASTER:
                 secName = "Gamemaster";
                 break;
-            case SEC_ADMINISTRATOR:
+            case SEC_SENIOR_GAMEMASTER:
+                secName = "Senior Gamemaster";
+                break;
+            case SEC_HEAD_GAMEMASTER:
+                secName = "Head Gamemaster";
+                break;
+            case SEC_EXECUTIVE_GAMEMASTER:
+                secName = "Executive Gamemaster";
+                break;
+            case SEC_DEVELOPER:
+                secName = "Developer";
+                break;
+            case SEC_COMMUNITY_MANAGER:
+                secName = "Community Manager";
+                break;
+            case SEC_ADMIN:
                 secName = "Administrator";
                 break;
             default:

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -243,10 +243,14 @@ namespace VMAP
         if (!result.File)
         {
             int32 parentMapId = vm->getParentMapId(mapID);
-            if (parentMapId != -1)
+            while (parentMapId != -1)
             {
                 result.Name = basePath + getTileFileName(parentMapId, tileX, tileY);
                 result.File = fopen(result.Name.c_str(), "rb");
+                if (result.File)
+                    break;
+
+                parentMapId = vm->getParentMapId(uint32(parentMapId));
             }
         }
 

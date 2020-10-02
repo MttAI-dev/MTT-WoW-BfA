@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -72,9 +72,9 @@ void CollectionMgr::LoadMountDefinitions()
 
 namespace
 {
-    EnumClassFlag<ToyFlags> GetToyFlags(bool isFavourite, bool hasFanfare)
+    EnumFlag<ToyFlags> GetToyFlags(bool isFavourite, bool hasFanfare)
     {
-        EnumClassFlag<ToyFlags> flags(ToyFlags::None);
+        ToyFlags flags = ToyFlags::None;
         if (isFavourite)
             flags |= ToyFlags::Favorite;
 
@@ -85,7 +85,7 @@ namespace
     }
 }
 
-CollectionMgr::CollectionMgr(WorldSession* owner) : _owner(owner), _appearances(Trinity::make_unique<boost::dynamic_bitset<uint32>>())
+CollectionMgr::CollectionMgr(WorldSession* owner) : _owner(owner), _appearances(std::make_unique<boost::dynamic_bitset<uint32>>())
 {
 }
 
@@ -151,7 +151,7 @@ void CollectionMgr::ToySetFavorite(uint32 itemId, bool favorite)
     if (favorite)
         itr->second |= ToyFlags::Favorite;
     else
-        itr->second.RemoveFlag(ToyFlags::Favorite);
+        itr->second &= ~ToyFlags::Favorite;
 }
 
 void CollectionMgr::ToyClearFanfare(uint32 itemId)
@@ -160,7 +160,7 @@ void CollectionMgr::ToyClearFanfare(uint32 itemId)
     if (itr == _toys.end())
         return;
 
-    itr->second.RemoveFlag(ToyFlags::HasFanfare);
+    itr->second &= ~ToyFlags::HasFanfare;
 }
 
 void CollectionMgr::OnItemAdded(Item* item, Player* owner)

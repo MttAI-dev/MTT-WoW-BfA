@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -578,13 +578,13 @@ void WorldSession::HandleAuctionSellCommodity(WorldPackets::AuctionHouse::Auctio
 
     switch (sellCommodity.RunTime)
     {
-        case 1 * MIN_AUCTION_TIME / MINUTE:
-        case 2 * MIN_AUCTION_TIME / MINUTE:
-        case 4 * MIN_AUCTION_TIME / MINUTE:
-            break;
-        default:
-            SendAuctionCommandResult(0, AuctionCommand::SellItem, AuctionResult::AuctionHouseBusy, throttle.DelayUntilNext);
-            return;
+    case 1 * MIN_AUCTION_TIME / MINUTE:
+    case 2 * MIN_AUCTION_TIME / MINUTE:
+    case 4 * MIN_AUCTION_TIME / MINUTE:
+        break;
+    default:
+        SendAuctionCommandResult(0, AuctionCommand::SellItem, AuctionResult::AuctionHouseBusy, throttle.DelayUntilNext);
+        return;
     }
 
     if (GetPlayer()->HasUnitState(UNIT_STATE_DIED))
@@ -692,14 +692,14 @@ void WorldSession::HandleAuctionSellCommodity(WorldPackets::AuctionHouse::Auctio
     TC_LOG_INFO("network", "CMSG_AUCTION_SELL_COMMODITY: %s %s is selling item %s %s to auctioneer %s with count " UI64FMTD " with with unit price " UI64FMTD " and with time %u (in sec) in auctionhouse %u",
         _player->GetGUID().ToString().c_str(), _player->GetName().c_str(), items2.begin()->second.first->GetNameForLocaleIdx(sWorld->GetDefaultDbcLocale()).c_str(),
         ([&items2]()
-        {
-            std::stringstream ss;
-            auto itr = items2.begin();
-            ss << (itr++)->first.ToString();
-            for (; itr != items2.end(); ++itr)
-                ss << ',' << itr->first.ToString();
-            return ss.str();
-        }()).c_str(),
+    {
+        std::stringstream ss;
+        auto itr = items2.begin();
+        ss << (itr++)->first.ToString();
+        for (; itr != items2.end(); ++itr)
+            ss << ',' << itr->first.ToString();
+        return ss.str();
+    }()).c_str(),
         creature->GetGUID().ToString().c_str(), totalCount, sellCommodity.UnitPrice, uint32(auctionTime.count()), auctionHouse->GetAuctionHouseId());
 
     if (HasPermission(rbac::RBAC_PERM_LOG_GM_TRADE))
@@ -802,13 +802,13 @@ void WorldSession::HandleAuctionSellItem(WorldPackets::AuctionHouse::AuctionSell
 
     switch (sellItem.RunTime)
     {
-        case 1 * MIN_AUCTION_TIME / MINUTE:
-        case 2 * MIN_AUCTION_TIME / MINUTE:
-        case 4 * MIN_AUCTION_TIME / MINUTE:
-            break;
-        default:
-            SendAuctionCommandResult(0, AuctionCommand::SellItem, AuctionResult::AuctionHouseBusy, throttle.DelayUntilNext);
-            return;
+    case 1 * MIN_AUCTION_TIME / MINUTE:
+    case 2 * MIN_AUCTION_TIME / MINUTE:
+    case 4 * MIN_AUCTION_TIME / MINUTE:
+        break;
+    default:
+        SendAuctionCommandResult(0, AuctionCommand::SellItem, AuctionResult::AuctionHouseBusy, throttle.DelayUntilNext);
+        return;
     }
 
     if (GetPlayer()->HasUnitState(UNIT_STATE_DIED))

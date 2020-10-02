@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2017-2020 WoWLegacy <https://github.com/AshamaneProject>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -28,6 +28,8 @@ enum EncounterData
     DATA_TIDESAGE_COUNCIL   = 1,
     DATA_LORD_STORMSONG     = 2,
     DATA_VOLZITH            = 3,
+    DATA_INSTANCE_ENTER     = 4,
+    DATA_AQUALING           = 5,
 };
 
 enum CreatureIds
@@ -37,6 +39,10 @@ enum CreatureIds
     NPC_GALECALLER_FAYE         = 134058,
     NPC_LORD_STORMSONG          = 139737,
     NPC_VOLZITH_THE_WHISPERER   = 134069,
+    NPC_REXXAR                  = 139971,
+    NPC_BROTHER_PIKE            = 139970,
+    NPC_ANCIENT_MINDBENDER      = 137051,
+    NPC_AWOKEN_VOID             = 137036,
 };
 
 #endif // SHRINE_OF_THE_STORM_H

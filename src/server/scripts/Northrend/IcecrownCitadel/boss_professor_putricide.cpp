@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -277,6 +277,7 @@ class boss_professor_putricide : public CreatureScript
                 Talk(SAY_AGGRO);
                 DoCast(me, SPELL_OOZE_TANK_PROTECTION, true);
                 DoZoneInCombat(me);
+                me->SetCombatPulseDelay(5);
 
                 instance->SetBossState(DATA_PROFESSOR_PUTRICIDE, IN_PROGRESS);
             }
@@ -733,7 +734,7 @@ class npc_putricide_oozeAI : public ScriptedAI
 {
     public:
         npc_putricide_oozeAI(Creature* creature, uint32 auraSpellId, uint32 hitTargetSpellId) : ScriptedAI(creature),
-            _auraSpellId(auraSpellId), _hitTargetSpellId(hitTargetSpellId), _newTargetSelectTimer(0) { }
+            _auraSpellId(auraSpellId), _hitTargetSpellId(hitTargetSpellId), _newTargetSelectTimer(0), _instance(creature->GetInstanceScript()) { }
 
         void SpellHitTarget(Unit* /*target*/, SpellInfo const* spell) override
         {
@@ -743,6 +744,10 @@ class npc_putricide_oozeAI : public ScriptedAI
 
         void Reset() override
         {
+            if (_instance->GetBossState(DATA_PROFESSOR_PUTRICIDE) != IN_PROGRESS)
+                me->DespawnOrUnsummon();
+
+            me->SetInCombatWithZone();
             DoCastAOE(_auraSpellId, true);
         }
 
@@ -783,6 +788,7 @@ class npc_putricide_oozeAI : public ScriptedAI
         uint32 _auraSpellId;
         uint32 _hitTargetSpellId;
         uint32 _newTargetSelectTimer;
+        InstanceScript* _instance;
 };
 
 class npc_volatile_ooze : public CreatureScript

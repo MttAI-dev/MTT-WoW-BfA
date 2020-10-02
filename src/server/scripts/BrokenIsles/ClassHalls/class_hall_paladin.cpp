@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -104,7 +103,7 @@ struct npc_orik_trueheart_108693 : public ScriptedAI
 
 struct npc_tahu_sagewind_105727 : public ScriptedAI
 {
-   npc_tahu_sagewind_105727(Creature* creature) : ScriptedAI(creature) {  }
+    npc_tahu_sagewind_105727(Creature* creature) : ScriptedAI(creature) {  }
 
     void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId)
     {

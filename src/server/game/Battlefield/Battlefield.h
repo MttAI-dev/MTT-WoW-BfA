@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -268,9 +268,9 @@ class TC_GAME_API Battlefield : public ZoneScript
         void KickPlayerFromBattlefield(ObjectGuid guid);
 
         /// Called when player (player) enter in zone
-        void HandlePlayerEnterZone(Player* player, Area* zone);
+        void HandlePlayerEnterZone(Player* player, uint32 zone);
         /// Called when player (player) leave the zone
-        void HandlePlayerLeaveZone(Player* player, Area* zone);
+        void HandlePlayerLeaveZone(Player* player, uint32 zone);
 
         // All-purpose data storage 64 bit
         virtual uint64 GetData64(uint32 dataId) const override { return m_Data64[dataId]; }

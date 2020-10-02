@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,12 +27,12 @@ class playerScript_enter_tanaan : public PlayerScript
 public:
     playerScript_enter_tanaan() : PlayerScript("playerScript_enter_tanaan") { }
 
-    void OnUpdateArea(Player* player, Area* newArea, Area* /*oldArea*/) override
+    void OnUpdateArea(Player* player, uint32 newAreaId, uint32 /*oldAreaID*/) override
     {
         if (player->GetZoneId() != ZONE_TANAAN_JUNGLE)
             return;
 
-        switch (newArea->GetId())
+        switch (newAreaId)
         {
             case AREA_TANAAN_DARK_PORTAL:
             {
@@ -109,6 +109,7 @@ public:
             {
                 player->GetSceneMgr().PlaySceneByPackageId(TanaanSceneObjects::SceneCostOfWarEscort);
                 player->PlayerTalkClass->SendCloseGossip();
+                player->TeleportTo(1265, 4064.0f, -2460.0f, 95.0f, 3.852f);
                 break;
             }
             case TanaanQuests::QuestBlazeOfGlory:

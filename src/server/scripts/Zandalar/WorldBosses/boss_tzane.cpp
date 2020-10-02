@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) (C) LatinCore Team 
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,22 +19,22 @@
 #include "world_bosses_zuldazar.h"
 
 enum Spells {
-    SPELL_CRUSHING_SLAM = 262004,
-    SPELL_COALESCED_ESSENCE = 261600,
+    SPELL_CRUSHING_SLAM            = 262004,
+    SPELL_COALESCED_ESSENCE        = 261600,
     SPELL_COALESCED_ESSENCE_DAMAGE = 261597,
     SPELL_COALESCED_ESSENCE_VISUAL = 261575,
-    SPELL_CONSUMING_SPIRITS = 261605,
+    SPELL_CONSUMING_SPIRITS        = 261605,
 
-    SPELL_TERROR_WALL = 261552,
-    SPELL_TERROR_WALL_VISUAL = 261560,
+    SPELL_TERROR_WALL             = 261552,
+    SPELL_TERROR_WALL_VISUAL      = 261560,
     SPELL_TERROR_WALL_VISUAL_BACK = 261718,
 };
 
 enum Events {
-    EVENT_CRUSHING_SLAM = 1,
+    EVENT_CRUSHING_SLAM     = 1,
     EVENT_COALSECED_ESSENCE = 2,
     EVENT_CONSUMING_SPIRITS = 3,
-    EVENT_TERROR_WALL = 4,
+    EVENT_TERROR_WALL       = 4,
 };
 
 struct boss_tzane : public BossAI

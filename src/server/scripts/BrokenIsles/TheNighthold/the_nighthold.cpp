@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -237,7 +237,7 @@ public:
     {
         npc_pulsauronAI(Creature* creature) : ScriptedAI(creature) { }
 
-        void Reset()
+        void Reset() override
         {
             me->SetReactState(REACT_PASSIVE);
             DoCastSelf(SPELL_SHIELD);
@@ -256,7 +256,7 @@ public:
             ScriptedAI::EnterEvadeMode(why);
         }
 
-        /*void MovementInform(uint32 type, uint32 /*id*//*) override
+        /*void MovementInform(uint32 type, uint32 id) override
         {
             if (type == ROTATE_MOTION_TYPE && me->IsInCombat())
                 me->GetMotionMaster()->MoveRotate(180000, urand(0, 1) ? ROTATE_DIRECTION_LEFT : ROTATE_DIRECTION_RIGHT);
@@ -377,7 +377,7 @@ public:
             targetsCount = targets.size();
         }
 
-        void HandleHitTarget(SpellEffIndex effIndex)
+        void HandleHitTarget(SpellEffIndex /*effIndex*/)
         {
             Unit* caster = GetCaster();
             Unit* target = GetHitUnit();

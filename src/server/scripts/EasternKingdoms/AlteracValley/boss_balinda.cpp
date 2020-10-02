@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,6 +18,7 @@
 #include "ScriptMgr.h"
 #include "ObjectAccessor.h"
 #include "ScriptedCreature.h"
+#include "Unit.h"
 
 enum Spells
 {
@@ -26,6 +27,7 @@ enum Spells
     SPELL_FIREBALL                          = 46988,
     SPELL_FROSTBOLT                         = 46987,
     SPELL_SUMMON_WATER_ELEMENTAL            = 45067,
+    SPELL_WATERBOLT                         = 46983,
     SPELL_ICEBLOCK                          = 46604
 };
 
@@ -191,7 +193,59 @@ public:
     }
 };
 
+class mob_water_elemental : public CreatureScript
+{
+public:
+    mob_water_elemental() : CreatureScript("mob_water_elemental") { }
+
+    struct mob_water_elementalAI : public ScriptedAI
+    {
+        mob_water_elementalAI(Creature* creature) : ScriptedAI(creature) {}
+
+        uint32 waterBoltTimer;
+        ObjectGuid balindaGUID;
+        uint32 resetTimer;
+
+        void Reset()
+        {
+            waterBoltTimer = 3 * IN_MILLISECONDS;
+            resetTimer = 5 * IN_MILLISECONDS;
+        }
+
+        void UpdateAI(uint32 diff)
+        {
+            if (!UpdateVictim())
+                return;
+
+            if (waterBoltTimer < diff)
+            {
+                DoCast(me->GetVictim(), SPELL_WATERBOLT);
+                waterBoltTimer = 5 * IN_MILLISECONDS;
+            }
+            else waterBoltTimer -= diff;
+
+            // check if creature is not outside of building
+            if (resetTimer < diff)
+            {
+                if (Creature* pBalinda = ObjectAccessor::GetCreature(*me, balindaGUID))
+                    if (me->GetDistance2d(pBalinda->GetHomePosition().GetPositionX(), pBalinda->GetHomePosition().GetPositionY()) > 50)
+                        EnterEvadeMode();
+                resetTimer = 5 * IN_MILLISECONDS;
+            }
+            else resetTimer -= diff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new mob_water_elementalAI(creature);
+    }
+};
+
 void AddSC_boss_balinda()
 {
     new boss_balinda;
+    new mob_water_elemental;
 }

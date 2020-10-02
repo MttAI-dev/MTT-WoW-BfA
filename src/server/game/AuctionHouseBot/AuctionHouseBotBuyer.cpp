@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -352,22 +352,22 @@ uint32 AuctionBotBuyer::GetVendorPrice(uint32 quality)
 {
     switch (quality)
     {
-        case ITEM_QUALITY_POOR:
-            return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_BASEPRICE_GRAY);
-        case ITEM_QUALITY_NORMAL:
-            return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_BASEPRICE_WHITE);
-        case ITEM_QUALITY_UNCOMMON:
-            return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_BASEPRICE_GREEN);
-        case ITEM_QUALITY_RARE:
-            return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_BASEPRICE_BLUE);
-        case ITEM_QUALITY_EPIC:
-            return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_BASEPRICE_PURPLE);
-        case ITEM_QUALITY_LEGENDARY:
-            return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_BASEPRICE_ORANGE);
-        case ITEM_QUALITY_ARTIFACT:
-            return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_BASEPRICE_YELLOW);
-        default:
-            return 1 * SILVER;
+    case ITEM_QUALITY_POOR:
+        return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_BASEPRICE_GRAY);
+    case ITEM_QUALITY_NORMAL:
+        return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_BASEPRICE_WHITE);
+    case ITEM_QUALITY_UNCOMMON:
+        return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_BASEPRICE_GREEN);
+    case ITEM_QUALITY_RARE:
+        return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_BASEPRICE_BLUE);
+    case ITEM_QUALITY_EPIC:
+        return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_BASEPRICE_PURPLE);
+    case ITEM_QUALITY_LEGENDARY:
+        return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_BASEPRICE_ORANGE);
+    case ITEM_QUALITY_ARTIFACT:
+        return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_BASEPRICE_YELLOW);
+    default:
+        return 1 * SILVER;
     }
 }
 
@@ -375,22 +375,22 @@ uint32 AuctionBotBuyer::GetChanceMultiplier(uint32 quality)
 {
     switch (quality)
     {
-        case ITEM_QUALITY_POOR:
-            return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_CHANCEMULTIPLIER_GRAY);
-        case ITEM_QUALITY_NORMAL:
-            return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_CHANCEMULTIPLIER_WHITE);
-        case ITEM_QUALITY_UNCOMMON:
-            return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_CHANCEMULTIPLIER_GREEN);
-        case ITEM_QUALITY_RARE:
-            return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_CHANCEMULTIPLIER_BLUE);
-        case ITEM_QUALITY_EPIC:
-            return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_CHANCEMULTIPLIER_PURPLE);
-        case ITEM_QUALITY_LEGENDARY:
-            return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_CHANCEMULTIPLIER_ORANGE);
-        case ITEM_QUALITY_ARTIFACT:
-            return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_CHANCEMULTIPLIER_YELLOW);
-        default:
-            return 100;
+    case ITEM_QUALITY_POOR:
+        return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_CHANCEMULTIPLIER_GRAY);
+    case ITEM_QUALITY_NORMAL:
+        return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_CHANCEMULTIPLIER_WHITE);
+    case ITEM_QUALITY_UNCOMMON:
+        return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_CHANCEMULTIPLIER_GREEN);
+    case ITEM_QUALITY_RARE:
+        return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_CHANCEMULTIPLIER_BLUE);
+    case ITEM_QUALITY_EPIC:
+        return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_CHANCEMULTIPLIER_PURPLE);
+    case ITEM_QUALITY_LEGENDARY:
+        return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_CHANCEMULTIPLIER_ORANGE);
+    case ITEM_QUALITY_ARTIFACT:
+        return sAuctionBotConfig->GetConfig(CONFIG_AHBOT_BUYER_CHANCEMULTIPLIER_YELLOW);
+    default:
+        return 100;
     }
 }
 

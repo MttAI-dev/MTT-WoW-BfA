@@ -1,6 +1,6 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
- *
+ * Copyright (C) 2020 LatinCoreTeam
+ * Thordekk
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
@@ -151,7 +151,7 @@ namespace WorldPackets
         struct BattlefieldStatusHeader
         {
             WorldPackets::LFG::RideTicket Ticket;
-            uint64 QueueID = 0;
+            std::vector<uint64> QueueID;
             uint8 RangeMin = 0;
             uint8 RangeMax = 0;
             uint8 TeamSize = 0;
@@ -317,12 +317,12 @@ namespace WorldPackets
 
             WorldPacket const* Write() override;
 
-            bool WargameArenas = false;
-            bool RatedArenas = false;
-            bool WargameBattlegrounds = false;
-            bool ArenaSkirmish = false;
-            bool PugBattlegrounds = false;
-            bool RatedBattlegrounds = false;
+            bool WargameArenas = true;
+            bool RatedArenas = true;
+            bool WargameBattlegrounds = true;
+            bool ArenaSkirmish = true;
+            bool PugBattlegrounds = true;
+            bool RatedBattlegrounds = true;
         };
 
         class RequestBattlefieldStatus final : public ClientPacket
@@ -441,6 +441,7 @@ namespace WorldPackets
             uint32 SeasonWins;
             uint32 SeasonGames;
             uint32 ProjectedConquestCap;
+            uint32 Ranking;
         };
 
         class RatedBattleFieldInfo final : public ServerPacket
@@ -451,6 +452,104 @@ namespace WorldPackets
             WorldPacket const* Write() override;
 
             std::array<RatedInfo, MAX_PVP_SLOT> Infos;
+        };
+
+        class RequestConquestFormulaConstants final : public ClientPacket
+        {
+        public:
+            RequestConquestFormulaConstants(WorldPacket&& packet) : ClientPacket(CMSG_REQUEST_CONQUEST_FORMULA_CONSTANTS, std::move(packet)) { }
+
+            void Read() override { }
+        };
+
+        class ConquestFormulaConstants final : public ServerPacket
+        {
+        public:
+            ConquestFormulaConstants() : ServerPacket(SMSG_CONQUEST_FORMULA_CONSTANTS, 20) { }
+
+            WorldPacket const* Write() override;
+
+            uint32 PvpMinCPPerWeek = 0;
+            uint32 PvpMaxCPPerWeek = 0;
+            float PvpCPBaseCoefficient = 0.0f;
+            float PvpCPExpCoefficient = 0.0f;
+            float PvpCPNumerator = 0.0f;
+        };
+
+        class SendPvpBrawlInfo final : public ServerPacket
+        {
+        public:
+            SendPvpBrawlInfo() : ServerPacket(SMSG_REQUEST_PVP_BRAWL_INFO_RESPONSE) { }
+
+            WorldPacket const* Write() override;
+
+            uint32 BrawlType = 0;
+            int32 TimeToEnd = 0;
+            bool IsActive = false;
+
+        };
+
+        class RequestPvpBrawlInfo final : public ClientPacket
+        {
+        public:
+            RequestPvpBrawlInfo(WorldPacket&& packet) : ClientPacket(CMSG_REQUEST_PVP_BRAWL_INFO, std::move(packet)) { }
+
+            void Read() override { }
+        };
+
+        class AcceptWargameInvite final : public ClientPacket
+        {
+        public:
+            AcceptWargameInvite(WorldPacket&& packet) : ClientPacket(CMSG_ACCEPT_WARGAME_INVITE, std::move(packet)) { }
+
+            void Read() override { }
+
+            ObjectGuid OpposingPartyMember;
+            uint64 QueueID = 0;
+            bool Accept = false;
+        };
+
+        class StartWargame final : public ClientPacket
+        {
+        public:
+            StartWargame(WorldPacket&& packet) : ClientPacket(CMSG_START_WAR_GAME, std::move(packet)) { }
+
+            void Read() override { }
+
+            ObjectGuid OpposingPartyMember;
+            uint64 QueueID = 0;
+            uint32 OpposingPartyMemberVirtualRealmAddress = 0;
+            uint16 UnkShort = 0;
+            bool TournamentRules = false;
+        };
+
+        class CheckWargameEntry final : public ServerPacket
+        {
+        public:
+            CheckWargameEntry() : ServerPacket(SMSG_CHECK_WARGAME_ENTRY, 16 + 8 + 8 + 4 + 1 + 1) { }
+
+            WorldPacket const* Write() override;
+
+            ObjectGuid OpposingPartyBnetAccountID;
+            ObjectGuid OpposingPartyMember;
+            uint64 QueueID = 0;
+            uint32 TimeoutSeconds = 0;
+            uint32 RealmID = 0;
+            uint16 UnkShort = 0;
+            uint8 OpposingPartyUserServer = 0;
+            bool TournamentRules = false;
+        };
+
+        class WargameRequestSuccessfullySentToOpponent final : public ServerPacket
+        {
+        public:
+            WargameRequestSuccessfullySentToOpponent() : ServerPacket(SMSG_WARGAME_REQUEST_SUCCESSFULLY_SENT_TO_OPPONENT, 6) { }
+
+            WorldPacket const* Write() override;
+
+            Optional<uint32> UnkInt2;
+            Optional<uint32> UnkInt3;
+            uint32 UnkInt = 0;
         };
     }
 }

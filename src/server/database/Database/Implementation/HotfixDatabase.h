@@ -1,6 +1,6 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
- *
+ * Copyright (C) 2020 LatinCoreTeam
+ * Thordekk
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
@@ -49,6 +49,10 @@ enum HotfixDatabaseStatements : uint32
     HOTFIX_SEL_AREA_TABLE,
     HOTFIX_SEL_AREA_TABLE_LOCALE,
 
+    HOTFIX_SEL_ALLIED_RACE,
+
+    HOTFIX_SEL_ALLIED_RACE_RACIAL_ABILITY,
+    HOTFIX_SEL_ALLIED_RACE_RACIAL_ABILITY_LOCALE,
     HOTFIX_SEL_AREA_TRIGGER,
 
     HOTFIX_SEL_ARMOR_LOCATION,
@@ -144,6 +148,8 @@ enum HotfixDatabaseStatements : uint32
 
     HOTFIX_SEL_CHARACTER_FACIAL_HAIR_STYLES,
 
+    HOTFIX_SEL_CHAR_BASE_INFO,
+
     HOTFIX_SEL_CHAR_BASE_SECTION,
 
     HOTFIX_SEL_CHAR_SECTIONS,
@@ -178,7 +184,6 @@ enum HotfixDatabaseStatements : uint32
     HOTFIX_SEL_CONVERSATION_LINE,
 
     HOTFIX_SEL_CORRUPTION_EFFECTS,
-    HOTFIX_SEL_CORRUPTION_EFFECTS_MAX_ID,
 
     HOTFIX_SEL_CREATURE_DISPLAY_INFO,
 
@@ -599,6 +604,9 @@ enum HotfixDatabaseStatements : uint32
     HOTFIX_SEL_SPELL_VISUAL_KIT,
 
     HOTFIX_SEL_SPELL_X_SPELL_VISUAL,
+
+    HOTFIX_SEL_SPELL,
+    HOTFIX_SEL_SPELL_LOCALE,
 
     HOTFIX_SEL_SUMMON_PROPERTIES,
 

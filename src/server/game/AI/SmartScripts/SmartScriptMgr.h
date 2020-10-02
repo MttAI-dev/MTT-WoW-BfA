@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,6 +23,12 @@
 #include <map>
 #include <string>
 #include <unordered_map>
+#include "Common.h"
+#include "Creature.h"
+#include "CreatureAI.h"
+#include "Unit.h"
+#include "Spell.h"
+#include "DB2Stores.h"
 
 class WorldObject;
 enum SpellEffIndex : uint8;
@@ -177,7 +183,7 @@ enum SMART_EVENT
     SMART_EVENT_JUST_CREATED             = 63,      // none
     SMART_EVENT_GOSSIP_HELLO             = 64,      // noReportUse (for GOs)
     SMART_EVENT_FOLLOW_COMPLETED         = 65,      // none
-    // 66 unused
+    SMART_EVENT_DUMMY_EFFECT             = 66,      // spellId, effectIndex
     SMART_EVENT_IS_BEHIND_TARGET         = 67,      // cooldownMin, CooldownMax
     SMART_EVENT_GAME_EVENT_START         = 68,      // game_event.Entry
     SMART_EVENT_GAME_EVENT_END           = 69,      // game_event.Entry
@@ -286,6 +292,11 @@ struct SmartEvent
             uint32 cooldownMin;
             uint32 cooldownMax;
         } summoned;
+
+        struct
+        {
+            uint32 quest;
+        } questaccepted;
 
         struct
         {
@@ -602,7 +613,12 @@ enum SMART_ACTION
     SMART_ACTION_PLAY_CINEMATIC                     = 135,    // reserved for future uses
     SMART_ACTION_SET_MOVEMENT_SPEED                 = 136,    // movementType, speedInteger, speedFraction
     SMART_ACTION_PLAY_SPELL_VISUAL_KIT              = 137,    // spellVisualKitId, kitType (unknown values, copypaste from packet dumps), duration
-
+    // Thordekk Specific Actions
+    SMART_ACTION_FORCE_COMPLETE_QUEST               = 138,   // quest Id
+    SMART_ACTION_SAY                                = 139,    // type(0= Say, 1=Yell), broadcastTextId, duration ,target
+    SMART_ACTION_GET_SCENARIO                       = 140,    // scenario Id
+    SMART_ACTION_COMPLETE_SCENARIO_STEP             = 141,    // that complete a scenario step
+    SMART_ACTION_COMPLETE_SCENARIO                  = 142,    // that complete full scenario
     // Ashamane' specific actions
     SMART_ACTION_PLAY_SPELL_VISUAL                  = 201,    // id, travelSpeed, target type variation.
     SMART_ACTION_PLAY_ORPHAN_SPELL_VISUAL           = 202,    // id, travelSpeed, target type variation.
@@ -619,6 +635,9 @@ enum SMART_ACTION
     SMART_ACTION_ADD_FLYING_MOVEMENT_FLAG           = 213,    // Variation
     SMART_ACTION_REMOVE_FLYING_MOVEMENT_FLAG        = 214,    // Variation
     SMART_ACTION_CAST_SPELL_OFFSET                  = 215,    // SpellId, triggered if value = 1.
+
+    // Latincore
+    SMART_ACTION_ENTER_LFG_QUEUE                    = 1005,
 
     SMART_ACTION_END
 };
@@ -1198,6 +1217,19 @@ struct SmartAction
 
         struct
         {
+            uint32 type;
+            uint32 textID;
+            uint32 duration;
+            uint32 useSayTarget;
+        } say;
+
+        struct
+        {
+            uint32 scenarioId;
+        } scenario;
+
+        struct
+        {
             uint32 movementType;
             uint32 speedInteger;
             uint32 speedFraction;
@@ -1283,6 +1315,12 @@ struct SmartAction
             uint32 spellId;
             uint32 triggered;
         } castOffSet;
+
+        struct
+        {
+            uint32 DungeonID;
+            uint32 RoleMask;
+        } enterLfgQueue;
 
         //! Note for any new future actions
         //! All parameters must have type uint32
@@ -1596,7 +1634,7 @@ const uint32 SmartAIEventMask[SMART_EVENT_END][2] =
     {SMART_EVENT_JUST_CREATED,              SMART_SCRIPT_TYPE_MASK_CREATURE + SMART_SCRIPT_TYPE_MASK_GAMEOBJECT },
     {SMART_EVENT_GOSSIP_HELLO,              SMART_SCRIPT_TYPE_MASK_CREATURE + SMART_SCRIPT_TYPE_MASK_GAMEOBJECT },
     {SMART_EVENT_FOLLOW_COMPLETED,          SMART_SCRIPT_TYPE_MASK_CREATURE },
-    {66,                                    0                               }, // unused
+    {SMART_EVENT_DUMMY_EFFECT,              SMART_SCRIPT_TYPE_MASK_SPELL    },
     {SMART_EVENT_IS_BEHIND_TARGET,          SMART_SCRIPT_TYPE_MASK_CREATURE },
     {SMART_EVENT_GAME_EVENT_START,          SMART_SCRIPT_TYPE_MASK_CREATURE + SMART_SCRIPT_TYPE_MASK_GAMEOBJECT },
     {SMART_EVENT_GAME_EVENT_END,            SMART_SCRIPT_TYPE_MASK_CREATURE + SMART_SCRIPT_TYPE_MASK_GAMEOBJECT },

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,9 +17,17 @@
 
 void AddSC_stormwind_extraction();
 void AddSC_scenario_stormwind_extraction();
+void AddSC_uncharted_island_tutorial();
+void AddSC_scenario_uncharted_island_tutorial();
+void AddSC_scenario_whispering_reef_island();
+void AddSC_scenario_pursuing_the_black_harvest();
 
 void AddScenariosScripts()
 {
     AddSC_stormwind_extraction();
     AddSC_scenario_stormwind_extraction();
+    AddSC_uncharted_island_tutorial();
+    AddSC_scenario_uncharted_island_tutorial();
+	AddSC_scenario_whispering_reef_island();
+	AddSC_scenario_pursuing_the_black_harvest();
 }

@@ -1,4 +1,4 @@
-# This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+# Copyright (C) 2020 LatinCoreTeam
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -50,26 +50,6 @@ CollectIncludeDirectories(
   # Exclude
   ${CMAKE_CURRENT_SOURCE_DIR}/PrecompiledHeaders)
 
-
-if (WITH_CPR)
-    target_include_directories(common
-      PUBLIC
-        # Provide the binary dir for all child targets
-        ${CMAKE_BINARY_DIR}
-        ${PUBLIC_INCLUDES}
-        ${CPR_INCLUDE_DIRS}
-      PRIVATE
-        ${CMAKE_CURRENT_BINARY_DIR})
-else()
-    target_include_directories(common
-      PUBLIC
-        # Provide the binary dir for all child targets
-        ${CMAKE_BINARY_DIR}
-        ${PUBLIC_INCLUDES}
-      PRIVATE
-        ${CMAKE_CURRENT_BINARY_DIR})
-endif()
-
 target_include_directories(common
   PUBLIC
     # Provide the binary dir for all child targets
@@ -78,40 +58,21 @@ target_include_directories(common
   PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR})
 
-if (WITH_CPR)
-    target_link_libraries(common
-      PRIVATE
-        process
-        trinity-core-interface
-      PUBLIC
-        boost
-        fmt
-        g3dlib
-        Detour
-        sfmt
-        utf8cpp
-        openssl
-        valgrind
-        threads
-        jemalloc
-        ${CPR_LIBRARIES})
-else()
-    target_link_libraries(common
-      PRIVATE
-        process
-        trinity-core-interface
-      PUBLIC
-        boost
-        fmt
-        g3dlib
-        Detour
-        sfmt
-        utf8cpp
-        openssl
-        valgrind
-        threads
-        jemalloc)
-endif()
+target_link_libraries(common
+  PRIVATE
+    process
+    trinity-core-interface
+  PUBLIC
+    boost
+    fmt
+    g3dlib
+    Detour
+    sfmt
+    utf8cpp
+    openssl
+    valgrind
+    threads
+    jemalloc)
 
 add_dependencies(common revision_data.h)
 

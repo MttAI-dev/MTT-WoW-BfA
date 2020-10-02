@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -540,7 +540,7 @@ enum RBACPermissions
     RBAC_PERM_COMMAND_MUTEHISTORY                            = 632,
     RBAC_PERM_COMMAND_RELOAD_CREATURE_LINKED_RESPAWN         = 633,
     RBAC_PERM_COMMAND_RELOAD_CREATURE_LOOT_TEMPLATE          = 634,
-    RBAC_PERM_COMMAND_RELOAD_CREATURE_ONKILL_REPUTATION      = 635,
+    RBAC_PERM_COMMAND_RELOAD_CREATURE_ONKILL_REWARD          = 635,
     RBAC_PERM_COMMAND_RELOAD_CREATURE_QUESTENDER             = 636,
     RBAC_PERM_COMMAND_RELOAD_CREATURE_QUESTSTARTER           = 637,
     RBAC_PERM_COMMAND_RELOAD_CREATURE_SUMMON_GROUPS          = 638,
@@ -777,11 +777,11 @@ enum RBACPermissions
     RBAC_PERM_COMMAND_DEBUG_THREATINFO = 870, // reserved
     RBAC_PERM_COMMAND_DEBUG_INSTANCESPAWN = 871, // reserved
     RBAC_PERM_COMMAND_SERVER_DEBUG = 872,
+    RBAC_PERM_COMMAND_DEBUG_SEND_CHALLENGEMODE = 873,
     //
     // IF YOU ADD NEW PERMISSIONS, ADD THEM IN 3.3.5 BRANCH AS WELL!
     //
     // custom permissions 1000+
-    RBAC_PERM_COMMAND_WORLD_CHAT                             = 1009,
     // ashamane permissions 2000+
     RBAC_PERM_COMMAND_DEBUG_MOVEMENT_FORCE = 2000,
     RBAC_PERM_COMMAND_DEBUG_APPLY_MOVEMENT_FORCE = 2001,
@@ -793,6 +793,7 @@ enum RBACPermissions
     RBAC_PERM_COMMAND_LFG_DEBUG = 2007,
     RBAC_PERM_COMMAND_TICKET_ADDON = 2008,
     RBAC_PERM_COMMAND_RELOAD_SPELL_SCRIPT_NAMES = 2009,
+    RBAC_PERM_COMMAND_WORLD_CHAT =2010,
     RBAC_PERM_MAX
 };
 

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -30,7 +30,7 @@
 #include "SpellMgr.h"
 #include "TemporarySummon.h"
 
-// Spell summary for ScriptedAI::SelectSpell
+ // Spell summary for ScriptedAI::SelectSpell
 struct TSpellSummary
 {
     uint8 Targets;                                          // set of enum SelectTarget
@@ -124,7 +124,13 @@ void SummonList::DoActionImpl(int32 action, StorageType const& summons)
 
 ScriptedAI::ScriptedAI(Creature* creature) : CreatureAI(creature),
     IsFleeing(false),
-    _isCombatMovementAllowed(true)
+    summons(creature),
+    damageEvents(creature),
+    instance(creature->GetInstanceScript()),
+    _isCombatMovementAllowed(true),
+    IsLock(false),
+    haseventdata(false),
+    hastalkdata(false)
 {
     _isHeroic = me->GetMap()->IsHeroic();
     _difficulty = me->GetMap()->GetDifficultyID();
@@ -149,6 +155,7 @@ void ScriptedAI::AttackStart(Unit* who)
 
 void ScriptedAI::UpdateAI(uint32 diff)
 {
+    controls.Update(diff);
     //Check if we have a current target
     if (!UpdateVictim())
         return;
@@ -446,11 +453,15 @@ void ScriptedAI::SetCombatMovement(bool allowMovement)
 void ScriptedAI::LoadEventData(std::vector<EventData> const* data)
 {
     eventList = data;
+    haseventdata = true;
 }
 
 void ScriptedAI::GetEventData(uint16 group)
 {
     if (!eventList)
+        return;
+
+    if (!haseventdata)
         return;
 
     for (EventData data : *eventList)
@@ -460,12 +471,20 @@ void ScriptedAI::GetEventData(uint16 group)
 
 void ScriptedAI::LoadTalkData(std::vector<TalkData> const* data)
 {
-    talkList = data;
+    if (data)
+    {
+        talkList = data;
+        hastalkdata = true;
+    }
+
 }
 
 void ScriptedAI::GetTalkData(uint32 eventId)
 {
     if (!talkList)
+        return;
+
+    if (!hastalkdata)
         return;
 
     for (TalkData data : *talkList)
@@ -474,34 +493,78 @@ void ScriptedAI::GetTalkData(uint32 eventId)
         {
             switch (data.eventType)
             {
-                case EVENT_TYPE_TALK:
-                    me->AI()->Talk(data.eventData);
-                    break;
-                case EVENT_TYPE_CONVERSATION:
-                    if (data.eventData > 0)
-                        if (instance)
-                            instance->DoPlayConversation(data.eventData);
-                    break;
-                case EVENT_TYPE_ACHIEVEMENT:
-                    if (data.eventData > 0)
-                        if (instance)
-                            instance->DoCompleteAchievement(data.eventData);
-                    break;
-                case EVENT_TYPE_SPELL:
-                    if (data.eventData > 0)
-                        if (instance)
-                            instance->DoCastSpellOnPlayers(data.eventData);
-                    break;
-                case EVENT_TYPE_YELL:
-                    if (data.eventData > 0)
-                        me->Yell(data.eventData);
-                    break;
-                case EVENT_TYPE_SAY:
-                    if (data.eventData > 0)
-                        me->Say(data.eventData);
-                    break;
+            case EVENT_TYPE_TALK:
+                me->AI()->Talk(data.eventData);
+                break;
+            case EVENT_TYPE_CONVERSATION:
+                if (data.eventData > 0)
+                    if (instance)
+                        instance->DoPlayConversation(data.eventData);
+                break;
+            case EVENT_TYPE_ACHIEVEMENT:
+                if (data.eventData > 0)
+                    if (instance)
+                        instance->DoCompleteAchievement(data.eventData);
+                break;
+            case EVENT_TYPE_SPELL:
+                if (data.eventData > 0)
+                    if (instance)
+                        instance->DoCastSpellOnPlayers(data.eventData);
+                break;
+            case EVENT_TYPE_YELL:
+                if (data.eventData > 0)
+                    me->Yell(data.eventData);
+                break;
+            case EVENT_TYPE_SAY:
+                if (data.eventData > 0)
+                    me->Say(data.eventData);
+                break;
             }
         }
+    }
+}
+
+void ScriptedAI::ApplyAllImmunities(bool apply)
+{
+    me->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_KNOCK_BACK, apply);
+    me->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_KNOCK_BACK_DEST, apply);
+    me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_GRIP, apply);
+    me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_STUN, apply);
+    me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_FEAR, apply);
+    me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_ROOT, apply);
+    me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_FREEZE, apply);
+    me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_POLYMORPH, apply);
+    me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_HORROR, apply);
+    me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_SAPPED, apply);
+    me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_CHARM, apply);
+    me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_DISORIENTED, apply);
+    me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_INTERRUPT, apply);
+    me->ApplySpellImmune(0, IMMUNITY_STATE, SPELL_AURA_MOD_CONFUSE, apply);
+}
+
+void ScriptedAI::DespawnCreaturesInArea(uint32 entry, WorldObject* object)
+{
+    std::list<Creature*> creatures;
+    GetCreatureListWithEntryInGrid(creatures, object, entry, 300.0f);
+    if (creatures.empty())
+        return;
+
+    for (std::list<Creature*>::iterator itr = creatures.begin(); itr != creatures.end(); ++itr)
+        (*itr)->DespawnOrUnsummon();
+}
+
+void ScriptedAI::DespawnGameObjectsInArea(uint32 entry, WorldObject* object)
+{
+    std::list<GameObject*> gameobjects;
+    GetGameObjectListWithEntryInGrid(gameobjects, object, entry, 300.0f);
+    if (gameobjects.empty())
+        return;
+
+    for (std::list<GameObject*>::iterator itr = gameobjects.begin(); itr != gameobjects.end();)
+    {
+        (*itr)->SetRespawnTime(0);
+        (*itr)->Delete();
+        itr = gameobjects.erase(itr);
     }
 }
 
@@ -528,6 +591,7 @@ BossAI::BossAI(Creature* creature, uint32 bossId) : ScriptedAI(creature),
 {
     if (instance)
         SetBoundary(instance->GetBossBoundary(bossId));
+    _dungeonEncounterId = sObjectMgr->GetDungeonEncounterID(creature->GetEntry());
 }
 
 void BossAI::_Reset()
@@ -537,6 +601,7 @@ void BossAI::_Reset()
 
     me->SetCombatPulseDelay(0);
     me->ResetLootMode();
+    controls.Reset();
     events.Reset();
     summons.DespawnAll();
     me->RemoveAllAreaTriggers();
@@ -547,6 +612,7 @@ void BossAI::_Reset()
 
 void BossAI::_JustDied()
 {
+    controls.Reset();
     events.Reset();
     summons.DespawnAll();
     me->GetScheduler().CancelAll();
@@ -554,8 +620,12 @@ void BossAI::_JustDied()
     {
         instance->SetBossState(_bossId, DONE);
         instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
+        if (_dungeonEncounterId > 0)
+            instance->SendBossKillCredit(_dungeonEncounterId);
+           instance->SetCheckPointPos(me->GetHomePosition());
     }
     Talk(BOSS_TALK_JUST_DIED);
+    GetTalkData(EVENT_ON_JUSTDIED);
 }
 
 void BossAI::_JustReachedHome()
@@ -623,6 +693,30 @@ void BossAI::JustSummoned(Creature* summon)
 void BossAI::SummonedCreatureDespawn(Creature* summon)
 {
     summons.Despawn(summon);
+}
+
+void BossAI::UpdateAI(uint32 diff)
+{
+    controls.Update(diff);
+    while (uint32 eventId = controls.ExecuteEvent())
+        ExecuteEvent(eventId);
+
+    if (!UpdateVictim())
+        return;
+
+    events.Update(diff);
+
+    if (me->HasUnitState(UNIT_STATE_CASTING))
+        return;
+
+    while (uint32 eventId = events.ExecuteEvent())
+    {
+        ExecuteEvent(eventId);
+        if (me->HasUnitState(UNIT_STATE_CASTING))
+            return;
+    }
+
+    DoMeleeAttackIfReady();
 }
 
 bool BossAI::CanAIAttack(Unit const* target) const
@@ -715,12 +809,14 @@ void WorldBossAI::_Reset()
     if (!me->IsAlive())
         return;
 
+    controls.Reset();
     events.Reset();
     summons.DespawnAll();
 }
 
 void WorldBossAI::_JustDied()
 {
+    controls.Reset();
     events.Reset();
     summons.DespawnAll();
 }

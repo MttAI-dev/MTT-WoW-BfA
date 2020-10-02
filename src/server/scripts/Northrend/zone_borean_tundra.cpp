@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -685,7 +685,7 @@ public:
 enum red_dragonblood
 {
     SPELL_DRAKE_HATCHLING_SUBDUED = 46691,
-    SPELL_SUBDUED = 46675
+    SPELL_SUBDUED                 = 46675
 };
 
 class spell_red_dragonblood : public SpellScriptLoader
@@ -2375,6 +2375,122 @@ public:
     }
 };
 
+/*######
+## npc_nexus_drake_hatchling
+######*/
+
+enum NexusDrakeHatchling
+{
+    SPELL_DRAKE_HARPOON   = 46607,
+    SPELL_RED_DRAGONBLOOD = 46620,
+
+    NPC_RAELORASZ         = 26117,
+
+    QUEST_DRAKE_HUNT      = 11919,
+    QUEST_DRAKE_HUNT_D    = 11940
+};
+
+class npc_nexus_drake_hatchling : public CreatureScript
+{
+public:
+    npc_nexus_drake_hatchling() : CreatureScript("npc_nexus_drake_hatchling") { }
+
+    struct npc_nexus_drake_hatchlingAI : public FollowerAI //The spell who makes the npc follow the player is missing, also we can use FollowerAI!
+    {
+        npc_nexus_drake_hatchlingAI(Creature* creature) : FollowerAI(creature)
+        {
+            Initialize();
+        }
+
+        void Initialize()
+        {
+            WithRedDragonBlood = false;
+        }
+
+        ObjectGuid HarpoonerGUID;
+        bool WithRedDragonBlood;
+
+        void Reset() override
+        {
+            Initialize();
+        }
+
+        void EnterCombat(Unit* who) override
+        {
+            if (me->IsValidAttackTarget(who))
+                AttackStart(who);
+        }
+
+        void SpellHit(Unit* caster, const SpellInfo* spell) override
+        {
+            if (spell->Id == SPELL_DRAKE_HARPOON && caster->GetTypeId() == TYPEID_PLAYER)
+            {
+                HarpoonerGUID = caster->GetGUID();
+                DoCast(me, SPELL_RED_DRAGONBLOOD, true);
+            }
+            WithRedDragonBlood = true;
+        }
+
+        void MoveInLineOfSight(Unit* who) override
+
+        {
+            FollowerAI::MoveInLineOfSight(who);
+
+            if (!HarpoonerGUID)
+                return;
+
+            if (me->HasAura(SPELL_SUBDUED) && who->GetEntry() == NPC_RAELORASZ)
+            {
+                if (me->IsWithinDistInMap(who, INTERACTION_DISTANCE))
+                {
+                    if (Player* pHarpooner = ObjectAccessor::GetPlayer(*me, HarpoonerGUID))
+                    {
+                        pHarpooner->KilledMonsterCredit(26175);
+                        pHarpooner->RemoveAura(SPELL_DRAKE_HATCHLING_SUBDUED);
+                        SetFollowComplete();
+                        HarpoonerGUID.Clear();
+                        me->DisappearAndDie();
+                    }
+                }
+            }
+        }
+
+        void UpdateAI(uint32 /*diff*/) override
+        {
+            if (WithRedDragonBlood && !HarpoonerGUID.IsEmpty() && !me->HasAura(SPELL_RED_DRAGONBLOOD))
+            {
+                if (Player* pHarpooner = ObjectAccessor::GetPlayer(*me, HarpoonerGUID))
+                {
+                    EnterEvadeMode();
+                    StartFollow(pHarpooner, 35, NULL);
+
+                    DoCast(me, SPELL_SUBDUED, true);
+                    pHarpooner->CastSpell(pHarpooner, SPELL_DRAKE_HATCHLING_SUBDUED, true);
+
+                    me->AttackStop();
+                    WithRedDragonBlood = false;
+                }
+            }
+
+            if ((me->getFaction() == 35) && (!me->HasAura(SPELL_SUBDUED)))
+            {
+                HarpoonerGUID.Clear();
+                me->DisappearAndDie();
+            }
+
+            if (!UpdateVictim())
+                return;
+
+            DoMeleeAttackIfReady();
+        }
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_nexus_drake_hatchlingAI(creature);
+    }
+};
+
 void AddSC_borean_tundra()
 {
     new npc_sinkhole_kill_credit();
@@ -2400,4 +2516,5 @@ void AddSC_borean_tundra()
     new npc_warmage_coldarra();
     new npc_hidden_cultist();
     new spell_windsoul_totem_aura();
+    new npc_nexus_drake_hatchling();
 }

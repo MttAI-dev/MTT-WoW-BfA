@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2017-WoWLegacy <https://github.com/AshamaneProject>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,12 +20,24 @@
 #include "InstanceScript.h"
 #include "tol_dagor.h"
 
+DoorData const doorData[] =
+{
+    { 284467, DATA_THE_SAND_QUEEN, DOOR_TYPE_ROOM },
+    { 281030, DATA_KNIGHT_CAPTAIN_VALYRI, DOOR_TYPE_ROOM },
+    { 281049, DATA_KNIGHT_CAPTAIN_VALYRI, DOOR_TYPE_ROOM },
+};
+
 struct instance_tol_dagor : public InstanceScript
 {
     instance_tol_dagor(InstanceMap* map) : InstanceScript(map)
     {
         SetHeaders(DataHeader);
         SetBossNumber(EncounterCount);
+    }
+    
+    void Initialize() override
+    {
+        LoadDoorData(doorData);
     }
 };
 

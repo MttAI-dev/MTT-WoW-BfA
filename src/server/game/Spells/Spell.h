@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -267,11 +267,13 @@ class TC_GAME_API SpellCastTargets
         void SetPitch(float pitch) { m_pitch = pitch; }
         float GetSpeed() const { return m_speed; }
         void SetSpeed(float speed) { m_speed = speed; }
+        void SetOrientation(float orientation) { m_orientation = orientation;  };
+        void SetMapId(uint32 mapId) { m_mapId = mapId; };
 
         float GetDist2d() const { return m_src._position.GetExactDist2d(&m_dst._position); }
         float GetSpeedXY() const { return m_speed * std::cos(m_pitch); }
         float GetSpeedZ() const { return m_speed * std::sin(m_pitch); }
-
+        void SetCaster(Unit* caster);
         void Update(Unit* caster);
         void OutDebug() const;
         std::string GetTargetString() const { return m_strTarget; }
@@ -288,11 +290,13 @@ class TC_GAME_API SpellCastTargets
         ObjectGuid m_objectTargetGUID;
         ObjectGuid m_itemTargetGUID;
         uint32 m_itemTargetEntry;
-
+        Unit* m_caster;
         SpellDestination m_src;
         SpellDestination m_dst;
 
         float m_pitch, m_speed;
+        Optional<float> m_orientation;
+        Optional<uint32> m_mapId;
         std::string m_strTarget;
 };
 
@@ -351,7 +355,7 @@ class TC_GAME_API Spell
     friend void SetUnitCurrentCastSpell(Unit* unit, Spell* spell);
     friend class SpellScript;
     public:
-        Ashamane::AnyData Variables;
+        LatinCore::AnyData Variables;
 
         void EffectNULL(SpellEffIndex effIndex);
         void EffectUnused(SpellEffIndex effIndex);
@@ -485,6 +489,7 @@ class TC_GAME_API Spell
         void EffectResurrectWithAura(SpellEffIndex effIndex);
         void EffectCreateAreaTrigger(SpellEffIndex effIndex);
         void EffectRemoveTalent(SpellEffIndex effIndex);
+        void EffectDespawnAreatrigger(SpellEffIndex);
         void EffectDestroyItem(SpellEffIndex effIndex);
         void EffectLearnGarrisonBuilding(SpellEffIndex effIndex);
         void EffectGrip(SpellEffIndex effIndex);
@@ -495,8 +500,10 @@ class TC_GAME_API Spell
         void EffectHealBattlePetPct(SpellEffIndex effIndex);
         void EffectEnableBattlePets(SpellEffIndex effIndex);
         void EffectApplyAuraWithAmount(SpellEffIndex effIndex);
+        void EffectPlayerMoveWaypoints(SpellEffIndex effIndex);
         void EffectLaunchQuestChoice(SpellEffIndex effIndex);
         void EffectLootWithToast(SpellEffIndex effIndex);
+        void EffectJoinOrLeavePlayerParty(SpellEffIndex effIndex);
         void EffectUncageBattlePet(SpellEffIndex effIndex);
         void EffectCreateHeirloomItem(SpellEffIndex effIndex);
         void EffectUpgradeHeirloom(SpellEffIndex effIndex);
@@ -505,6 +512,7 @@ class TC_GAME_API Spell
         void EffectUpdateZoneAurasAndPhases(SpellEffIndex effIndex);
         void EffectGiveExperience(SpellEffIndex effIndex);
         void EffectIncreaseSkill(SpellEffIndex effIndex);
+        void EffectForceEquipItem(SpellEffIndex effIndex);
         void EffectGiveArtifactPower(SpellEffIndex effIndex);
         void EffectGiveArtifactPowerNoBonus(SpellEffIndex effIndex);
         void EffectPlayScene(SpellEffIndex effIndex);
@@ -606,6 +614,7 @@ class TC_GAME_API Spell
         static void SendCastResult(Player* caster, SpellInfo const* spellInfo, uint32 spellVisual, ObjectGuid cast_count, SpellCastResult result, SpellCustomErrors customError = SPELL_CUSTOM_ERROR_NONE, uint32* param1 = nullptr, uint32* param2 = nullptr);
         void SendCastResult(SpellCastResult result, uint32* param1 = nullptr, uint32* param2 = nullptr) const;
         void SendPetCastResult(SpellCastResult result, uint32* param1 = nullptr, uint32* param2 = nullptr) const;
+        void SendMountResult(MountResult result);
         void SendSpellStart();
         void SendSpellGo();
         void SendSpellCooldown();
@@ -688,6 +697,7 @@ class TC_GAME_API Spell
         bool IsProcDisabled() const;
         bool IsChannelActive() const;
         bool IsAutoActionResetSpell() const;
+        bool IsCritForTarget(Unit* target) const;
 
         bool IsTriggeredByAura(SpellInfo const* auraSpellInfo) const { return (auraSpellInfo == m_triggeredByAuraSpell); }
 
@@ -974,7 +984,8 @@ namespace Trinity
     struct TC_GAME_API WorldObjectSpellConeTargetCheck : public WorldObjectSpellAreaTargetCheck
     {
         float _coneAngle;
-        WorldObjectSpellConeTargetCheck(float coneAngle, float range, Unit* caster,
+        float _lineWidth;
+        WorldObjectSpellConeTargetCheck(float coneAngle, float lineWidth, float range, Unit* caster,
             SpellInfo const* spellInfo, SpellTargetCheckTypes selectionType, ConditionContainer* condList);
         bool operator()(WorldObject* target);
     };

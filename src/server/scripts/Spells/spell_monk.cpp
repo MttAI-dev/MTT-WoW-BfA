@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1207,7 +1206,7 @@ class aura_monk_disable : public AuraScript
     }
 };
 
-// Zen Pilgrimage - 126892 and Zen Pilgrimage : Return - 126895
+// Zen Pilgrimage - 126892, Zen Pilgrimage - 194011
 class spell_monk_zen_pilgrimage : public SpellScriptLoader
 {
 public:
@@ -1217,60 +1216,76 @@ public:
     {
         PrepareSpellScript(spell_monk_zen_pilgrimage_SpellScript);
 
-        bool Validate(SpellInfo const* /*spellInfo*/) override
+        SpellCastResult CheckDist()
         {
-            if (!sSpellMgr->GetSpellInfo(SPELL_MONK_ZEN_PILGRIMAGE) || !sSpellMgr->GetSpellInfo(SPELL_MONK_ZEN_PILGRIMAGE_RETURN)
-                || !sSpellMgr->GetSpellInfo(SPELL_MONK_ZEN_PILGREIMAGE_RETURN_AURA))
-                return false;
-            return true;
-        }
-
-        void HandleDummy(SpellEffIndex effIndex)
-        {
-            PreventHitDefaultEffect(effIndex);
-            PreventHitEffect(effIndex);
+            if (GetSpellInfo()->Id == 194011)
+                return SPELL_CAST_OK;
 
             if (Unit* caster = GetCaster())
-            {
                 if (Player* _player = caster->ToPlayer())
-                {
-                    if (GetSpellInfo()->Id == SPELL_MONK_ZEN_PILGRIMAGE)
+                    if (_player->IsQuestRewarded(40236)) // Check quest for port to oplot
                     {
-                        _player->SaveRecallPosition();
-                        _player->TeleportTo(870, 3818.55f, 1793.18f, 950.35f, _player->GetOrientation());
+                        caster->CastSpell(caster, 194011, false);
+                        return SPELL_FAILED_DONT_REPORT;
                     }
-                }
-            }
+
+            return SPELL_CAST_OK;
         }
 
-        void HandleScriptEffect(SpellEffIndex effIndex)
+        void HandleOnCast()
         {
-            PreventHitDefaultEffect(effIndex);
-            PreventHitEffect(effIndex);
-
             if (Unit* caster = GetCaster())
-            {
                 if (Player* _player = caster->ToPlayer())
                 {
-                    if (GetSpellInfo()->Id == SPELL_MONK_ZEN_PILGRIMAGE_RETURN)
-                    {
-                        _player->Recall();
-                        _player->RemoveAura(SPELL_MONK_ZEN_PILGREIMAGE_RETURN_AURA);
-                    }
+                    _player->SaveRecallPosition();
+                    _player->CastSpell(_player, 126896, true);
                 }
-            }
         }
 
         void Register() override
         {
-            OnEffectHitTarget += SpellEffectFn(spell_monk_zen_pilgrimage_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_TELEPORT_UNITS);
-            OnEffectHitTarget += SpellEffectFn(spell_monk_zen_pilgrimage_SpellScript::HandleScriptEffect, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
+            OnCast += SpellCastFn(spell_monk_zen_pilgrimage_SpellScript::HandleOnCast);
+            OnCheckCast += SpellCheckCastFn(spell_monk_zen_pilgrimage_SpellScript::CheckDist);
         }
     };
 
     SpellScript* GetSpellScript() const override
     {
         return new spell_monk_zen_pilgrimage_SpellScript();
+    }
+};
+
+// Zen Pilgrimage : Return - 126895
+class spell_monk_zen_pilgrimage_return : public SpellScriptLoader
+{
+public:
+    spell_monk_zen_pilgrimage_return() : SpellScriptLoader("spell_monk_zen_pilgrimage_return") { }
+
+    class spell_monk_zen_pilgrimage_return_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_monk_zen_pilgrimage_return_SpellScript);
+
+        void HandleDummy(SpellEffIndex /*effIndex*/)
+        {
+            if (Unit* caster = GetCaster())
+            {
+                if (Player* _player = caster->ToPlayer())
+                {
+                  // _player->TeleportTo(_player->m_recallLoc); After change now iw work
+                    _player->RemoveAura(126896);
+                }
+            }
+        }
+
+        void Register() override
+        {
+            OnEffectHitTarget += SpellEffectFn(spell_monk_zen_pilgrimage_return_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_monk_zen_pilgrimage_return_SpellScript();
     }
 };
 
@@ -4032,4 +4047,5 @@ void AddSC_monk_spell_scripts()
 
     RegisterCreatureAI(npc_monk_sef_spirit);
     RegisterCreatureAI(npc_monk_xuen);
+	new spell_monk_zen_pilgrimage_return();
 }

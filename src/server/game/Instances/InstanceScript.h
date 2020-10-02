@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,7 +26,6 @@
 #include <map>
 #include <memory>
 #include <set>
-#include <sstream>
 
 #define OUT_SAVE_INST_DATA             TC_LOG_DEBUG("scripts", "Saving Instance Data for Instance %s (Map %d, Instance Id %d)", instance->GetMapName(), instance->GetId(), instance->GetInstanceId())
 #define OUT_SAVE_INST_DATA_COMPLETE    TC_LOG_DEBUG("scripts", "Saving Instance Data for Instance %s (Map %d, Instance Id %d) completed.", instance->GetMapName(), instance->GetId(), instance->GetInstanceId())
@@ -43,6 +42,7 @@ class ModuleReference;
 class Player;
 class Unit;
 class TempSummon;
+class ChallengeModeMgr;
 struct Position;
 enum CriteriaTypes : uint8;
 enum CriteriaTimedTypes : uint8;
@@ -96,18 +96,51 @@ enum DoorType
     MAX_DOOR_TYPES
 };
 
-enum ChallengeMode
-{
-    GOB_CHALLENGER_DOOR     = 239408,
 
-    SPELL_CHALLENGER_MIGHT  = 206150,
-    SPELL_CHALLENGER_BURDEN = 206151
-};
 
 struct DoorData
 {
     uint32 entry, bossId;
     DoorType type;
+    uint32 boundary;
+};
+
+enum BoundaryType
+{
+    BOUNDARY_NONE = 0,
+    BOUNDARY_N,
+    BOUNDARY_S,
+    BOUNDARY_E,
+    BOUNDARY_W,
+    BOUNDARY_NE,
+    BOUNDARY_NW,
+    BOUNDARY_SE,
+    BOUNDARY_SW,
+    BOUNDARY_MAX_X = BOUNDARY_N,
+    BOUNDARY_MIN_X = BOUNDARY_S,
+    BOUNDARY_MAX_Y = BOUNDARY_W,
+    BOUNDARY_MIN_Y = BOUNDARY_E
+};
+
+enum ChallengeSpells : uint32
+{
+    ChallengersMight = 206150, /// generic creature aura
+    ChallengersBurden = 206151, /// generic player aura
+    ChallengerBolstering = 209859,
+    ChallengerNecrotic = 209858,
+    ChallengerOverflowing = 221772,
+    ChallengerSanguine = 226489,
+    ChallengerRaging = 228318,
+    ChallengerSummonVolcanicPlume = 209861,
+    ChallengerVolcanicPlume = 209862,
+    ChallengerBursting = 240443,
+    ChallengerQuake = 240447,
+
+    //Explosive
+    SPELL_FEL_EXPLOSIVES_SUMMON_1 = 240444, //Short dist
+    SPELL_FEL_EXPLOSIVES_SUMMON_2 = 243110, //Long dist
+    SPELL_FEL_EXPLOSIVES_VISUAL = 240445,
+    SPELL_FEL_EXPLOSIVES_DMG = 240446,
 };
 
 struct BossBoundaryEntry
@@ -181,7 +214,7 @@ class TC_GAME_API InstanceScript : public ZoneScript
         virtual ~InstanceScript() { }
 
         InstanceMap* instance;
-
+        void BroadcastPacket(WorldPacket const* data) const;
         // On creation, NOT load.
         // PLEASE INITIALIZE FIELDS IN THE CONSTRUCTOR INSTEAD !!!
         // KEEPING THIS METHOD ONLY FOR BACKWARD COMPATIBILITY !!!
@@ -202,7 +235,10 @@ class TC_GAME_API InstanceScript : public ZoneScript
         // Used by the map's CannotEnter function.
         // This is to prevent players from entering during boss encounters.
         virtual bool IsEncounterInProgress() const;
-
+       /// Challenge
+     //   void SetChallenge(Challenge* challenge);
+      //  Challenge* GetChallenge() const;
+        bool IsChallenge() const;
         // Called when a creature/gameobject is added to map or removed from map.
         // Insert/Remove objectguid to dynamic guid store
         virtual void OnCreatureCreate(Creature* creature) override;
@@ -226,6 +262,8 @@ class TC_GAME_API InstanceScript : public ZoneScript
         virtual void OnCompletedCriteriaTree(CriteriaTree const* /*tree*/) { }
 
         // Handle open / close objects
+        virtual void OnGameObjectCreateForScript(GameObject* go);
+        virtual void OnGameObjectRemoveForScript(GameObject* go);
         // * use HandleGameObject(0, boolen, GO); in OnObjectCreate in instance scripts
         // * use HandleGameObject(GUID, boolen, NULL); in any other script
         void HandleGameObject(ObjectGuid guid, bool open, GameObject* go = nullptr);
@@ -243,12 +281,19 @@ class TC_GAME_API InstanceScript : public ZoneScript
         // Send Notify to all players in instance
         void DoSendNotifyToInstance(char const* format, ...);
 
-        // Update Achievement Criteria for all players in instance
+        void DoResetAchievementCriteria(CriteriaTypes type, uint64 miscValue1 = 0, uint64 miscValue2 = 0, bool evenIfCriteriaComplete = false);
+     
+	   
+
+		// Update Achievement Criteria for all players in instance
         void DoUpdateCriteria(CriteriaTypes type, uint32 miscValue1 = 0, uint32 miscValue2 = 0, Unit* unit = NULL);
 
+        // Send Event For Scenario
+        void DoSendEventScenario(uint32 eventId);
+
         // Start/Stop Timed Achievement Criteria for all players in instance
-        void DoStartCriteriaTimer(CriteriaTimedTypes type, uint32 entry);
-        void DoStopCriteriaTimer(CriteriaTimedTypes type, uint32 entry);
+         void DoStartCriteriaTimer(CriteriaTimedTypes type, uint32 entry);
+         void DoStopCriteriaTimer(CriteriaTimedTypes type, uint32 entry);
 
         // Remove Auras due to Spell on all players in instance
         void DoRemoveAurasDueToSpellOnPlayers(uint32 spell);
@@ -262,14 +307,21 @@ class TC_GAME_API InstanceScript : public ZoneScript
         // Play scene by packageId on all players in instance
         void DoPlayScenePackageIdOnPlayers(uint32 scenePackageId);
 
+        // Play scene by Id on all players in instance
+        void DoPlaySceneOnPlayers(uint32 sceneId);
+
         // Remove all movement forces related to forceGuid
         void DoRemoveForcedMovementsOnPlayers(ObjectGuid forceGuid);
 
         void DoSetAlternatePowerOnPlayers(int32 value);
 
         void DoModifyPlayerCurrencies(uint32 id, int32 value);
+	    
+		void RepopPlayersAtGraveyard();
 
         void DoNearTeleportPlayers(const Position pos, bool casting = false);
+
+        void DoTeleportPlayers(uint32 mapId, const Position pos);
 
         void DoKilledMonsterCredit(uint32 questId, uint32 entry, ObjectGuid guid = ObjectGuid::Empty);
 
@@ -289,11 +341,25 @@ class TC_GAME_API InstanceScript : public ZoneScript
         void DoStartMovie(uint32 movieId);
 
         void DoPlayConversation(uint32 conversationId);
-        void DoDelayedConversation(uint32 delay, uint32 conversationId);
 
+        //Scenarios
+        void DoSendScenarioEvent(uint32 eventId);
+        void GetScenarioByID(Player* p_Player, uint32 p_ScenarioId);
+
+        // Add item on all players in instance
+        void DoAddItemOnPlayers(uint32 itemId, uint32 count);
+
+        // Remove item on all players in instance
+        void DoDestroyItemCountOnPlayers(uint32 item, uint32 count);
+
+        // Add item by class on all players in instance
         void DoAddItemByClassOnPlayers(uint8 classId, uint32 itemId, uint32 count);
 
-        void DoSendScenarioEvent(uint32 eventId);
+        // Remove item by class on all players in instance
+        void DoDestroyItemCountByClassOnPlayers(uint8 classId, uint32 item, uint32 count);
+
+        // Resurrect all players in instance
+        void DoResurrectPlayers(float restore_percent);
 
         // Return wether server allow two side groups or not
         bool ServerAllowsTwoSideGroups();
@@ -360,6 +426,15 @@ class TC_GAME_API InstanceScript : public ZoneScript
 
         virtual void FillInitialWorldStates(WorldPackets::WorldState::InitWorldStates& /*packet*/) { }
 
+        /// SetData auto get lastdataid
+        void SendNextData(uint32 Value);
+
+        /////////////////////////////////////////////////////////////////////////////
+        bool IsScenarioComplete() { return m_IsScenarioComplete; }
+        bool m_IsScenarioComplete;
+        void CompleteScenario();
+        void CompleteCurrStep();
+
         // Check if all players are dead (except gamemasters)
         bool IsWipe() const;
 
@@ -386,14 +461,35 @@ class TC_GAME_API InstanceScript : public ZoneScript
         void SendChallengeModeStart(Player* player = nullptr) const;
         void SendChallengeModeDeathCount(Player* player = nullptr) const;
         void SendChallengeModeElapsedTimer(Player* player = nullptr) const;
+        void SendChallengeModeNewPlayerRecord(Player* player);
+       
 
         void CastChallengeCreatureSpell(Creature* creature);
         void CastChallengePlayerSpell(Player* player);
 
+        // load scenario after challenge mode started
+        void SetChallengeModeScenario(uint32 scenarioId) { _challengeModeScenario = scenarioId; }
         void SetChallengeDoorPos(Position pos) { _challengeModeDoorPosition = pos; }
         virtual void SpawnChallengeModeRewardChest() { }
+	
+        void ResetChallengeMode();
+        
+		void SetFontOfPowerPos(Position pos) { _challengeModeFontOfPowerPosition = pos; }
+        void SetFontOfPowerPos2(Position pos) { _challengeModeFontOfPowerPosition2 = pos; }
+        void SpawnFontOfPower();
 
-        void DoOnPlayers(std::function<void(Player*)>&& function);
+        virtual void ShowChallengeDoor() { }
+        virtual void HideChallengeDoor() { }
+
+        void AfterChallengeModeStarted();
+
+        std::vector<ObjectGuid> _challengeDoorGuids;
+        std::vector<ObjectGuid> _challengeChestGuids;
+        ObjectGuid _challengeOrbGuid;
+        ObjectGuid _challengeChest;
+
+        void SetCheckPointPos(Position pos) { _checkPointPosition = pos; }
+        Optional<Position> GetCheckPoint() { return _checkPointPosition; }
 
     protected:
         void SetHeaders(std::string const& dataHeaders);
@@ -425,13 +521,41 @@ class TC_GAME_API InstanceScript : public ZoneScript
         void WriteSaveDataBossStates(std::ostringstream& data);
         virtual void WriteSaveDataMore(std::ostringstream& /*data*/) { }
 
+
+        GuidUnorderedSet _challengers;
+        bool _checkStart;
+        bool _canRun;
+        bool _run;
+        bool _complete;
+
+        ObjectGuid m_gguid;
+        ObjectGuid m_ownerGuid;
+        ObjectGuid m_itemGuid;
+        InstanceScript* _instanceScript;
+        uint32 _challengeTimer;
+        uint32 _affixQuakingTimer;
+        uint8 _rewardLevel;
+
         bool _SkipCheckRequiredBosses(Player const* player = nullptr) const;
+        uint32 _mapID;
+        
+        std::array<uint32, 3> _affixes;
+        Map* _map;
+        Item* _item;
+        uint32 _challengeLevel;
+        uint32 _instanceID;
+        bool _isKeyDepleted;
+
 
     private:
         static void LoadObjectData(ObjectData const* creatureData, ObjectInfoMap& objectInfo);
         void UpdateEncounterState(EncounterCreditType type, uint32 creditEntry, Unit* source);
-
+        ChallengeModeMgr* _challenge;
         std::vector<char> headers;
+
+      
+      
+
         std::vector<BossInfo> bosses;
         DoorInfoMap doors;
         MinionInfoMap minions;
@@ -451,7 +575,11 @@ class TC_GAME_API InstanceScript : public ZoneScript
         uint8 _challengeModeLevel;
         uint32 _challengeModeStartTime;
         uint32 _challengeModeDeathCount;
+        Optional<uint32> _challengeModeScenario;
         Optional<Position> _challengeModeDoorPosition;
+        Optional<Position> _challengeModeFontOfPowerPosition;
+        Optional<Position> _challengeModeFontOfPowerPosition2;
+        Optional<Position> _checkPointPosition;
 
     #ifdef TRINITY_API_USE_DYNAMIC_LINKING
         // Strong reference to the associated script module

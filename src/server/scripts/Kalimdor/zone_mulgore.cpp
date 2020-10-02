@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2008-2019 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -143,8 +142,79 @@ private:
     ObjectGuid _playerGUID;
 };
 
+enum EagleSpirit
+{
+    SPELL_EJECT_ALL_PASSENGERS = 50630,
+    SPELL_SPIRIT_FORM = 69324
+};
+
+Position const EagleSpiritflightPath[] =
+{
+    { -2884.155f, -71.08681f, 242.0678f },
+    { -2720.592f, -111.0035f, 242.5955f },
+    { -2683.951f, -382.9010f, 231.1792f },
+    { -2619.148f, -484.9288f, 231.1792f },
+    { -2543.868f, -525.3333f, 231.1792f },
+    { -2465.321f, -502.4896f, 190.7347f },
+    { -2343.872f, -401.8281f, -8.320873f }
+};
+size_t const EagleSpiritflightPathSize = std::extent<decltype(EagleSpiritflightPath)>::value;
+
+class npc_eagle_spirit : public CreatureScript
+{
+public:
+    npc_eagle_spirit() : CreatureScript("npc_eagle_spirit") { }
+
+    struct npc_eagle_spirit_AI : public ScriptedAI
+    {
+        npc_eagle_spirit_AI(Creature* creature) : ScriptedAI(creature) { }
+
+        void PassengerBoarded(Unit* /*who*/, int8 /*seatId*/, bool apply) override
+        {
+            if (!apply)
+                return;
+
+            me->GetMotionMaster()->MoveSmoothPath(uint32(EagleSpiritflightPathSize), EagleSpiritflightPath, EagleSpiritflightPathSize, false, true);
+            me->CastSpell(me, SPELL_SPIRIT_FORM);
+        }
+
+        void MovementInform(uint32 type, uint32 pointId) override
+        {
+            if (type == EFFECT_MOTION_TYPE && pointId == EagleSpiritflightPathSize)
+            {
+                DoCast(SPELL_EJECT_ALL_PASSENGERS);
+            }
+        }
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_eagle_spirit_AI(creature);
+    }
+};
+
+// 71898 Funeral Offering
+class spell_mulgore_funeral_offering : public SpellScript
+{
+    PrepareSpellScript(spell_mulgore_funeral_offering);
+
+    void HandleHitTarget(SpellEffIndex /*effIndex*/)
+    {
+        if (Creature* target = GetHitCreature())
+            if (GetCaster()->IsPlayer())
+                GetCaster()->ToPlayer()->KilledMonsterCredit(target->GetEntry());
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_mulgore_funeral_offering::HandleHitTarget, EFFECT_1, SPELL_EFFECT_DUMMY);
+    }
+};
+
 void AddSC_mulgore()
 {
     RegisterCreatureAI(npc_agitated_earth_spirit);
     RegisterCreatureAI(npc_kyle_the_frenzied);
+    new npc_eagle_spirit();
+    RegisterSpellScript(spell_mulgore_funeral_offering);
 }

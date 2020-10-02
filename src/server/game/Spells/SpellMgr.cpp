@@ -1,5 +1,6 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
+ * Copyright (C) Thordekk
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -33,6 +34,7 @@
 #include "SpellAuraDefines.h"
 #include "SpellInfo.h"
 #include <G3D/g3dmath.h>
+#include "Containers.h"
 
 PetFamilySpellsStore sPetFamilySpellsStore;
 
@@ -639,7 +641,7 @@ bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32
             return false;
 
     if (questEnd)                                // is not in expected forbidden quest state
-        if (!player || (((1 << player->GetQuestStatus(questEnd)) & questEndStatus) != 0))
+        if (!player || (((1 << player->GetQuestStatus(questEnd)) & questEndStatus) == 0))
             return false;
 
     if (auraSpell)                               // does not have expected aura
@@ -2524,6 +2526,8 @@ void SpellMgr::LoadSpellInfoCustomAttributes()
                     break;
                 }
             }
+           /* if (!spellInfoMutable->_IsPositiveEffect(effect->EffectIndex, false))
+                spellInfoMutable->NegativeEffects[effect->EffectIndex] = true;*/
         }
 
         // spells ignoring hit result should not be binary
@@ -2555,6 +2559,9 @@ void SpellMgr::LoadSpellInfoCustomAttributes()
                     case SPELL_EFFECT_APPLY_AREA_AURA_ENEMY:
                     case SPELL_EFFECT_APPLY_AREA_AURA_PET:
                     case SPELL_EFFECT_APPLY_AREA_AURA_OWNER:
+                    case SPELL_EFFECT_APPLY_AURA_ON_PET:
+                    case SPELL_EFFECT_202:
+                    case SPELL_EFFECT_APPLY_AREA_AURA_PARTY_NONRANDOM:
                     {
                         if (effect->ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE ||
                             effect->ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE_PERCENT ||
@@ -2607,17 +2614,11 @@ void SpellMgr::LoadSpellInfoCustomAttributes()
             spellInfo->AttributesCu |= SPELL_ATTR0_CU_SCHOOLMASK_NORMAL_WITH_MAGIC;
         }
 
-        if (!spellInfo->_IsPositiveEffect(EFFECT_0, false))
-            spellInfo->AttributesCu |= SPELL_ATTR0_CU_NEGATIVE_EFF0;
-
-        if (!spellInfo->_IsPositiveEffect(EFFECT_1, false))
-            spellInfo->AttributesCu |= SPELL_ATTR0_CU_NEGATIVE_EFF1;
-
-        if (!spellInfo->_IsPositiveEffect(EFFECT_2, false))
-            spellInfo->AttributesCu |= SPELL_ATTR0_CU_NEGATIVE_EFF2;
-
         if (talentSpells.count(spellInfo->Id))
             spellInfo->AttributesCu |= SPELL_ATTR0_CU_IS_TALENT;
+
+       /* if (G3D::fuzzyNe(spellInfoMutable->Width, 0.0f))
+            spellInfoMutable->AttributesCu |= SPELL_ATTR0_CU_CONE_LINE;*/
 
         switch (spellInfo->SpellFamilyName)
         {
@@ -2705,6 +2706,30 @@ void SpellMgr::LoadSpellInfoCorrections()
 {
     uint32 oldMSTime = getMSTime();
 
+    ApplySpellFix({
+        201633,  // Earthen Shield
+        200851,  // Rage of the Sleeper
+        209426,  // Darkness
+        195181,  // Bone Shield
+        207319,  // Corpse Shield
+        206977,  // Blood Mirror
+        203975,  // Earthwarden
+        208771,  // Smite
+        197268,  // Ray of Hope (PvP Talent)
+        144331,  // Iron Prison
+        142906,  // Ancient Miasma Dmg
+        29604,   // Jom Gabbar
+        204266,  // Swelling Waves (PvP Talent)
+        108366,  // Soul Leech
+        233263,  // Embrace of the Eclipse
+        233264,  // Embrace of the Eclipse
+        215300,  // Web of Pain
+        215307   // Web of Pain
+    }, [](SpellInfo* spellInfo)
+    {
+        spellInfo->AttributesEx6 |= SPELL_ATTR6_NO_DONE_PCT_DAMAGE_MODS;
+    });
+
     // Ring of Frost
     ApplySpellFix({ 82691 }, [](SpellInfo* spellInfo)
     {
@@ -2758,6 +2783,8 @@ void SpellMgr::LoadSpellInfoCorrections()
     {
         spellInfo->AttributesEx4 |= SPELL_ATTR4_FIXED_DAMAGE;
     });
+	
+	
 
     // Howl of Azgalor
     ApplySpellFix({ 31344 }, [](SpellInfo* spellInfo)
@@ -2779,11 +2806,11 @@ void SpellMgr::LoadSpellInfoCorrections()
         const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->TriggerSpell = 36325; // They Must Burn Bomb Drop (DND)
     });
 
-    // Execute
-    ApplySpellFix({ 5308 }, [](SpellInfo* spellInfo)
-    {
-        spellInfo->AttributesEx3 |= SPELL_ATTR3_CANT_TRIGGER_PROC;
-    });
+    //// Execute
+    // ApplySpellFix({ 5308 }, [](SpellInfo* spellInfo)
+    // {
+    //    spellInfo->AttributesEx3 |= SPELL_ATTR3_CANT_TRIGGER_PROC;
+    //});
 
     // Chi Torpedo
     ApplySpellFix({ 115008 }, [](SpellInfo* spellInfo) { const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_2))->BasePoints = 410; });
@@ -2931,6 +2958,13 @@ void SpellMgr::LoadSpellInfoCorrections()
     ApplySpellFix({ 51912 }, [](SpellInfo* spellInfo)
     {
         const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->ApplyAuraPeriod = 3000;
+    });
+
+    //Vanish
+    ApplySpellFix({ 11327 }, [](SpellInfo* spellInfo)
+    {
+        spellInfo->AttributesEx4 |= SPELL_ATTR4_TRIGGER_ACTIVATE;
+        spellInfo->AuraInterruptFlags[0] |= AURA_INTERRUPT_FLAG_MELEE_ATTACK;
     });
 
     // Nether Portal - Perseverence
@@ -3184,6 +3218,14 @@ void SpellMgr::LoadSpellInfoCorrections()
         spellInfo->AttributesEx |= SPELL_ATTR1_DISPEL_AURAS_ON_IMMUNITY;
     });
 
+    // Blizzard (Thorim)
+    ApplySpellFix({ 62576, 62602 }, [](SpellInfo* spellInfo)
+    {
+        // DBC data is wrong for EFFECT_0, it's a different dynobject target than EFFECT_1
+        // Both effects should be shared by the same DynObject
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->TargetA = SpellImplicitTargetInfo(TARGET_DEST_CASTER_LEFT);
+    });
+
     // Spinning Up (Mimiron)
     ApplySpellFix({ 63414 }, [](SpellInfo* spellInfo)
     {
@@ -3350,6 +3392,15 @@ void SpellMgr::LoadSpellInfoCorrections()
         spellInfo->RequiredAreasID = 0; // originally, these require area 4522, which is... outside of Icecrown Citadel
     });
 
+    // WARLOC SPELLS
+    ApplySpellFix({ 108415, 108446 }, [](SpellInfo* spellInfo)
+    {
+        spellInfo->Attributes &= ~SPELL_ATTR0_NOT_SHAPESHIFT;
+        spellInfo->AttributesEx3 &= ~SPELL_ATTR3_CANT_TRIGGER_PROC;
+        spellInfo->AttributesEx3 |= SPELL_ATTR3_CAN_PROC_WITH_TRIGGERED;
+    });
+    // END WARLOC SPELLS
+
     // Corruption
     ApplySpellFix({ 70602 }, [](SpellInfo* spellInfo)
     {
@@ -3388,13 +3439,6 @@ void SpellMgr::LoadSpellInfoCorrections()
         spellInfo->Speed = 0.0f;    // This spell's summon happens instantly
     });
 
-    // Chilled to the Bone
-    ApplySpellFix({ 70106 }, [](SpellInfo* spellInfo)
-    {
-            spellInfo->AttributesEx3 |= SPELL_ATTR3_NO_DONE_BONUS;
-            spellInfo->AttributesEx6 |= SPELL_ATTR6_NO_DONE_PCT_DAMAGE_MODS;
-    });
-
     // Ice Lock
     ApplySpellFix({ 71614 }, [](SpellInfo* spellInfo)
     {
@@ -3418,6 +3462,12 @@ void SpellMgr::LoadSpellInfoCorrections()
     {
         const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->RadiusEntry = sSpellRadiusStore.LookupEntry(EFFECT_RADIUS_200_YARDS); // 200yd
         const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_1))->RadiusEntry = sSpellRadiusStore.LookupEntry(EFFECT_RADIUS_200_YARDS); // 200yd
+    });
+
+    // Val'kyr Target Search
+    ApplySpellFix({ 69030 }, [](SpellInfo* spellInfo)
+    {
+        spellInfo->Attributes |= SPELL_ATTR0_UNAFFECTED_BY_INVULNERABILITY;
     });
 
     // Raging Spirit Visual
@@ -3467,12 +3517,17 @@ void SpellMgr::LoadSpellInfoCorrections()
     {
         spellInfo->RangeEntry = sSpellRangeStore.LookupEntry(3); // 20yd
         const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->RadiusEntry = sSpellRadiusStore.LookupEntry(EFFECT_RADIUS_25_YARDS); // 25yd
+        spellInfo->RangeEntry = sSpellRangeStore.LookupEntry(5); // 40yd
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->RadiusEntry = sSpellRadiusStore.LookupEntry(EFFECT_RADIUS_10_YARDS); // 10yd
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->MiscValue = 190;
     });
 
     // Broken Frostmourne
     ApplySpellFix({ 72405 }, [](SpellInfo* spellInfo)
     {
         const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_1))->RadiusEntry = sSpellRadiusStore.LookupEntry(EFFECT_RADIUS_200_YARDS); // 200yd
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_1))->RadiusEntry = sSpellRadiusStore.LookupEntry(EFFECT_RADIUS_20_YARDS); // 20yd
+        spellInfo->AttributesEx |= SPELL_ATTR1_NO_THREAT;
     });
     // ENDOF ICECROWN CITADEL SPELLS
 
@@ -3574,9 +3629,9 @@ void SpellMgr::LoadSpellInfoCorrections()
     });
 
     // Tree of Life (Passive)
-    ApplySpellFix({ 5420 }, [](SpellInfo* spellInfo)
+    ApplySpellFix({ 5420, 81097 }, [](SpellInfo* spellInfo)
     {
-        spellInfo->Stances = UI64LIT(1) << (FORM_TREE_OF_LIFE - 1);
+         spellInfo->Stances = 1 << (FORM_TREE_OF_LIFE - 1);
     });
 
     // Feral Charge (Cat Form)
@@ -3884,6 +3939,13 @@ void SpellMgr::LoadSpellInfoCorrections()
         }
     });
 
+    //Atal Dazar Correction
+    ApplySpellFix({ 255836 }, [](SpellInfo* spellInfo)
+        {
+            const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->BasePoints = spellInfo->GetEffect(EFFECT_0)->BasePoints / 100;
+
+        });
+    //End Atal Dazar Correction
 
     ApplySpellFix({
         70661, // See quest invis 1
@@ -3893,6 +3955,74 @@ void SpellMgr::LoadSpellInfoCorrections()
     }, [](SpellInfo* spellInfo)
     {
         spellInfo->RequiredAreasID = 0;
+    });
+
+    // Revitalize Spirit Obelisk
+    ApplySpellFix({ 254904 }, [](SpellInfo* spellInfo)
+    {
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(0))->TargetA = SpellImplicitTargetInfo(TARGET_UNIT_CASTER);
+    });
+
+    // Requiem of the Abyss
+    ApplySpellFix({ 274365 }, [](SpellInfo* spellInfo)
+    {
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->TargetA = SpellImplicitTargetInfo(TARGET_DEST_DB);
+    });
+
+    // Surging Rush (HACK: charge effect is scripted in boss script)
+    ApplySpellFix({ 264101 }, [](SpellInfo* spellInfo)
+    {
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->Effect = 0;
+    });
+
+    // Erupting Waters
+    ApplySpellFix({ 264911, 264912, 264913 }, [](SpellInfo* spellInfo)
+    {
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->TargetA = SpellImplicitTargetInfo(TARGET_DEST_DB);
+    });
+
+    // Swiftness Ward
+    // Reinforcing Ward
+    ApplySpellFix({ 267891, 267905 }, [](SpellInfo* spellInfo)
+    {
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->TargetA = SpellImplicitTargetInfo(TARGET_DEST_DEST);
+    });
+
+    // Grasp from the Depths
+    // Mind Rend
+    // Tentacle Slam
+    ApplySpellFix({ 264477, 268896, 267364 }, [](SpellInfo* spellInfo)
+    {
+        spellInfo->MaxAffectedTargets = 1;
+    });
+
+    // Disciple of the Vol'zith
+    ApplySpellFix({ 269289 }, [](SpellInfo* spellInfo)
+    {
+        //const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_2))->Effect = 0;
+        spellInfo->AuraInterruptFlags[0] = 0;
+        spellInfo->AuraInterruptFlags[1] = 0;
+    });
+
+    /// Gilneas ///
+    // Summon Ravenous Worgen
+    // Serverside dummy target so we have to change to spell_target_position
+    ApplySpellFix({ 66925, 66836 }, [](SpellInfo* spellInfo)
+    {
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->TargetA = SpellImplicitTargetInfo(TARGET_DEST_DEST);
+    });
+
+    // Pull-to
+    ApplySpellFix({ 67357 }, [](SpellInfo* spellInfo)
+    {
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->MiscValue = 150;
+    });
+    /// Gilneas END ///
+
+    // Nyalotha
+    ApplySpellFix({ 308679 }, [](SpellInfo* spellInfo)
+    {
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_1))->Effect = 0;
     });
 
     SpellInfo* spellInfo = NULL;

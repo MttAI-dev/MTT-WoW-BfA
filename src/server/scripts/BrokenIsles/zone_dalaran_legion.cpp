@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,29 +20,40 @@
 #include "MapManager.h"
 #include "ObjectMgr.h"
 #include "PhasingHandler.h"
-#include "GameObjectAI.h"
 #include "Player.h"
 #include "ScriptMgr.h"
 #include "SpellMgr.h"
 #include "ScriptedCreature.h"
 #include "SpellScript.h"
-#include "ScriptedEscortAI.h"
-#include "ScriptedGossip.h"
 #include "Log.h"
-#include "AchievementMgr.h"
-#include "Vehicle.h"
-#include "CombatAI.h"
-
-/*
- * Dalaran above Karazhan
- *
- * Legion Intro
- */
+#include "World.h"
+#include "WorldSession.h"
+#include "ScriptedGossip.h"
+#include "SceneHelper.h"
+#include "Spell.h"
+ /*
+  * Dalaran above Karazhan
+  *
+  * Legion Intro
+  */
 
 enum
 {
-    PHASE_DALARAN_KARAZHAN  = 5829,
-    QUEST_BLINK_OF_AN_EYE   = 44663,
+    QUEST_THE_LEGION_RETURNS_A = 40519,
+    QUEST_THE_FALLEN_LION = 40517,
+
+    QUEST_THE_LEGION_RETURNS_H = 43926,
+    QUEST_FATE_OF_THE_HORDE = 40522,
+
+    PHASE_DALARAN_KARAZHAN = 5829,
+    QUEST_BLINK_OF_AN_EYE = 44663,
+    QUEST_KHADGARS_DISCOVERY = 44555,
+    SPELL_LEGION_LAUNCH_PATCH_QUEST_LAUNCH = 258792,
+    SPELL_LEGION_7_2_PATCH_QUEST_LAUNCH = 239624,
+    SPELL_WHISPERS_OF_A_FRIGHTENED_WORLD_PUSH = 240549,
+
+    PHASE_STORMHEIM_HORDE = 5277,
+    PHASE_STORMHEIM_ALLIANCE = 7048,
 };
 
 // TODO : All this script is temp fix,
@@ -54,20 +65,45 @@ public:
 
     enum
     {
-        SPELL_MAGE_LEARN_GUARDIAN_HALL_TP   = 204287,
-        SPELL_WAR_LEARN_JUMP_TO_SKYHOLD     = 192084,
-        SPELL_DRUID_CLASS_HALL_TP           = 204874,
-        SPELL_CREATE_CLASS_HALL_ALLIANCE    = 185506,
-        SPELL_CREATE_CLASS_HALL_HORDE       = 192191,
+        SPELL_MAGE_LEARN_GUARDIAN_HALL_TP = 204287,
+        SPELL_WAR_LEARN_JUMP_TO_SKYHOLD = 192084,
+        SPELL_DRUID_CLASS_HALL_TP = 204874,
+        SPELL_CREATE_CLASS_HALL_ALLIANCE = 185506,
+        SPELL_CREATE_CLASS_HALL_HORDE = 192191,
 
-        CONVERSATION_KHADGAR_BLINK_OF_EYE   = 3827,
+        CONVERSATION_KHADGAR_BLINK_OF_EYE = 3827,
     };
+
+    void OnQuestStatusChange(Player* player, uint32 /*questId*/)
+    {
+        if ((player->IsInAlliance() && player->GetQuestStatus(QUEST_THE_LEGION_RETURNS_A) == QUEST_STATUS_REWARDED) || (player->IsInHorde() && player->GetQuestStatus(QUEST_THE_LEGION_RETURNS_H) == QUEST_STATUS_REWARDED))
+        {
+            if (player->GetQuestStatus(QUEST_BLINK_OF_AN_EYE) == QUEST_STATUS_NONE)
+            {
+                Conversation::CreateConversation(CONVERSATION_KHADGAR_BLINK_OF_EYE, player, player->GetPosition(), { player->GetGUID() });
+
+                if (const Quest* quest = sObjectMgr->GetQuestTemplate(QUEST_BLINK_OF_AN_EYE))
+                    player->AddQuest(quest, nullptr);
+            }
+        }
+    }
 
     void OnLogin(Player* player, bool firstLogin) override
     {
         // Can happen in recovery cases
         if (player->getLevel() >= 100 && firstLogin)
             HandleLegionArrival(player);
+
+        if (Map* map = sMapMgr->FindMap(0, 0))
+            map->LoadGrid(-11099.8f, -2212.36f);
+
+        if (Map* map = sMapMgr->FindMap(1669, 0))
+        {
+            map->LoadGrid(459.02f, 1450.02f);
+            map->LoadGrid(4682.5f, 9851.57f);
+            map->LoadGrid(-2624.08f, 8654.29f);
+        }
+
     }
 
     void OnLevelChanged(Player* player, uint8 oldLevel) override
@@ -80,31 +116,111 @@ public:
     {
         switch (player->getClass())
         {
-            case CLASS_MAGE:
-                player->CastSpell(player, SPELL_MAGE_LEARN_GUARDIAN_HALL_TP, true);
-                break;
-            case CLASS_WARRIOR:
-                player->CastSpell(player, SPELL_WAR_LEARN_JUMP_TO_SKYHOLD, true);
-                break;
-            case CLASS_DRUID:
-                player->CastSpell(player, SPELL_DRUID_CLASS_HALL_TP, true);
-                break;
-            case CLASS_HUNTER:
-                player->m_taxi.SetTaximaskNode(1848); // Hunter Class Hall
-                break;
-            default:
-                break;
+        case CLASS_MAGE:
+            player->CastSpell(player, SPELL_MAGE_LEARN_GUARDIAN_HALL_TP, true);
+            break;
+        case CLASS_WARRIOR:
+            player->CastSpell(player, SPELL_WAR_LEARN_JUMP_TO_SKYHOLD, true);
+            break;
+        case CLASS_DRUID:
+            player->CastSpell(player, SPELL_DRUID_CLASS_HALL_TP, true);
+            break;
+        case CLASS_HUNTER:
+            player->m_taxi.SetTaximaskNode(1848); // Hunter Class Hall
+            break;
+        default:
+            break;
+        }
+
+        ///QUEST_THE_LEGION_RETURNS
+        player->CastSpell(player, SPELL_LEGION_LAUNCH_PATCH_QUEST_LAUNCH, true);
+
+        if ((player->IsInAlliance() && player->GetQuestStatus(QUEST_THE_LEGION_RETURNS_A) == QUEST_STATUS_REWARDED) || (player->IsInHorde() && player->GetQuestStatus(QUEST_THE_LEGION_RETURNS_H) == QUEST_STATUS_REWARDED))
+        {
+            if (player->GetQuestStatus(QUEST_BLINK_OF_AN_EYE) == QUEST_STATUS_NONE)
+            {
+                Conversation::CreateConversation(CONVERSATION_KHADGAR_BLINK_OF_EYE, player, player->GetPosition(), { player->GetGUID() });
+
+                if (const Quest* quest = sObjectMgr->GetQuestTemplate(QUEST_BLINK_OF_AN_EYE))
+                    player->AddQuest(quest, nullptr);
+            }
+        }
+
+        if (player->GetQuestStatus(QUEST_BLINK_OF_AN_EYE) == QUEST_STATUS_REWARDED)
+            HandleGetAfterBlinkOfAnEye(player);
+    }
+
+    void OnQuestComplete(Player* player, Quest const* quest)
+    {
+        if (quest->GetQuestId() == QUEST_BLINK_OF_AN_EYE)
+            HandleGetAfterBlinkOfAnEye(player);
+    }
+
+    void HandleGetAfterBlinkOfAnEye(Player* player)
+    {
+        if (player->GetQuestStatus(QUEST_KHADGARS_DISCOVERY) == QUEST_STATUS_NONE)
+            if (const Quest* quest = sObjectMgr->GetQuestTemplate(QUEST_KHADGARS_DISCOVERY))
+                player->AddQuest(quest, nullptr);
+
+        if (uint32 artifact_knowledge = sWorld->getIntConfig(CONFIG_CURRENCY_START_ARTIFACT_KNOWLEDGE))
+        {
+            if (artifact_knowledge > 10)
+                player->CompletedAchievement(10852);
+            if (artifact_knowledge > 24)
+                player->CompletedAchievement(10853);
         }
 
         player->CastSpell(player, player->IsInAlliance() ? SPELL_CREATE_CLASS_HALL_ALLIANCE : SPELL_CREATE_CLASS_HALL_HORDE, true);
+        HandleGetFirstFollower(player);
+    }
 
-        if (player->GetQuestStatus(QUEST_BLINK_OF_AN_EYE) == QUEST_STATUS_NONE)
+    void HandleGetFirstFollower(Player* player)
+    {
+        if (player->GetQuestStatus(QUEST_BLINK_OF_AN_EYE) == QUEST_STATUS_COMPLETE || player->GetQuestStatus(QUEST_BLINK_OF_AN_EYE) == QUEST_STATUS_REWARDED)
         {
-            Conversation::CreateConversation(CONVERSATION_KHADGAR_BLINK_OF_EYE, player, player->GetPosition(), { player->GetGUID() });
-
-            if (const Quest* quest = sObjectMgr->GetQuestTemplate(QUEST_BLINK_OF_AN_EYE))
-                player->AddQuest(quest, nullptr);
+            switch (player->getClass())
+            {
+            case CLASS_WARRIOR:
+                player->CastSpell(player, 198182, true);
+                break;
+            case CLASS_PALADIN:
+                player->CastSpell(player, 181009, true);
+                break;
+            case CLASS_HUNTER:
+                player->CastSpell(player, 203376, true);
+                break;
+            case CLASS_ROGUE:
+                player->CastSpell(player, 235468, true);
+                break;
+            case CLASS_PRIEST:
+                player->CastSpell(player, 219764, true);
+                break;
+            case CLASS_DEATH_KNIGHT:
+                player->CastSpell(player, 191521, true);
+                break;
+            case CLASS_SHAMAN:
+                player->CastSpell(player, 211710, true);
+                break;
+            case CLASS_MAGE:
+                player->CastSpell(player, 217305, true);
+                break;
+            case CLASS_WARLOCK:
+                player->CastSpell(player, 201163, true);
+                break;
+            case CLASS_MONK:
+                player->CastSpell(player, 234265, true);
+                break;
+            case CLASS_DRUID:
+                player->CastSpell(player, 210357, true);
+                break;
+            case CLASS_DEMON_HUNTER:
+                player->CastSpell(player, player->IsInAlliance() ? 188249 : 215133, true);
+                break;
+            default:
+                break;
+            }
         }
+        player->CastSpell(player, 164608, true);
     }
 };
 
@@ -115,7 +231,9 @@ public:
 
     enum
     {
-        QUEST_UNITING_THE_ISLES     = 43341,
+        QUEST_UNITING_THE_ISLES = 43341,
+        QUEST_ARMIES_OF_LEGIONFALL = 46730,
+        QUEST_WHISPERS_OF_A_FRIGHTENED_WORLD = 46206,
     };
 
     void OnLogin(Player* player, bool firstLogin) override
@@ -136,10 +254,14 @@ public:
         if (player->GetQuestStatus(QUEST_UNITING_THE_ISLES) == QUEST_STATUS_NONE)
             if (const Quest* quest = sObjectMgr->GetQuestTemplate(QUEST_UNITING_THE_ISLES))
                 player->AddQuest(quest, nullptr);
+        if (player->GetQuestStatus(QUEST_ARMIES_OF_LEGIONFALL) == QUEST_STATUS_NONE)
+            player->CastSpell(player, SPELL_LEGION_7_2_PATCH_QUEST_LAUNCH, true);
+        //if (player->GetQuestStatus(QUEST_WHISPERS_OF_A_FRIGHTENED_WORLD) == QUEST_STATUS_NONE)
+        //    player->CastSpell(player, SPELL_WHISPERS_OF_A_FRIGHTENED_WORLD_PUSH, true);
     }
 };
 
-// 228329 & 228330 - T?l?portation
+// 228329 & 228330 - T??ortation
 class spell_dalaran_teleportation : public SpellScript
 {
     PrepareSpellScript(spell_dalaran_teleportation);
@@ -213,7 +335,7 @@ public:
  * Legion Dalaran
  */
 
-// Zone 8392
+ // Zone 8392
 class zone_legion_dalaran_underbelly : public ZoneScript
 {
 public:
@@ -231,890 +353,580 @@ public:
     }
 };
 
-class CastEventTP : public BasicEvent
-{
-public:
-    CastEventTP(Unit* caster, uint32 spellId, bool trigger) :
-        _caster(caster), _spellId(spellId), _trigger(trigger) { }
-
-    bool Execute(uint64 /*time*/, uint32 /*diff*/)
-    {
-        if (_caster)
-            _caster->CastSpell(_caster, _spellId, _trigger);
-        return true;
-    }
-
-private:
-    Unit * _caster;
-    uint32 _spellId;
-    bool _trigger;
-};
-
-// 108868 7.x.x
-class npc_hunter_talua : public CreatureScript
-{
-public:
-    npc_hunter_talua() : CreatureScript("npc_hunter_talua") { }
-
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 /*action*/) override
-    {
-        if (player->getLevel() < 98 || player->getClass() != CLASS_HUNTER)
-            return true;
-
-        if (Pet* pet = player->GetPet())
-            player->RemovePet(nullptr, PET_SAVE_DISMISS, false);
-
-        player->CastSpell(player, 216213, true);
-        player->m_Events.AddEvent(new CastEventTP(player, 216216, true), player->m_Events.CalculateTime(10000));
-
-        return true;
-    }
-};
-
-class npc_great_eagle : public CreatureScript
-{
-public:
-    npc_great_eagle() : CreatureScript("npc_great_eagle") { }
-
-    struct npc_great_eagleAI : public ScriptedAI
-    {
-        npc_great_eagleAI(Creature* creature) : ScriptedAI(creature) { }
-
-        uint8 curID;
-        void Reset()
-        {
-        }
-
-        void SpellHit(Unit* caster, SpellInfo const* spell) override
-        {
-            me->GetMotionMaster()->MoveDistract(1000);
-            me->GetMotionMaster()->MovePoint(1, -854.9718f, 4185.322f, 754.1122f);
-        }
-
-        void MovementInform(uint32 type, uint32 id)
-        {
-            if (type != POINT_MOTION_TYPE)
-                return;
-
-            switch (id)
-            {
-            case 1:
-                me->DespawnOrUnsummon(0);
-                break;
-            }
-        }
-    };
-    CreatureAI* GetAI(Creature* creature) const
-    {
-        return new npc_great_eagleAI(creature);
-    }
-};
-
-enum ChoicesAndKillcredits
-{
-    HUNTER_CHOICE                           = 240,
-    HUNTER_ARTIFACT_QUEST_KILLCREDIT        = 104634,
-    ROGUE_CHOICE                            = 280,
-    ROGUE_ARTIFACT_QUEST_KILLCREDIT         = 105953,
-    PALADIN_CHOICE                          = 235,
-    PALADIN_ARTIFACT_QUEST_KILLCREDIT       = 90369,
-    DEATH_KNIGHT_CHOICE                     = 253,
-    DEATH_KNIGHT_ARTIFACT_QUEST_KILLCREDIT  = 101441,
-    PRIEST_CHOICE                           = 248,
-    PRIEST_ARTIFACT_QUEST_KILLCREDIT        = 100583,
-    DEMON_HUNTER_CHOICE                     = 255,
-    DEMON_HUNTER_ARTIFACT_QUEST_KILLCREDIT  = 105177,
-    MAGE_CHOICE                             = 265,
-    MAGE_ARTIFACT_QUEST_KILLCREDIT          = 103037,
-    WARLOCK_CHOICE                          = 245,
-    WARLOCK_ARTIFACT_QUEST_KILLCREDIT       = 101095,
-    WARRIOR_CHOICE                          = 236,
-    WARRIOR_ARTIFACT_QUEST_KILLCREDIT       = 100583,
-    SHAMAN_CHOICE                           = 266,
-    SHAMAN_ARTIFACT_QUEST_KILLCREDIT        = 96527,
-    MONK_CHOICE                             = 242,
-    MONK_ARTIFACT_QUEST_KILLCREDIT          = 100438,
-};
-
-class player_artifact_choice : public PlayerScript
-{
-public:
-    player_artifact_choice() : PlayerScript("player_artifact_choice") { }
-
-    void OnCompleteQuestChoice(Player* player, uint32 choiceId, uint32 /*responseId*/)
-    {
-        switch (choiceId)
-        {
-            case HUNTER_CHOICE:
-                player->KilledMonsterCredit(HUNTER_ARTIFACT_QUEST_KILLCREDIT);
-                break;
-            case ROGUE_CHOICE:
-                player->KilledMonsterCredit(ROGUE_ARTIFACT_QUEST_KILLCREDIT);
-                break;
-            case PALADIN_CHOICE:
-                player->KilledMonsterCredit(PALADIN_ARTIFACT_QUEST_KILLCREDIT);
-                break;
-            case DEATH_KNIGHT_CHOICE:
-                player->KilledMonsterCredit(DEATH_KNIGHT_ARTIFACT_QUEST_KILLCREDIT);
-                break;
-            case PRIEST_CHOICE:
-                player->KilledMonsterCredit(PRIEST_ARTIFACT_QUEST_KILLCREDIT);
-                break;
-            case DEMON_HUNTER_CHOICE:
-                player->KilledMonsterCredit(DEMON_HUNTER_ARTIFACT_QUEST_KILLCREDIT);
-                break;
-            case MAGE_CHOICE:
-                player->KilledMonsterCredit(MAGE_ARTIFACT_QUEST_KILLCREDIT);
-                break;
-            case WARLOCK_CHOICE:
-                player->KilledMonsterCredit(WARLOCK_ARTIFACT_QUEST_KILLCREDIT);
-                break;
-            case WARRIOR_CHOICE:
-                player->KilledMonsterCredit(WARRIOR_ARTIFACT_QUEST_KILLCREDIT);
-                break;
-            case SHAMAN_CHOICE:
-                player->KilledMonsterCredit(SHAMAN_ARTIFACT_QUEST_KILLCREDIT);
-                break;
-            case MONK_CHOICE:
-                player->KilledMonsterCredit(MONK_ARTIFACT_QUEST_KILLCREDIT);
-                break;
-        }
-
-    }
-};
-
-// quest 38970
-class npc_tele_q38970 : public CreatureScript
-{
-public:
-    npc_tele_q38970() : CreatureScript("npc_tele_q38970") { }
-     struct npc_tele_q38970AI : public ScriptedAI
-    {
-        npc_tele_q38970AI(Creature* creature) : ScriptedAI(creature) { }
-         void MoveInLineOfSight(Unit* who) override
-        {
-            if (Player* player = who->ToPlayer())
-            {
-                if (player->GetQuestStatus(38970) == QUEST_STATUS_INCOMPLETE)
-                {
-                    if (player->IsInDist(me, 2.0f))
-                    {
-                       player->KilledMonsterCredit(94259);
-                    }
-                }
-            }
-        }
-    };
-     CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_tele_q38970AI(creature);
-    }
-};
-
-class npc_quest_48954 : public CreatureScript
-{
-public:
-    npc_quest_48954() : CreatureScript("npc_quest_48954") { }
-
-    bool OnQuestReward(Player* player, Creature* creature, const Quest *_Quest, uint32 /*slot*/) override
-    {
-        if (_Quest->GetQuestId() == 48954)
-        {
-            if (AchievementEntry const *ForgedforBattle = sAchievementStore.LookupEntry(11991))
-            {
-                player->CompletedAchievement(ForgedforBattle);
-            }
-        }
-
-        return true;
-    }
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_quest_48954AI(creature);
-    }
-
-    struct npc_quest_48954AI : public ScriptedAI
-    {
-        npc_quest_48954AI(Creature* creature) : ScriptedAI(creature) { }
-    };
-};
-
-class npc_quest_49032 : public CreatureScript
-{
-public:
-    npc_quest_49032() : CreatureScript("npc_quest_49032") { }
-
-    bool OnQuestReward(Player* player, Creature* creature, const Quest *_Quest, uint32 /*slot*/) override
-    {
-        if (_Quest->GetQuestId() == 49032)
-        {
-            if (AchievementEntry const *ForgedforBattle = sAchievementStore.LookupEntry(10853))
-            {
-                player->CompletedAchievement(ForgedforBattle);
-            }
-        }
-
-        return true;
-    }
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_quest_49032AI(creature);
-    }
-
-    struct npc_quest_49032AI : public ScriptedAI
-    {
-        npc_quest_49032AI(Creature* creature) : ScriptedAI(creature) { }
-    };
-};
-
-// quest 47223
-class npc_tele_q47223 : public CreatureScript
-{
-public:
-    npc_tele_q47223() : CreatureScript("npc_tele_q47223") { }
-     struct npc_tele_q47223AI : public ScriptedAI
-    {
-        npc_tele_q47223AI(Creature* creature) : ScriptedAI(creature) { }
-         void MoveInLineOfSight(Unit* who) override
-        {
-            if (Player* player = who->ToPlayer())
-            {
-                if (player->GetQuestStatus(47223) == QUEST_STATUS_INCOMPLETE)
-                {
-                    if (player->IsInDist(me, 2.0f))
-                    {
-                       player->KilledMonsterCredit(122006);
-                    }
-                }
-            }
-        }
-    };
-     CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_tele_q47223AI(creature);
-    }
-};
-
-// quest 48507
-class npc_tele_q48507 : public CreatureScript
-{
-public:
-    npc_tele_q48507() : CreatureScript("npc_tele_q48507") { }
-     struct npc_tele_q48507AI : public ScriptedAI
-    {
-        npc_tele_q48507AI(Creature* creature) : ScriptedAI(creature) { }
-         void MoveInLineOfSight(Unit* who) override
-        {
-            if (Player* player = who->ToPlayer())
-            {
-                if (player->GetQuestStatus(48507) == QUEST_STATUS_INCOMPLETE)
-                {
-                    if (player->IsInDist(me, 2.0f))
-                    {
-                       player->KilledMonsterCredit(124365);
-                    }
-                }
-            }
-        }
-    };
-     CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_tele_q48507AI(creature);
-    }
-};
-
-// quest 42454
-class npc_tele_q42454 : public CreatureScript
-{
-public:
-    npc_tele_q42454() : CreatureScript("npc_tele_q42454") { }
-     struct npc_tele_q42454AI : public ScriptedAI
-    {
-        npc_tele_q42454AI(Creature* creature) : ScriptedAI(creature) { }
-         void MoveInLineOfSight(Unit* who) override
-        {
-            if (Player* player = who->ToPlayer())
-            {
-                if (player->GetQuestStatus(42454) == QUEST_STATUS_INCOMPLETE)
-                {
-                    if (player->IsInDist(me, 2.0f))
-                    {
-                       player->KilledMonsterCredit(107587);
-                    }
-                }
-            }
-        }
-    };
-     CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_tele_q42454AI(creature);
-    }
-};
-
-// Quest In the blink of an eye 44663
-// 114561
-class npc_khadgar_upgraded_servant : public CreatureScript
-{
-public:
-    npc_khadgar_upgraded_servant() : CreatureScript("npc_khadgar_upgraded_servant") { }
-
-    bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest)
-    {
-        if (quest->GetQuestId() == 44663)
-        {
-
-            player->CastSpell(player, 225203, true);
-
-            player->KilledMonsterCredit(113762, ObjectGuid::Empty);
-            player->KilledMonsterCredit(114506, ObjectGuid::Empty);
-        }
-
-        return true;
-    }
-};
-
-// 86563
-// 86563
-class npc_archmage_khadgar_86563 : public CreatureScript
-{
-public:
-    npc_archmage_khadgar_86563() : CreatureScript("npc_archmage_khadgar_86563") { }
-
-    enum eNpc
-    {
-        QUEST_DOWN_TO_AZSUNA = 41220,
-        SPELL_TAXI_DALARAN_AZSUNA_ALLIANCE = 205098,
-        SPELL_TAXI_DALARAN_AZSUNA_HORDE = 205203,
-    };
-
-    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 /*action*/) override
-    {
-        if (player->HasQuest(QUEST_DOWN_TO_AZSUNA) || player->GetQuestStatus(QUEST_DOWN_TO_AZSUNA) == QUEST_STATUS_INCOMPLETE)
-            player->CastSpell(player, player->IsInAlliance() ? SPELL_TAXI_DALARAN_AZSUNA_ALLIANCE : SPELL_TAXI_DALARAN_AZSUNA_HORDE, true); // KillCredit & SendTaxi
-
-        return true;
-    }
-
-    bool OnQuestAccept(Player* /*player*/, Creature* creature, Quest const* quest) override
-    {
-        if (quest->GetQuestId() == QUEST_DOWN_TO_AZSUNA)
-        {
-            creature->AI()->Talk(1);
-        }
-        return true;
-    }
-};
-
-// npc 90417 for the quest 41804 'Ask and You Shall Receive'
-class npc_archmage_khadgar_90417 : public CreatureScript {
-public:
-    npc_archmage_khadgar_90417() : CreatureScript("npc_archmage_khadgar_90417") { }
-
-    enum Khadgar {
-        QUEST_ASK_AND_YOU_SHALL_RECEIVE = 41804,
-        QUEST_RETURN_TO_JACE = 41806,
-        SPELL_CRYSTALLIZED_SOUL = 208510,
-        PHASE_NONE = 0,
-        PHASE_CONTINUE = -1,
-        DATA_EVENT_STARTER_GUID = 0,
-        SAY_KHADGAR_1 = 3,
-        SAY_KHADGAR_2 = 4,
-        SAY_KHADGAR_3 = 5,
-        SAY_KHADGAR_4 = 6,
-        SAY_KHADGAR_5 = 7,
-        SAY_KHADGAR_6 = 8,
-        SAY_KHADGAR_7 = 9,
-        SAY_KHADGAR_8 = 10,
-        WP_START = 1,
-        WP_START_WALK = 4,
-        WP_IN_THE_MIDDLE = 10,
-        WP_AT_FIRST_CHEST = 11,
-        WP_AT_SECOND_CHEST = 15,
-        WP_AT_HOME = 21,
-        PHASE_WAIT_IN_MIDDLE = 1,
-        PHASE_SEEK_IN_FIRST_CHEST_1 = 2,
-        PHASE_SEEK_IN_FIRST_CHEST_2 = 3,
-        PHASE_SEEK_IN_FIRST_CHEST_3 = 4,
-        PHASE_SEEK_IN_SECOND_CHEST_1 = 5,
-        PHASE_SEEK_IN_SECOND_CHEST_2 = 6,
-        PHASE_SEEK_IN_SECOND_CHEST_3 = 7,
-        PHASE_SEEK_IN_SECOND_CHEST_4 = 8,
-        PHASE_MOVE_HOME = 9,
-        PHASE_DESPAWN = 10,
-        GO_CRYSTALLIZED_SOUL = 248521,
-    };
-
-    struct npc_archmage_khadgar_90417_AI : public npc_escortAI
-    {
-        npc_archmage_khadgar_90417_AI(Creature* creature) : npc_escortAI(creature)
-        {
-            Initialize();
-        }
-
-        void Initialize()
-        {
-            _phase = PHASE_NONE;
-            _moveTimer = 0;
-        }
-
-        void sQuestAccept(Player* player, Quest const* quest) override
-        {
-            if (quest->GetQuestId() == QUEST_ASK_AND_YOU_SHALL_RECEIVE)
-            {
-                SetGUID(player->GetGUID(), DATA_EVENT_STARTER_GUID);
-                Talk(SAY_KHADGAR_1);
-                Start(false, true, player->GetGUID(), quest);
-            }
-            if (quest->GetQuestId() == QUEST_RETURN_TO_JACE)
-            {
-                Talk(SAY_KHADGAR_8);
-            }
-        }
-
-        ObjectGuid GetGUID(int32 type) const override
-        {
-            if (type == DATA_EVENT_STARTER_GUID)
-                return _eventStarterGuid;
-
-            return ObjectGuid::Empty;
-        }
-
-        void SetGUID(ObjectGuid guid, int32 type) override
-        {
-            switch (type)
-            {
-            case DATA_EVENT_STARTER_GUID:
-                _eventStarterGuid = guid;
-                break;
-            default:
-                break;
-            }
-        }
-
-        void Reset() override
-        {
-            me->SetWalk(false);
-            Initialize();
-            _events.Reset();
-        }
-
-        void UpdateAI(uint32 diff) override
-        {
-            _events.Update(diff);
-
-            if (UpdateVictim())
-            {
-                DoMeleeAttackIfReady();
-            }
-
-            if (HasEscortState(STATE_ESCORT_NONE))
-                return;
-
-            npc_escortAI::UpdateAI(diff);
-
-            if (_phase)
-            {
-                if (_moveTimer <= diff)
-                {
-                    switch (_phase)
-                    {
-                    case PHASE_CONTINUE:
-                        SetEscortPaused(false);
-                        _moveTimer = 0 * IN_MILLISECONDS;
-                        _phase = PHASE_NONE;
-                        break;
-                    case PHASE_WAIT_IN_MIDDLE:
-                        _moveTimer = 0 * IN_MILLISECONDS;
-                        _phase = PHASE_CONTINUE;
-                        break;
-                    case PHASE_SEEK_IN_FIRST_CHEST_1:
-                        me->HandleEmoteCommand(EMOTE_STATE_USESTANDING);
-                        Talk(SAY_KHADGAR_3);
-                        _moveTimer = 7 * IN_MILLISECONDS;
-                        _phase = PHASE_SEEK_IN_FIRST_CHEST_2;
-                        break;
-                    case PHASE_SEEK_IN_FIRST_CHEST_2:
-                        me->HandleEmoteCommand(EMOTE_STATE_NONE);
-                        me->SetFacingTo(5.1576f);
-                        Talk(SAY_KHADGAR_4);
-                        _moveTimer = 3 * IN_MILLISECONDS;
-                        _phase = PHASE_SEEK_IN_FIRST_CHEST_3;
-                        break;
-                    case PHASE_SEEK_IN_FIRST_CHEST_3:
-                        SetEscortPaused(false);
-                        _moveTimer = 0 * IN_MILLISECONDS;
-                        _phase = PHASE_NONE;
-                        break;
-                    case PHASE_SEEK_IN_SECOND_CHEST_1:
-                        me->HandleEmoteCommand(EMOTE_STATE_USESTANDING);
-                        Talk(SAY_KHADGAR_5);
-                        _moveTimer = 7 * IN_MILLISECONDS;
-                        _phase = PHASE_SEEK_IN_SECOND_CHEST_2;
-                        break;
-                    case PHASE_SEEK_IN_SECOND_CHEST_2:
-                        me->HandleEmoteCommand(EMOTE_STATE_NONE);
-                        Talk(SAY_KHADGAR_6);
-                        _moveTimer = 6 * IN_MILLISECONDS;
-                        _phase = PHASE_SEEK_IN_SECOND_CHEST_3;
-                        break;
-                    case PHASE_SEEK_IN_SECOND_CHEST_3:
-                        me->CastSpell(me, SPELL_CRYSTALLIZED_SOUL);
-                        me->SummonGameObject(GO_CRYSTALLIZED_SOUL, -829.154f, 4653.472f, 768.774f, 1.46863f, QuaternionData(), 60);
-                        if (Player* player = ObjectAccessor::GetPlayer(*me, _eventStarterGuid))
-                        {
-                            player->KilledMonsterCredit(90417, ObjectGuid::Empty);
-                        }
-                        me->SetFacingTo(1.9587f);
-                        Talk(SAY_KHADGAR_7);
-                        _moveTimer = 5 * IN_MILLISECONDS;
-                        _phase = PHASE_SEEK_IN_SECOND_CHEST_4;
-                        break;
-                    case PHASE_SEEK_IN_SECOND_CHEST_4:
-                        SetEscortPaused(false);
-                        _moveTimer = 0 * IN_MILLISECONDS;
-                        _phase = PHASE_NONE;
-                        break;
-                    case PHASE_DESPAWN:
-                        me->Respawn(false);
-                        break;
-                    default:
-                        break;
-                    }
-                }
-                else if (!me->IsInCombat())
-                    _moveTimer -= diff;
-            }
-        }
-
-        void WaypointReached(uint32 waypointId) override
-        {
-            Player* player = GetPlayerForEscort();
-            if (!player)
-                return;
-
-            switch (waypointId)
-            {
-            case WP_START_WALK:
-                _moveTimer = 0 * IN_MILLISECONDS;
-                _phase = PHASE_NONE;
-                me->SetWalk(true);
-                me->SetUnitMovementFlags(MOVEMENTFLAG_WALKING);
-                break;
-            case WP_IN_THE_MIDDLE:
-                SetEscortPaused(true);
-                me->SetFacingTo(2.3671f);
-                Talk(SAY_KHADGAR_2);
-                _moveTimer = 5 * IN_MILLISECONDS;
-                _phase = PHASE_WAIT_IN_MIDDLE;
-                break;
-            case WP_AT_FIRST_CHEST:
-                SetEscortPaused(true);
-                me->SetFacingTo(3.6316f);
-                _moveTimer = 0.2 * IN_MILLISECONDS;
-                _phase = PHASE_SEEK_IN_FIRST_CHEST_1;
-                break;
-            case WP_AT_SECOND_CHEST:
-                SetEscortPaused(true);
-                _moveTimer = 0.2 * IN_MILLISECONDS;
-                _phase = PHASE_SEEK_IN_SECOND_CHEST_1;
-                break;
-            case WP_AT_HOME:
-                _moveTimer = 0.2 * IN_MILLISECONDS;
-                _phase = PHASE_DESPAWN;
-                break;
-            default:
-                break;
-            }
-        }
-
-    private:
-        int8 _phase;
-        uint32 _moveTimer;
-        ObjectGuid _eventStarterGuid;
-        GuidList _explosivesGuids;
-        EventMap _events;
-    };
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_archmage_khadgar_90417_AI(creature);
-    }
-};
 enum
 {
-    QUEST_ESTABLISHING_A_CONNECTION = 41807,
-    KILLCREDIT_ACTIVATE_COMMUNICATOR = 104907,
-    KILLCREDIT_REPORT_RECEIVED = 104908,
-    SPELL_ACTIVATE_LEGION_COMMUNICATOR = 37020,
-    EVENT_START_ANIM = 1,
-    DATA_COMMUNICATOR_ACTIVATED = 21,
-    DATA_REPORT_RECEIVED = 22,
-    DATA_GARBLED_POSITION = 23,
-    DATA_GARBLED_INCOMING = 24,
-    SPELL_SUMMON_ALLARI = 207795,
+    ///Druid Quest
+    ///start  from Archdruid Hamuul Runetotem once you arrive in Dalaran
+    QUEST_A_SUMMONS_FROM_MOONGLADE = 40643,
+    NPC_ARCHDRUID_HAMUUL_RUNETOTEM = 101061,
+
+    ///quest 47221 The Hand of Fate
+    QUEST_A_THE_HAND_OF_FATE = 47221,
+    QUEST_H_THE_HAND_OF_FATE = 47835,
+    CONVERSATION_A_THE_HAND_OF_FATE = 4904,
+    CONVERSATION_H_THE_HAND_OF_FATE = 5337,
+
+    QUEST_THE_DALARAN_FOUNTAIN = 40961,
+    NPC_NAT_PAGLE = 102639, //88317,
+    QUEST_FISH_FRENZY = 41010,
+
+    ///Paradin Quest
+    ///start  from Archdruid Hamuul Runetotem once you arrive in Dalaran
+    QUEST_AN_URGENT_GATHERING = 38710,
+    NPC_LORD_MAXWELL_TYROSUS = 92909,
+
+    ///Mage Quest
+    NPC_EMISSARY_AULDBRIDGE_111109 = 111109,
+    NPC_MERYL_FELSTORM_102700 = 102700,
+
+    CONVERSATION_MAGE_QUEST_START = 1263,
+    QUEST_FELSTORMS_PLEA = 41035, /// after quest 44184 In the Blink of an Eye complete
+
+    ///Death Knight Quest
+    QUEST_THE_CALL_TO_WAR = 40714,
+    SEPLL_CONVERSATION_THE_CALL_TO_WAR = 200226,
+
+    ///Roge Quest
+    NPC_RAVENHOLDT_COURIER_102018 = 102018,
+    QUEST_CALL_OF_THE_UNCROWNED = 40832,
+
+    ///Hunter Quest
+    NPC_SNOWFEATHER_100786 = 100786,
+    QUEST_NEEDS_OF_THE_HUNTERS = 40384,
+
+    ///DH Quest
+    NPC_KORVAS_BLOODTHORN_99343 = 99343,
+    QUEST_CALL_OF_THE_ILLIDARI_39261 = 39261,
+    QUEST_CALL_OF_THE_ILLIDARI_39047 = 39047,
+
+    ///Monk Quest before the storm
+    NPC_INITIATE_DA_NEL = 98519,
+    QUEST_DA_NEL = 12103,
+
+    ///Priest Quest
+    NPC_A_HOODED_PRIESTESS = 102333, ///A
+    NPC_H_HOODED_PRIESTESS = 101344, ///H
+    QUEST_PRIESTLY_MATTERS = 40705,
+
+    ///WARLOCK Quest 
+    NPC_RITSSYN_FLAMESCOWL_103506 = 103506,
+    QUEST_THE_SIXTH = 40716,
+
+    ///WARRIOR Quest
+    NPC_EITRIGG_93775 = 93775,
+    NPC_SERGEANT_DALTON_108961 = 108961,
+    QUEST_H_A_DESPERATE_PLEA = 41052,
+    QUEST_A_AN_IMPORTANT_MISSION = 42814,
+    QUEST_H_RETURN_TO_THE_BROKEN_SHORE = 38904,
+    QUEST_A_RETURN_TO_THE_BROKEN_SHORE = 42815,
+
+    ///Shaman
+    NPC_WHISPERING_WINDS = 99549,
+
 };
-// npc 99262 for the quest 41807 'Establishing A Connection'
-class npc_jace_darkweaver_99262 : public CreatureScript
+//
+class zone_legion_dalaran : public ZoneScript
 {
 public:
-    npc_jace_darkweaver_99262() : CreatureScript("npc_jace_darkweaver_99262") { }
+    zone_legion_dalaran() : ZoneScript("zone_legion_dalaran") { }
+    uint32 _insideNpc;
+    uint32 _killCredit;
+    Creature* creature;
+    Position _positon;
 
-    enum eJace
-    {
-        SAY_JACE_1 = 0,
-        SAY_JACE_2 = 1,
-        SAY_ALTRUIS_1 = 0,
-    };
 
-    bool OnQuestReward(Player* player, Creature* creature, Quest const* quest, uint32 /*opt*/) override
+    void OnTempSummonNPC(uint32 insideNpc, Player* player)
     {
-        if (quest->GetQuestId() == QUEST_ESTABLISHING_A_CONNECTION)
-            if (Creature* altruis = creature->FindNearestCreature(99254, 15.0f))
-                altruis->AI()->Talk(SAY_ALTRUIS_1);
-        return true;
+        _insideNpc = insideNpc;
+        if (creature = player->FindNearestCreature(_insideNpc, 100.0f))
+            creature->DestroyForPlayer(player);
+
+        _positon = Position(player->GetPositionX() + 20, player->GetPositionY() + 20, player->GetPositionZ());
+        TempSummon* personalCreature = player->SummonCreature(_insideNpc, _positon, TEMPSUMMON_TIMED_DESPAWN, 60000, 0, true);
     }
 
-    struct npc_jace_darkweaver_99262_AI : public ScriptedAI
+    void OnTempSummonNPCOnPOS(uint32 insideNpc, Player* player, Position npcPos)
     {
-        npc_jace_darkweaver_99262_AI(Creature* creature) : ScriptedAI(creature) {
-            me->SetReactState(REACT_PASSIVE);
+        _insideNpc = insideNpc;
+        if (creature = player->FindNearestCreature(_insideNpc, 100.0f))
+        {
+            // TODO : Remove this line when phasing is done properly
+            creature->DestroyForPlayer(player);
         }
 
-        void SetData(uint32 id, uint32 /*value*/) override
+        _positon = npcPos;
+        TempSummon* personalCreature = player->SummonCreature(_insideNpc, _positon, TEMPSUMMON_TIMED_DESPAWN, 3600000, 0, true);
+    }
+    enum BROKEN_ISLES_PATHFINDE
+    {
+        SPELL_BROKEN_ISLES_PATHFINDER_1 = 226342,
+        SPELL_BROKEN_ISLES_PATHFINDER_2 = 233368,
+    };
+
+    void OnPlayerEnter(Player* player) override
+    {
+        if (player->HasAchieved(11190))//[BROKEN_ISLES_PATHFINDER]
+            player->LearnSpell(SPELL_BROKEN_ISLES_PATHFINDER_1, true);
+        if (player->HasAchieved(11446))//[BROKEN_ISLES_PATHFINDER]
+            player->LearnSpell(SPELL_BROKEN_ISLES_PATHFINDER_2, true);
+
+        //AGUS ARRAIVE
+        if (player->IsInAlliance() && player->GetQuestStatus(QUEST_A_THE_HAND_OF_FATE) != QUEST_STATUS_REWARDED && player->getLevel() >= 110 && player->GetZoneId() == 7502)
         {
-            switch (id)
+            if (const Quest* quest = sObjectMgr->GetQuestTemplate(QUEST_A_THE_HAND_OF_FATE))
+                if (player->GetQuestStatus(QUEST_A_THE_HAND_OF_FATE) == QUEST_STATUS_NONE)
+                {
+                    player->AddQuest(quest, nullptr);
+                    Conversation::CreateConversation(CONVERSATION_A_THE_HAND_OF_FATE, player, player->GetPosition(), { player->GetGUID() });
+                }
+        }
+        if (player->IsInHorde() && player->GetQuestStatus(QUEST_H_THE_HAND_OF_FATE) != QUEST_STATUS_REWARDED && player->getLevel() >= 110 && player->GetZoneId() == 7502)
+        {
+            if (const Quest* quest = sObjectMgr->GetQuestTemplate(QUEST_H_THE_HAND_OF_FATE))
+                if (player->GetQuestStatus(QUEST_H_THE_HAND_OF_FATE) == QUEST_STATUS_NONE)
+                {
+                    player->AddQuest(quest, nullptr);
+                    Conversation::CreateConversation(CONVERSATION_H_THE_HAND_OF_FATE, player, player->GetPosition(), { player->GetGUID() });
+                }
+        }
+
+        if (player->GetQuestStatus(QUEST_BLINK_OF_AN_EYE) == QUEST_STATUS_REWARDED && player->getLevel() >= 98 && player->GetZoneId() == 7502)
+        {
+            //Druid Quest
+            if (player->getClass() == CLASS_DRUID && player->GetQuestStatus(QUEST_A_SUMMONS_FROM_MOONGLADE) == QUEST_STATUS_NONE)
+                OnTempSummonNPC(NPC_ARCHDRUID_HAMUUL_RUNETOTEM, player);
+
+            //Paladin Quest
+            if (player->getClass() == CLASS_PALADIN && player->GetQuestStatus(QUEST_AN_URGENT_GATHERING) == QUEST_STATUS_NONE)
+                OnTempSummonNPC(NPC_LORD_MAXWELL_TYROSUS, player);
+
+            //Mage Quest phase 4598
+            if (player->getClass() == CLASS_MAGE && player->GetQuestStatus(QUEST_FELSTORMS_PLEA) == QUEST_STATUS_NONE)
             {
-            case DATA_COMMUNICATOR_ACTIVATED:
-                Talk(SAY_JACE_1);
-                break;
-            case DATA_REPORT_RECEIVED:
-                Talk(SAY_JACE_2);
-                break;
+                Conversation::CreateConversation(CONVERSATION_MAGE_QUEST_START, player, player->GetPosition(), { player->GetGUID() });
+
+                if (const Quest* quest = sObjectMgr->GetQuestTemplate(QUEST_FELSTORMS_PLEA))
+                    player->AddQuest(quest, nullptr);
             }
-        }
-
-    private:
-        EventMap _events;
-    };
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_jace_darkweaver_99262_AI(creature);
-    }
-};
-
-// gameobject 251528 for the quest 41807 'Establishing A Connection'
-class go_legion_communicator : public GameObjectScript
-{
-public:
-    go_legion_communicator() : GameObjectScript("go_legion_communicator") { }
-
-    enum eAllari {
-        EVENT_TALK_JACE_00 = 1,
-        EVENT_TALK_JACE_01 = 2,
-        EVENT_TALK_PART_00 = 3,
-        EVENT_TALK_PART_01 = 4,
-        EVENT_GIVE_CREDIT = 5,
-        NPC_ALLARI_SOULEATER = 104909,
-    };
-
-    bool OnGossipHello(Player* player, GameObject* go) override
-    {
-        if (player->HasQuest(QUEST_ESTABLISHING_A_CONNECTION) &&
-            !player->GetQuestObjectiveData(QUEST_ESTABLISHING_A_CONNECTION, 0))
-        {
-            Position allariPosition = { go->GetPositionX(), go->GetPositionY(), 747.019f, 0.385333f };
-            player->SummonCreature(NPC_ALLARI_SOULEATER, allariPosition, TEMPSUMMON_TIMED_DESPAWN, 30000);
-        }
-
-        return false;
-    }
-
-    struct go_legion_communicator_AI : public GameObjectAI
-    {
-        go_legion_communicator_AI(GameObject* go) : GameObjectAI(go) { }
-
-        EventMap    _events;
-        ObjectGuid  _playerGUID;
-        ObjectGuid  _allariGUID;
-        ObjectGuid  _jaceGUID;
-
-        void Reset() override
-        {
-            _playerGUID = ObjectGuid::Empty;
-            _allariGUID = ObjectGuid::Empty;
-            _jaceGUID = ObjectGuid::Empty;
-        }
-
-        void OnStateChanged(uint32 /*state*/, Unit* unit) override
-        {
-            if (unit)
-                if (unit->ToPlayer()->HasQuest(QUEST_ESTABLISHING_A_CONNECTION) &&
-                    !unit->ToPlayer()->GetQuestObjectiveData(QUEST_ESTABLISHING_A_CONNECTION, 0))
-                    if (Creature* allari = go->FindNearestCreature(104909, 3.0f))
-                        if (Creature* jace = go->FindNearestCreature(99262, 5.0f))
-                            if (Player* player = unit->ToPlayer())
-                            {
-                                _playerGUID = player->GetGUID();
-                                _allariGUID = allari->GetGUID();
-                                _jaceGUID = jace->GetGUID();
-                                _events.ScheduleEvent(EVENT_TALK_JACE_00, 1000);
-                                _events.RescheduleEvent(EVENT_TALK_PART_00, 7000);
-                            }
-        }
-
-        void UpdateAI(uint32 diff) override
-        {
-            _events.Update(diff);
-
-            while (uint32 eventId = _events.ExecuteEvent())
+            //Death Knight Quest ServerToClient: SMSG_SPELL_START (0x2C3A) Length: 101 ConnIdx: 0 Time: 06/06/2018 13:41:43.782 Number: 6386
+            if (player->getClass() == CLASS_DEATH_KNIGHT && player->GetQuestStatus(QUEST_THE_CALL_TO_WAR) == QUEST_STATUS_NONE)
             {
-                switch (eventId)
-                {
-                case EVENT_TALK_JACE_00:
-                {
-                    if (Creature* jace = ObjectAccessor::GetCreature(*go, _jaceGUID))
-                        if (Player* player = ObjectAccessor::GetPlayer(*go, _playerGUID))
-                        {
-                            jace->AI()->SetData(DATA_COMMUNICATOR_ACTIVATED, DATA_COMMUNICATOR_ACTIVATED);
-                            player->KilledMonsterCredit(KILLCREDIT_ACTIVATE_COMMUNICATOR, ObjectGuid::Empty);
-                        }
-                    break;
-                }
-                case EVENT_TALK_PART_00:
-                {
-                    if (Creature* allari = ObjectAccessor::GetCreature(*go, _allariGUID))
-                        if (Player* player = ObjectAccessor::GetPlayer(*go, _playerGUID))
-                            allari->AI()->SetData(DATA_GARBLED_POSITION, DATA_GARBLED_POSITION);
-                    _events.ScheduleEvent(EVENT_TALK_PART_01, 6000);
-                    break;
-                }
-                case EVENT_TALK_PART_01:
-                {
-                    if (Creature* allari = ObjectAccessor::GetCreature(*go, _allariGUID))
-                        if (Player* player = ObjectAccessor::GetPlayer(*go, _playerGUID))
-                            allari->AI()->SetData(DATA_GARBLED_INCOMING, DATA_GARBLED_INCOMING);
-                    _events.ScheduleEvent(EVENT_GIVE_CREDIT, 2000);
-                    break;
-                }
-                case EVENT_GIVE_CREDIT:
-                {
-                    if (Creature* allari = ObjectAccessor::GetCreature(*go, _allariGUID))
-                        if (Player* player = ObjectAccessor::GetPlayer(*go, _playerGUID))
-                        {
-                            player->KilledMonsterCredit(KILLCREDIT_REPORT_RECEIVED, ObjectGuid::Empty);
-                            allari->DespawnOrUnsummon(Seconds(2));
-                        }
-                    _events.ScheduleEvent(EVENT_TALK_JACE_01, 2000);
-                    break;
-                }
-                case EVENT_TALK_JACE_01:
-                {
-                    if (Creature* jace = ObjectAccessor::GetCreature(*go, _jaceGUID))
-                        if (Player* player = ObjectAccessor::GetPlayer(*go, _playerGUID))
-                            jace->AI()->SetData(DATA_REPORT_RECEIVED, DATA_REPORT_RECEIVED);
-                    break;
-                }
-                default:
-                    break;
-                }
+                player->CastSpell(player, SEPLL_CONVERSATION_THE_CALL_TO_WAR, true);
+                if (const Quest* quest = sObjectMgr->GetQuestTemplate(QUEST_THE_CALL_TO_WAR))
+                    player->AddQuest(quest, nullptr);
             }
-        }
-    };
+            //Hunter Quest
+            if (player->getClass() == CLASS_HUNTER && player->GetQuestStatus(QUEST_NEEDS_OF_THE_HUNTERS) == QUEST_STATUS_NONE)
+                OnTempSummonNPC(NPC_SNOWFEATHER_100786, player);
 
-    GameObjectAI* GetAI(GameObject* go) const override
-    {
-        return new go_legion_communicator_AI(go);
-    }
-};
+            //DEMON_HUNTER Quest
+            if (player->getClass() == CLASS_DEMON_HUNTER && (player->GetQuestStatus(QUEST_CALL_OF_THE_ILLIDARI_39261) == QUEST_STATUS_NONE && player->GetQuestStatus(QUEST_CALL_OF_THE_ILLIDARI_39047) == QUEST_STATUS_NONE))
+                OnTempSummonNPC(NPC_KORVAS_BLOODTHORN_99343, player);
 
-// npc 104909 for the quest 41807 'Establishing A Connection'
-class npc_allari_souleater_104909 : public CreatureScript
-{
-public:
-    npc_allari_souleater_104909() : CreatureScript("npc_allari_souleater_104909") { }
-
-    enum eAllari {
-        SAY_ALLARI_1 = 0,
-        SAY_ALLARI_2 = 1,
-    };
-
-    struct npc_allari_souleater_104909_AI : public ScriptedAI
-    {
-        npc_allari_souleater_104909_AI(Creature* creature) : ScriptedAI(creature) {
-            me->SetEmoteState(Emote::EMOTE_STATE_READY2H);
-        }
-
-        void SetData(uint32 id, uint32 /*value*/) override
-        {
-            switch (id)
+            //WARRIOR Quest
+            if (player->getClass() == CLASS_WARRIOR)
             {
-            case DATA_GARBLED_POSITION:
-                Talk(SAY_ALLARI_1);
-                break;
-            case DATA_GARBLED_INCOMING:
-                Talk(SAY_ALLARI_2);
-                break;
+                if (player->IsInAlliance() && player->GetQuestStatus(QUEST_A_AN_IMPORTANT_MISSION) == QUEST_STATUS_NONE)
+                    OnTempSummonNPC(NPC_SERGEANT_DALTON_108961, player);
+                if (player->IsInHorde() && player->GetQuestStatus(QUEST_H_A_DESPERATE_PLEA) == QUEST_STATUS_NONE)
+                    OnTempSummonNPC(NPC_EITRIGG_93775, player);
             }
+            //ROGUE Quest
+            if (player->getClass() == CLASS_ROGUE && player->GetQuestStatus(QUEST_CALL_OF_THE_UNCROWNED) == QUEST_STATUS_NONE)
+                OnTempSummonNPC(NPC_RAVENHOLDT_COURIER_102018, player);
+
+            //Priest Quest
+            if (player->getClass() == CLASS_PRIEST && player->GetQuestStatus(QUEST_PRIESTLY_MATTERS) == QUEST_STATUS_NONE)
+            {
+                uint32 priestNpc = player->IsInAlliance() ? NPC_A_HOODED_PRIESTESS : NPC_H_HOODED_PRIESTESS;
+                OnTempSummonNPC(priestNpc, player);
+            }
+            //SHAMAN Quest
+            if (player->getClass() == CLASS_SHAMAN && player->GetQuestStatus(QUEST_THE_CALL_TO_WAR) == QUEST_STATUS_NONE)
+                player->SummonCreature(NPC_WHISPERING_WINDS, Position(-828.6302f, 4386.04f, 738.7358f, 1.828947f), TEMPSUMMON_TIMED_DESPAWN, 60000, 0, true);
+
+            //WARLOCK Quest
+            if (player->getClass() == CLASS_WARLOCK && player->GetQuestStatus(QUEST_THE_SIXTH) == QUEST_STATUS_NONE)
+                OnTempSummonNPC(NPC_RITSSYN_FLAMESCOWL_103506, player);
+
+            //MONK Quest
+            if (player->getClass() == CLASS_MONK && player->GetQuestStatus(QUEST_DA_NEL) == QUEST_STATUS_NONE)
+                OnTempSummonNPC(NPC_INITIATE_DA_NEL, player);
+
+            //achievement 10596 npc 88317,102639
+            if (player->HasAchieved(10596) && player->GetQuestStatus(QUEST_THE_DALARAN_FOUNTAIN) == QUEST_STATE_COMPLETE && player->GetQuestStatus(QUEST_FISH_FRENZY) == QUEST_STATUS_NONE)
+                OnTempSummonNPC(NPC_NAT_PAGLE, player);
         }
 
-    private:
-        EventMap _events;
-    };
+    }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    void OnPlayerExit(Player* player) override
     {
-        return new npc_allari_souleater_104909_AI(creature);
+        if (creature = player->FindNearestCreature(_insideNpc, 100.0f))
+        {
+            // TODO : Remove this line when phasing is done properly
+            creature->DestroyForPlayer(player);
+        }
     }
 };
 
-// quest 38564
-class npc_tele_q38564 : public CreatureScript
+enum CLASS_PHASE
+{
+    PHASE_CLASS_WARRIOR_HORDE = 7300,
+    PHASE_CLASS_WARRIOR = 7301,
+    PHASE_CLASS_WARRIOR_ALIANCE = 7302,
+    PHASE_CLASS_PALADIN = 7319,
+    PHASE_CLASS_HUNTER_1 = 7341,
+    PHASE_CLASS_HUNTER_2 = 6763,
+    PHASE_CLASS_ROGUE = 4,
+    PHASE_CLASS_PRIEST = 7947,
+    PHASE_CLASS_DEATH_KNIGHT = 7162,
+    PHASE_CLASS_SHAMAN = 6762,
+    PHASE_CLASS_MAGE = 4918,
+    PHASE_CLASS_WARLOCK = 6811,
+    PHASE_CLASS_MONK = 10,
+    //PHASE_CLASS_DRUID = 11,
+    PHASE_CLASS_DEMON_HUNTER = 5015,
+    PHASE_CLASS_DEMON_HUNTER_ALLIANCE = 5020,
+    PHASE_CLASS_DEMON_HUNTER_HORDE = 5021,
+    PHASE_CLASS_DEMON_HUNTER_READY_TO = 5022,
+    PHASE_QUEST_AZUNA = 5704,
+    PHASE_QUEST_ASSAULT_ON_BROKEN_SHORE = 5705,
+    PHASE_QUEST_VALSHARAH = 5706,
+};
+class PhaseOnDaralanArea : public PlayerScript
 {
 public:
-    npc_tele_q38564() : CreatureScript("npc_tele_q38564") { }
-     struct npc_tele_q38564AI : public ScriptedAI
+    PhaseOnDaralanArea() : PlayerScript("PhaseOnDaralanArea") { }
+
+    void OnQuestStatusChange(Player* player, uint32 /*questId*/)
     {
-        npc_tele_q38564AI(Creature* creature) : ScriptedAI(creature) { }
-         void MoveInLineOfSight(Unit* who) override
+    //    OnCheckPhase(player);
+    }
+/*
+    void OnCheckPhase(Player* player) AÑADIR FUNCIONES
+    { 
+        if (player->GetMapId() == 1220)
         {
-            if (Player* player = who->ToPlayer())
+            if (player->GetAreaId() == 7505 && player->getClass() == CLASS_PALADIN)
             {
-                if (player->GetQuestStatus(38564) == QUEST_STATUS_INCOMPLETE)
+                PhasingHandler::AddPhase(player, PHASE_CLASS_PALADIN);
+                if (player->CheckQuestStatus(42120, CHECK_QUEST_COMPLETE_AND_REWARDED) && player->CheckQuestStatus(42017, CHECK_QUEST_COMPLETE_AND_REWARDED) && player->CheckQuestStatus(38376, CHECK_QUEST_COMPLETE_AND_REWARDED))
+                    PhasingHandler::RemovePhase(player, PHASE_CLASS_PALADIN);
+            }
+            if (player->getClass() == CLASS_HUNTER)
+            {
+                if (player->GetAreaId() == 7502 || player->GetAreaId() == 7505)
+                    PhasingHandler::AddPhase(player, PHASE_CLASS_HUNTER_1);
+                if (player->GetAreaId() == 7505)
+                    PhasingHandler::AddPhase(player, PHASE_CLASS_HUNTER_2);
+            }
+            if (player->GetAreaId() == 7505 && player->getClass() == CLASS_WARRIOR)
+            {
+                if (player->IsInHorde() && (player->HasQuest(QUEST_H_A_DESPERATE_PLEA) || player->HasQuest(QUEST_H_RETURN_TO_THE_BROKEN_SHORE)))
+                    PhasingHandler::AddPhase(player, PHASE_CLASS_WARRIOR_HORDE);
+                if (player->IsInAlliance() && (player->HasQuest(QUEST_A_AN_IMPORTANT_MISSION) || player->HasQuest(QUEST_A_RETURN_TO_THE_BROKEN_SHORE)))
+                    PhasingHandler::AddPhase(player, PHASE_CLASS_WARRIOR_ALIANCE);
+                PhasingHandler::AddPhase(player, PHASE_CLASS_WARRIOR);
+            }
+            if (player->getClass() == CLASS_DEMON_HUNTER)
+            {
+                if ((player->GetAreaId() == 7505) || (player->GetAreaId() == 7592))
                 {
-                    if (player->IsInDist(me, 2.0f))
+                    PhasingHandler::AddPhase(player, PHASE_CLASS_DEMON_HUNTER);
+                    PhasingHandler::AddPhase(player, player->IsInAlliance() ? PHASE_CLASS_DEMON_HUNTER_ALLIANCE : PHASE_CLASS_DEMON_HUNTER_HORDE);
+                    // The Hunt (Obtain the Twinblades of the Deceiver from Varedis Felsoul in Suramar.) OR Vengeance Will Be Ours (Take the Aldrachi Warblades from Caria Felsoul.)
+                    if (player->CheckQuestStatus(41119, CHECK_QUEST_COMPLETE_AND_REWARDED) || player->CheckQuestStatus(39247, CHECK_QUEST_COMPLETE_AND_REWARDED) || player->CheckQuestStatus(40249, CHECK_QUEST_COMPLETE_AND_REWARDED) || player->CheckQuestStatus(41863, CHECK_QUEST_COMPLETE_AND_REWARDED))
+                        PhasingHandler::AddPhase(player, PHASE_CLASS_DEMON_HUNTER_READY_TO);
+                    // Eternal Vigil
+                    if (player->CheckQuestStatus(42869, CHECK_QUEST_REWARDED) && !player->HasQuest(41119) && !player->HasQuest(39247) && !player->HasQuest(40249) && !player->HasQuest(41863))
+                        PhasingHandler::RemovePhase(player, PHASE_CLASS_DEMON_HUNTER_READY_TO);
+                }
+                if (player->GetAreaId() == 8284)
+                {
+                    if (player->GetQuestStatus(42869) == QUEST_STATUS_INCOMPLETE)
+                        player->ForceCompleteQuest(42869);
+                    if (player->CheckQuestStatus(42869, CHECK_QUEST_TAKEN_AND_COMPLETE_AND_REWARDED))
+                        PhasingHandler::AddPhase(player, PHASE_CLASS_DEMON_HUNTER_READY_TO);
+
+                    if (player->CheckQuestStatus(42872, CHECK_QUEST_TAKEN))
+                        PhasingHandler::AddPhase(player, 5023);
+                    if (player->CheckQuestStatus(42872, CHECK_QUEST_COMPLETE_AND_REWARDED))
                     {
-                       player->KilledMonsterCredit(92925);
+                        PhasingHandler::RemovePhase(player, 5023);
+                        PhasingHandler::AddPhase(player, 5024);
+                    }
+
+                }
+            }
+            if (player->getClass() == CLASS_SHAMAN)
+            {
+                if ((player->GetAreaId() == 7505) || (player->GetAreaId() == 7592) || (player->GetAreaId() == 7581))
+                    PhasingHandler::AddPhase(player, PHASE_CLASS_SHAMAN);
+            }
+            if (player->getClass() == CLASS_WARLOCK)
+            {
+                if ((player->GetAreaId() == 7505) || (player->GetAreaId() == 7592))
+                    PhasingHandler::AddPhase(player, PHASE_CLASS_WARLOCK);
+            }
+            if (player->getClass() == CLASS_PRIEST)
+            {
+                if (player->GetAreaId() == 7596)
+                {
+                    if (player->CheckQuestStatus(41957, CHECK_QUEST_TAKEN_AND_COMPLETE_AND_REWARDED))
+                        PhasingHandler::AddPhase(player, PHASE_CLASS_PRIEST);
+                    if (player->CheckQuestStatus(41967, CHECK_QUEST_COMPLETE_AND_REWARDED))
+                        PhasingHandler::RemovePhase(player, PHASE_CLASS_PRIEST);
+                }
+                if (player->GetAreaId() == 7505)
+                {
+                    if (player->CheckQuestStatus(41967, CHECK_QUEST_TAKEN_AND_COMPLETE))
+                        PhasingHandler::AddPhase(player, PHASE_CLASS_PRIEST);
+                    if (player->CheckQuestStatus(41967, CHECK_QUEST_REWARDED))
+                        PhasingHandler::RemovePhase(player, PHASE_CLASS_PRIEST);
+                }
+                //6266 6298 6265 6310 6317 6330
+                if (player->GetAreaId() == 8143)
+                {
+                    if (player->CheckQuestStatus(41967, CHECK_QUEST_TAKEN))
+                        PhasingHandler::AddPhase(player, 6266);
+                    if (player->CheckQuestStatus(41967, CHECK_QUEST_COMPLETE_AND_REWARDED))
+                    {
+                        PhasingHandler::RemovePhase(player, 6266);
+                        PhasingHandler::AddPhase(player, 6265);
+                    }
+                    if (player->CheckQuestStatus(41993, CHECK_QUEST_TAKEN))
+                    {
+                        PhasingHandler::RemovePhase(player, 6265);
+                        PhasingHandler::AddPhase(player, 6310);
+                    }
+                    if (player->CheckQuestStatus(41993, CHECK_QUEST_COMPLETE_AND_REWARDED))
+                    {
+                        PhasingHandler::RemovePhase(player, 6265);
+                        PhasingHandler::RemovePhase(player, 6310);
+                        PhasingHandler::AddPhase(player, 6330);
+                    }
+
+                    if (player->CheckQuestStatus(42074, CHECK_QUEST_COMPLETE_AND_REWARDED))
+                    {
+                        PhasingHandler::RemovePhase(player, 6265);
+                        PhasingHandler::RemovePhase(player, 6310);
+                        PhasingHandler::RemovePhase(player, 6330);
                     }
                 }
             }
+            if (player->getClass() == CLASS_DEATH_KNIGHT)
+            {
+                if ((player->GetAreaId() == 7505) || (player->GetAreaId() == 7592))
+                    if (player->CheckQuestStatus(40714, CHECK_QUEST_TAKEN_AND_COMPLETE_AND_REWARDED))
+                        PhasingHandler::AddPhase(player, PHASE_CLASS_DEATH_KNIGHT);
+            }
+            if (player->GetAreaId() == 7502)
+            {
+                if (player->GetQuestStatus(39864) == QUEST_STATUS_INCOMPLETE)
+                    player->KilledMonsterCredit(97377);
+                if (player->GetQuestStatus(39735) == QUEST_STATUS_INCOMPLETE)
+                    player->KilledMonsterCredit(97377);
+            }
         }
-    };
-     CreatureAI* GetAI(Creature* creature) const override
+        if (player->GetAreaId() == 7505)
+        {
+            if (player->CheckQuestStatus(46734, CHECK_QUEST_NOT_REWARDED))
+                PhasingHandler::AddPhase(player, PHASE_QUEST_ASSAULT_ON_BROKEN_SHORE);
+            else if (player->CheckQuestStatus(46734, CHECK_QUEST_REWARDED))
+                PhasingHandler::RemovePhase(player, PHASE_QUEST_ASSAULT_ON_BROKEN_SHORE);
+            if (player->CheckQuestStatus(39731, CHECK_QUEST_TAKEN_AND_COMPLETE_AND_REWARDED) || player->CheckQuestStatus(39861, CHECK_QUEST_TAKEN))
+                PhasingHandler::AddPhase(player, PHASE_QUEST_VALSHARAH);
+            if (player->CheckQuestStatus(39861, CHECK_QUEST_REWARDED))
+                PhasingHandler::RemovePhase(player, PHASE_QUEST_VALSHARAH);
+
+            if (player->CheckQuestStatus(39718, CHECK_QUEST_TAKEN_AND_COMPLETE_AND_REWARDED) || player->CheckQuestStatus(41220, CHECK_QUEST_TAKEN))
+                PhasingHandler::AddPhase(player, PHASE_QUEST_AZUNA);
+            if (player->CheckQuestStatus(41220, CHECK_QUEST_REWARDED))
+                PhasingHandler::RemovePhase(player, PHASE_QUEST_AZUNA);
+        }
+        if (player->GetAreaId() == 7502)
+        {
+            //horde            
+         /*   if (player->CheckQuestStatus(39864, CHECK_QUEST_TAKEN_AND_COMPLETE_AND_REWARDED) || player->CheckQuestStatus(44701, CHECK_QUEST_TAKEN_AND_COMPLETE_AND_REWARDED))
+                PhasingHandler::AddPhase(player, PHASE_STORMHEIM_HORDE);
+            if (player->CheckQuestStatus(39801, CHECK_QUEST_REWARDED))
+                PhasingHandler::RemovePhase(player, PHASE_STORMHEIM_HORDE);
+            //alliance
+            if (player->CheckQuestStatus(39735, CHECK_QUEST_TAKEN_AND_COMPLETE_AND_REWARDED) || player->CheckQuestStatus(44700, CHECK_QUEST_TAKEN_AND_COMPLETE_AND_REWARDED))
+                PhasingHandler::AddPhase(player, PHASE_STORMHEIM_ALLIANCE);
+            if (player->CheckQuestStatus(38052, CHECK_QUEST_REWARDED))
+                PhasingHandler::RemovePhase(player, PHASE_STORMHEIM_ALLIANCE);
+        }
+    }
+    */
+    void OnSpellCast(Player* player, Spell* spell, bool /*skipCheck*/)
     {
-        return new npc_tele_q38564AI(creature);
+        if (spell->GetSpellInfo()->Id == 220513)
+            player->TeleportTo(1624, Position(-4242.29f, -11480.4f, 9.495f, 5.97674f));
     }
 };
 
-struct npc_credit_portal_taken_110409 : public ScriptedAI
+struct npc_emissary_auldbridge_111109 : public ScriptedAI
 {
-    npc_credit_portal_taken_110409(Creature* creature) : ScriptedAI(creature) { }
-
-    void MoveInLineOfSight(Unit* who) override
+    npc_emissary_auldbridge_111109(Creature* creature) : ScriptedAI(creature) { Initialize(); }
+    enum Texts
     {
-        if (!who || !who->IsInWorld())
-            return;
-        if (!me->IsWithinDist(who, 15.0f, false))
-            return;
-        Player* player = who->GetCharmerOrOwnerPlayerOrPlayerItself();
-        if (!player)
-            return;
-            player->KilledMonsterCredit(me->GetEntry());
-            player->KilledMonsterCredit(97481);
+        SAY_FIRST_LINE = 0, ///
+        SAY_SECOND_LINE = 1,///
+        SAY_THIRD_LINE = 2, ///
+    };
+    enum DataTypes
+    {
+        DATA_TALK_1 = 1,
+        DATA_TALK_2 = 2,
+        DATA_TALK_3 = 3,
+        DATA_GIVE_QUEST_CHECK = 4,
+    };
+
+    void Initialize()
+    {
+        m_playerGUID = ObjectGuid::Empty;
     }
+
+    void sQuestReward(Player* player, Quest const* quest, uint32 /*opt*/)  override
+    {
+        if (quest->GetQuestId() == QUEST_BLINK_OF_AN_EYE)
+        {
+            m_playerGUID = player->GetGUID();
+            events.ScheduleEvent(DATA_TALK_1, 1s);
+        }
+    }
+    void UpdateAI(uint32 diff) override
+    {
+        events.Update(diff);
+        while (uint32 eventId = events.ExecuteEvent())
+        {
+            switch (eventId)
+            {
+            case DATA_TALK_1:
+            {
+                Talk(SAY_FIRST_LINE);
+                events.ScheduleEvent(DATA_TALK_2, 3s);
+                break;
+            }
+            case DATA_TALK_2:
+            {
+                Talk(SAY_SECOND_LINE);
+                events.ScheduleEvent(DATA_TALK_3, 3s);
+                break;
+            }
+            case DATA_TALK_3:
+            {
+                if (Player* player = ObjectAccessor::GetPlayer(*me, m_playerGUID))
+                    Talk(SAY_THIRD_LINE, player);
+                events.ScheduleEvent(DATA_GIVE_QUEST_CHECK, 3s);
+                break;
+            }
+            case DATA_GIVE_QUEST_CHECK:
+            {
+                CheckQuestGive();
+                break;
+            }
+            }
+        }
+    }
+    void OnTempSummonNPC(uint32 insideNpc, Player* player)
+    {
+        if (Creature* creature = player->FindNearestCreature(insideNpc, 100.0f))
+            creature->DespawnOrUnsummon(1000);
+
+        Position _positon = me->GetPosition();
+        GetPositionWithDistInFront(me, 15.f, _positon);
+
+        if (TempSummon* personalCreature = player->SummonCreature(insideNpc, _positon, TEMPSUMMON_TIMED_DESPAWN, 60000, 0, true))
+            personalCreature->GetMotionMaster()->MoveFollow(player, PET_FOLLOW_DIST, personalCreature->GetFollowAngle());
+    }
+    void CheckQuestGive()
+    {
+
+        if (!m_playerGUID.IsEmpty())
+        {
+            if (Player* player = ObjectAccessor::GetPlayer(*me, m_playerGUID))
+                if (player->GetQuestStatus(QUEST_BLINK_OF_AN_EYE) == QUEST_STATUS_REWARDED && player->getLevel() >= 98 && player->GetZoneId() == 7502 && player->IsInWorld() || player->IsAlive())
+                {
+                    //Druid Quest
+                    if (player->getClass() == CLASS_DRUID && player->GetQuestStatus(QUEST_A_SUMMONS_FROM_MOONGLADE) == QUEST_STATUS_NONE)
+                        OnTempSummonNPC(NPC_ARCHDRUID_HAMUUL_RUNETOTEM, player);
+
+                    //Paladin Quest
+                    if (player->getClass() == CLASS_PALADIN && player->GetQuestStatus(QUEST_AN_URGENT_GATHERING) == QUEST_STATUS_NONE)
+                        OnTempSummonNPC(NPC_LORD_MAXWELL_TYROSUS, player);
+
+                    //Mage Quest phase 4598
+                    if (player->getClass() == CLASS_MAGE && player->GetQuestStatus(QUEST_FELSTORMS_PLEA) == QUEST_STATUS_NONE)
+                    {
+                        Conversation::CreateConversation(CONVERSATION_MAGE_QUEST_START, player, player->GetPosition(), { player->GetGUID() });
+
+                        if (const Quest* quest = sObjectMgr->GetQuestTemplate(QUEST_FELSTORMS_PLEA))
+                            player->AddQuest(quest, nullptr);
+                    }
+                    //Death Knight Quest ServerToClient: SMSG_SPELL_START (0x2C3A) Length: 101 ConnIdx: 0 Time: 06/06/2018 13:41:43.782 Number: 6386
+                    if (player->getClass() == CLASS_DEATH_KNIGHT && player->GetQuestStatus(QUEST_THE_CALL_TO_WAR) == QUEST_STATUS_NONE)
+                    {
+                        player->CastSpell(player, SEPLL_CONVERSATION_THE_CALL_TO_WAR, true);
+                        if (const Quest* quest = sObjectMgr->GetQuestTemplate(QUEST_THE_CALL_TO_WAR))
+                            player->AddQuest(quest, nullptr);
+
+                    }
+                    //Hunter Quest
+                    if (player->getClass() == CLASS_HUNTER && player->GetQuestStatus(QUEST_NEEDS_OF_THE_HUNTERS) == QUEST_STATUS_NONE)
+                        OnTempSummonNPC(NPC_SNOWFEATHER_100786, player);
+
+                    //DEMON_HUNTER Quest
+                    if (player->getClass() == CLASS_DEMON_HUNTER && (player->GetQuestStatus(QUEST_CALL_OF_THE_ILLIDARI_39261) == QUEST_STATUS_NONE || player->GetQuestStatus(QUEST_CALL_OF_THE_ILLIDARI_39047) == QUEST_STATUS_NONE))
+                        OnTempSummonNPC(NPC_KORVAS_BLOODTHORN_99343, player);
+
+                    //WARRIOR Quest
+                    if (player->getClass() == CLASS_WARRIOR)
+                    {
+                        if (player->IsInAlliance() && player->GetQuestStatus(QUEST_A_AN_IMPORTANT_MISSION) == QUEST_STATUS_NONE)
+                            OnTempSummonNPC(NPC_SERGEANT_DALTON_108961, player);
+                        if (player->IsInHorde() && player->GetQuestStatus(QUEST_H_A_DESPERATE_PLEA) == QUEST_STATUS_NONE)
+                            OnTempSummonNPC(NPC_EITRIGG_93775, player);
+                    }
+                    //ROGUE Quest
+                    if (player->getClass() == CLASS_ROGUE && player->GetQuestStatus(QUEST_CALL_OF_THE_UNCROWNED) == QUEST_STATUS_NONE)
+                        OnTempSummonNPC(NPC_RAVENHOLDT_COURIER_102018, player);
+
+                    //Priest Quest
+                    if (player->getClass() == CLASS_PRIEST && player->GetQuestStatus(QUEST_PRIESTLY_MATTERS) == QUEST_STATUS_NONE)
+                    {
+                        uint32 priestNpc = player->IsInAlliance() ? NPC_A_HOODED_PRIESTESS : NPC_H_HOODED_PRIESTESS;
+                        OnTempSummonNPC(priestNpc, player);
+                    }
+                    //SHAMAN Quest
+                    if (player->getClass() == CLASS_SHAMAN && player->GetQuestStatus(QUEST_THE_CALL_TO_WAR) == QUEST_STATUS_NONE)
+                        player->SummonCreature(NPC_WHISPERING_WINDS, Position(-828.6302f, 4386.04f, 738.7358f, 1.828947f), TEMPSUMMON_TIMED_DESPAWN, 60000, 0, true);
+
+                    //WARLOCK Quest
+                    if (player->getClass() == CLASS_WARLOCK && player->GetQuestStatus(QUEST_THE_SIXTH) == QUEST_STATUS_NONE)
+                        OnTempSummonNPC(NPC_RITSSYN_FLAMESCOWL_103506, player);
+
+                    //MONK Quest
+                    if (player->getClass() == CLASS_MONK && player->GetQuestStatus(QUEST_DA_NEL) == QUEST_STATUS_NONE)
+                        OnTempSummonNPC(NPC_INITIATE_DA_NEL, player);
+                }
+
+        }
+
+        //RemovePlayer();  
+    }
+private:
+    EventMap events;
+    std::set<ObjectGuid> pList;
+    ObjectGuid   m_playerGUID;
 };
+
+
+/*******************************************************
+* npc_guard_dalaran_legion
+*******************************************************/
 
 enum Spells
 {
@@ -1160,7 +972,7 @@ struct npc_guard_dalaran_legion : public ScriptedAI
                 if (GetClosestCreatureWithEntry(me, NPC_APPLEBOUGH_A, 32.0f))
                 {
                     if (me->isInBackInMap(who, 12.0f))   // In my line of sight, "outdoors", and behind me
-                        player->CastSpell(player, SPELL_TRESPASSER_A, true); // Teleport the Horde unit out
+                        player->CastSpell(player, SPELL_TRESPASSER_A, true); // Teleport the Horde unit out                          
                 }
                 else                                      // In my line of sight, and "indoors"
                 {
@@ -1204,1007 +1016,362 @@ public:
     }
 };
 
-enum
+struct npc_credit_portal_taken_110409 : public ScriptedAI
 {
-    ///Druid Quest
-    ///start  from Archdruid Hamuul Runetotem once you arrive in Dalaran
-    QUEST_A_SUMMONS_FROM_MOONGLADE = 40643,
-    NPC_ARCHDRUID_HAMUUL_RUNETOTEM = 101061,
+    npc_credit_portal_taken_110409(Creature* creature) : ScriptedAI(creature) { }
 
-    ///quest 47221 The Hand of Fate
-    QUEST_A_THE_HAND_OF_FATE = 47221,
-    QUEST_H_THE_HAND_OF_FATE = 47835,
-    CONVERSATION_A_THE_HAND_OF_FATE = 4904,
-    CONVERSATION_H_THE_HAND_OF_FATE = 5337,
-
-    QUEST_THE_DALARAN_FOUNTAIN = 40961,
-    NPC_NAT_PAGLE = 88317,
-
-    ///Paradin Quest
-    ///start  from Archdruid Hamuul Runetotem once you arrive in Dalaran
-    QUEST_AN_URGENT_GATHERING = 38710,
-    NPC_LORD_MAXWELL_TYROSUS = 92909,
-
-    ///Mage Quest
-    NPC_EMISSARY_AULDBRIDGE_111109 = 111109,
-    NPC_MERYL_FELSTORM_102700 = 102700,
-
-    CONVERSATION_MAGE_QUEST_START = 1263,
-    QUEST_FELSTORMS_PLEA = 41035, /// after quest 44184 In the Blink of an Eye complete
-
-    ///Death Knight Quest
-    QUEST_THE_CALL_TO_WAR = 40714,
-    SEPLL_CONVERSATION_THE_CALL_TO_WAR = 200226,
-
-    ///Roge Quest
-    NPC_RAVENHOLDT_COURIER_102018 = 102018,
-    QUEST_CALL_OF_THE_UNCROWNED = 40832,
-
-    ///Hunter Quest
-    NPC_SNOWFEATHER_100786 = 100786,
-    QUEST_NEEDS_OF_THE_HUNTERS = 40384,
-
-    ///DH Quest
-    NPC_KORVAS_BLOODTHORN_99343 = 99343,
-    QUEST_CALL_OF_THE_ILLIDARI_39261 = 39261,
-    QUEST_CALL_OF_THE_ILLIDARI_39047 = 39047,
-
-    ///Monk Quest before the storm
-    NPC_INITIATE_DA_NEL = 98519,
-    QUEST_DA_NEL = 12103,
-
-    ///Priest Quest
-    NPC_A_HOODED_PRIESTESS = 102333, ///A
-    NPC_H_HOODED_PRIESTESS = 101344, ///H
-    QUEST_PRIESTLY_MATTERS = 40705,
-
-    ///WARLOCK Quest
-    NPC_RITSSYN_FLAMESCOWL_103506 = 103506,
-    QUEST_THE_SIXTH = 40716,
-
-    ///WARRIOR Quest
-    NPC_EITRIGG_93775 = 93775,
-    NPC_SERGEANT_DALTON_108961 = 108961,
-    QUEST_H_A_DESPERATE_PLEA = 41052,
-    QUEST_A_AN_IMPORTANT_MISSION = 42814,
-
+    void MoveInLineOfSight(Unit* who) override
+    {
+        if (!who || !who->IsInWorld())
+            return;
+        if (!me->IsWithinDist(who, 15.0f, false))
+            return;
+        Player* player = who->GetCharmerOrOwnerPlayerOrPlayerItself();
+        if (!player)
+            return;
+        player->KilledMonsterCredit(me->GetEntry());
+        player->KilledMonsterCredit(97481);
+    }
 };
-//
-class zone_legion_dalaran: public ZoneScript
+
+struct npc_nat_pagle_102639 : public ScriptedAI
+{
+    npc_nat_pagle_102639(Creature* creature) : ScriptedAI(creature) { }
+
+    void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId)
+    {
+        CloseGossipMenuFor(player);
+        player->KilledMonsterCredit(102639);
+        if (player->HasQuest(QUEST_FISH_FRENZY))
+            player->TeleportTo(1553, Position(2570.71f, 8273.89f, 1.93f, 2.79253f));
+    }
+};
+
+class CastEventTP : public BasicEvent
 {
 public:
-    zone_legion_dalaran() : ZoneScript("zone_legion_dalaran") { }
-    uint32 _insideNpc;
-    uint32 _killCredit;
-    Creature* creature;
-    Position _positon;
+    CastEventTP(Unit* caster, uint32 spellId, bool trigger) :
+        _caster(caster), _spellId(spellId), _trigger(trigger) { }
 
-
-    void OnTempSummonNPC(uint32 insideNpc, Player* player)
+    bool Execute(uint64 /*time*/, uint32 /*diff*/)
     {
-        _insideNpc = insideNpc;
-        if (creature = player->FindNearestCreature(_insideNpc, 100.0f))
-        {
-            // TODO : Remove this line when phasing is done properly
-            creature->DestroyForPlayer(player);
-        }
-
-        _positon = Position(player->GetPositionX() + 20, player->GetPositionY() + 20, player->GetPositionZ());
-        //   _positon= player->GetPosition();
-
-
-        if (TempSummon* personalCreature = player->SummonCreature(_insideNpc, _positon, TEMPSUMMON_TIMED_DESPAWN, 60000, 0, true))
-        {
-            //personalCreature->GetMotionMaster()->MoveCloserAndStop(personalCreature->GetEntry(), player, 5.0f);
-            personalCreature->GetMotionMaster()->MoveFollow(player, PET_FOLLOW_DIST, personalCreature->GetFollowAngle());
-            // TODO : personalCreature->Talk(0);
-        }
-    }
-    void OnTempSummonNPCOnPOS(uint32 insideNpc, Player* player,Position npcPos)
-    {
-        _insideNpc = insideNpc;
-        if (creature = player->FindNearestCreature(_insideNpc, 100.0f))
-        {
-            // TODO : Remove this line when phasing is done properly
-            creature->DestroyForPlayer(player);
-        }
-
-        _positon = npcPos;
-        TempSummon* personalCreature = player->SummonCreature(_insideNpc, _positon, TEMPSUMMON_TIMED_DESPAWN, 3600000, 0, true);
-    }
-    enum BROKEN_ISLES_PATHFINDE
-    {
-        SPELL_BROKEN_ISLES_PATHFINDER_1 = 226342,
-        SPELL_BROKEN_ISLES_PATHFINDER_2 = 233368,
-
-    };
-
-    void OnPlayerEnter(Player* player) override
-    {
-        if (player->HasAchieved(11190))//[BROKEN_ISLES_PATHFINDER]
-        {
-            //226342 SPELL_BROKEN_ISLES_PATHFINDER_1
-            player->LearnSpell(SPELL_BROKEN_ISLES_PATHFINDER_1, true);
-        }
-        if (player->HasAchieved(11446))//[BROKEN_ISLES_PATHFINDER]
-        {
-            //233368 SPELL_BROKEN_ISLES_PATHFINDER_2
-            player->LearnSpell(SPELL_BROKEN_ISLES_PATHFINDER_2, true);
-        }
-
-        //AGUS ARRAIVE
-        if (player->IsInAlliance() && player->GetQuestStatus(QUEST_A_THE_HAND_OF_FATE) == QUEST_STATUS_NONE && player->getLevel() >= 110 && player->GetZoneId() == 7502)
-        {
-            Conversation::CreateConversation(CONVERSATION_A_THE_HAND_OF_FATE, player, player->GetPosition(), { player->GetGUID() });
-
-            if (const Quest* quest = sObjectMgr->GetQuestTemplate(QUEST_A_THE_HAND_OF_FATE))
-                player->AddQuest(quest, nullptr);
-        }
-        if (player->IsInHorde() && player->GetQuestStatus(QUEST_A_THE_HAND_OF_FATE) == QUEST_STATUS_NONE && player->getLevel() >= 110 && player->GetZoneId() == 7502)
-        {
-            Conversation::CreateConversation(CONVERSATION_H_THE_HAND_OF_FATE, player, player->GetPosition(), { player->GetGUID() });
-
-            if (const Quest* quest = sObjectMgr->GetQuestTemplate(QUEST_H_THE_HAND_OF_FATE))
-                player->AddQuest(quest, nullptr);
-        }
-
-
-        if (player->GetQuestStatus(QUEST_BLINK_OF_AN_EYE) == QUEST_STATUS_REWARDED && player->getLevel() >= 98 && player->GetZoneId() == 7502)
-        {
-            //Druid Quest
-            if (player->getClass() == CLASS_DRUID && player->GetQuestStatus(QUEST_A_SUMMONS_FROM_MOONGLADE) == QUEST_STATUS_NONE)
-            {
-                OnTempSummonNPC(NPC_ARCHDRUID_HAMUUL_RUNETOTEM, player);
-            }
-            //Paladin Quest
-            if (player->getClass() == CLASS_PALADIN && player->GetQuestStatus(QUEST_AN_URGENT_GATHERING) == QUEST_STATUS_NONE)
-            {
-                OnTempSummonNPC(NPC_LORD_MAXWELL_TYROSUS, player);
-            }
-            //Mage Quest phase 4598
-            if (player->getClass() == CLASS_MAGE && player->GetQuestStatus(QUEST_FELSTORMS_PLEA) == QUEST_STATUS_NONE)
-            {
-                Conversation::CreateConversation(CONVERSATION_MAGE_QUEST_START, player, player->GetPosition(), { player->GetGUID() });
-
-                if (const Quest* quest = sObjectMgr->GetQuestTemplate(QUEST_FELSTORMS_PLEA))
-                    player->AddQuest(quest, nullptr);
-            }
-            //Death Knight Quest ServerToClient: SMSG_SPELL_START (0x2C3A) Length: 101 ConnIdx: 0 Time: 06/06/2018 13:41:43.782 Number: 6386
-            if (player->getClass() == CLASS_DEATH_KNIGHT && player->GetQuestStatus(QUEST_THE_CALL_TO_WAR) == QUEST_STATUS_NONE)
-            {
-                player->CastSpell(player, SEPLL_CONVERSATION_THE_CALL_TO_WAR, true);
-                if (const Quest* quest = sObjectMgr->GetQuestTemplate(QUEST_THE_CALL_TO_WAR))
-                    player->AddQuest(quest, nullptr);
-
-            }
-            //Hunter Quest
-            if (player->getClass() == CLASS_HUNTER && player->GetQuestStatus(QUEST_NEEDS_OF_THE_HUNTERS) == QUEST_STATUS_NONE)
-            {
-                OnTempSummonNPC(NPC_SNOWFEATHER_100786, player);
-            }
-            //DEMON_HUNTER Quest
-            if (player->getClass() == CLASS_DEMON_HUNTER && (player->GetQuestStatus(QUEST_CALL_OF_THE_ILLIDARI_39261) == QUEST_STATUS_NONE || player->GetQuestStatus(QUEST_CALL_OF_THE_ILLIDARI_39047) == QUEST_STATUS_NONE))
-            {
-                ///DH Quest
-                OnTempSummonNPC(NPC_KORVAS_BLOODTHORN_99343, player);
-            }
-            //WARRIOR Quest
-            if (player->getClass() == CLASS_WARRIOR)
-            {
-                if (player->IsInAlliance() && player->GetQuestStatus(QUEST_A_AN_IMPORTANT_MISSION) == QUEST_STATUS_NONE)
-                    OnTempSummonNPC(NPC_SERGEANT_DALTON_108961, player);
-                if (player->IsInHorde() && player->GetQuestStatus(QUEST_H_A_DESPERATE_PLEA) == QUEST_STATUS_NONE)
-                    OnTempSummonNPC(NPC_EITRIGG_93775, player);
-            }
-            //ROGUE Quest
-            if (player->getClass() == CLASS_ROGUE && player->GetQuestStatus(QUEST_CALL_OF_THE_UNCROWNED) == QUEST_STATUS_NONE)
-            {
-                OnTempSummonNPC(NPC_RAVENHOLDT_COURIER_102018, player);
-            }
-            //Priest Quest
-            if (player->getClass() == CLASS_PRIEST && player->GetQuestStatus(QUEST_PRIESTLY_MATTERS) == QUEST_STATUS_NONE)
-            {
-                uint32 priestNpc = player->IsInAlliance() ? NPC_A_HOODED_PRIESTESS : NPC_H_HOODED_PRIESTESS;
-                OnTempSummonNPC(priestNpc, player);
-            }
-            //SHAMAN Quest
-            if (player->getClass() == CLASS_SHAMAN && player->GetQuestStatus(QUEST_THE_CALL_TO_WAR) == QUEST_STATUS_NONE)
-            {
-
-            }
-            //WARLOCK Quest
-            if (player->getClass() == CLASS_WARLOCK && player->GetQuestStatus(QUEST_THE_SIXTH) == QUEST_STATUS_NONE)
-            {
-                OnTempSummonNPC(NPC_RITSSYN_FLAMESCOWL_103506, player);
-            }
-            //MONK Quest
-            if (player->getClass() == CLASS_MONK && player->GetQuestStatus(QUEST_DA_NEL) == QUEST_STATUS_NONE)
-            {
-                OnTempSummonNPC(NPC_INITIATE_DA_NEL, player);
-            }
-
-            //achievement 10596 npc 88317
-            if (player->HasAchieved(10596) && player->GetQuestStatus(QUEST_THE_DALARAN_FOUNTAIN) == QUEST_STATE_COMPLETE )
-            {
-                OnTempSummonNPC(NPC_NAT_PAGLE, player);
-            }
-        }
-
+        if (_caster)
+            _caster->CastSpell(_caster, _spellId, _trigger);
+        return true;
     }
 
-    void OnPlayerExit(Player* player) override
-    {
-
-        if (creature = player->FindNearestCreature(_insideNpc, 100.0f))
-        {
-            // TODO : Remove this line when phasing is done properly
-            creature->DestroyForPlayer(player);
-        }
-    }
+private:
+    Unit* _caster;
+    uint32 _spellId;
+    bool _trigger;
 };
 
-enum CLASS_PHASE
+// 108868 7.x.x
+struct npc_hunter_talua : public ScriptedAI
 {
-    PHASE_CLASS_WARRIOR_HORDE = 7300,
-    PHASE_CLASS_WARRIOR_ALIANCE = 7302,
-    PHASE_CLASS_PALADIN = 7319,
-    PHASE_CLASS_HUNTER_1 = 7341,
-    PHASE_CLASS_HUNTER_2 = 6763,
-    PHASE_CLASS_ROGUE = 4,
-    PHASE_CLASS_PRIEST = 5,
-    PHASE_CLASS_DEATH_KNIGHT = 6,
-    //PHASE_CLASS_SHAMAN = 7,
-    PHASE_CLASS_MAGE = 8,
-    PHASE_CLASS_WARLOCK = 9,
-    PHASE_CLASS_MONK = 10,
-    //PHASE_CLASS_DRUID = 11,
-    PHASE_CLASS_DEMON_HUNTER = 12
-};
-class PhaseOnDaralanArea : public PlayerScript
-{
-public:
-    PhaseOnDaralanArea() : PlayerScript("PhaseOnDaralanArea") { }
+    npc_hunter_talua(Creature* creature) : ScriptedAI(creature) {  }
 
-    void OnPlayerUpdateAreaAlternate(Player* player, uint32 newArea, uint32 /*oldArea*/)
+    void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId)
     {
-        if (player->GetAreaId() == 7505 && player->getClass() == CLASS_PALADIN)
-            PhasingHandler::AddPhase(player, PHASE_CLASS_PALADIN);
-        if (player->getClass() == CLASS_HUNTER)
-        {
-            if (player->GetAreaId() == 7502 || player->GetAreaId() == 7505)
-                PhasingHandler::AddPhase(player, PHASE_CLASS_HUNTER_1);
-            if (player->GetAreaId() == 7505)
-                PhasingHandler::AddPhase(player, PHASE_CLASS_HUNTER_2);
-        }
-        if (player->GetAreaId() == 7502 && player->getClass() == CLASS_WARRIOR)
-        {
-            if(player->IsInHorde() && player->HasQuest(QUEST_H_A_DESPERATE_PLEA))
-                PhasingHandler::AddPhase(player, PHASE_CLASS_WARRIOR_HORDE);
-            if (player->IsInAlliance() && player->HasQuest(QUEST_A_AN_IMPORTANT_MISSION))
-                PhasingHandler::AddPhase(player, PHASE_CLASS_WARRIOR_ALIANCE);
-        }
+        CloseGossipMenuFor(player);
+        if (player->getLevel() < 98 || player->getClass() != CLASS_HUNTER)
+            return;
 
+        if (Pet* pet = player->GetPet())
+            player->RemovePet(nullptr, PET_SAVE_DISMISS, false);
+
+        player->CastSpell(player, 216213, true);
+        player->m_Events.AddEvent(new CastEventTP(player, 216216, true), player->m_Events.CalculateTime(10000));
 
     }
 };
 
-struct npc_emissary_auldbridge_111109 : public ScriptedAI
+//108853
+struct npc_great_eagle : public ScriptedAI
 {
-    npc_emissary_auldbridge_111109(Creature* creature) : ScriptedAI(creature) { Initialize(); }
-    enum Texts
-    {
-        SAY_FIRST_LINE = 0, ///
-        SAY_SECOND_LINE = 1,///
-        SAY_THIRD_LINE = 2, ///
-    };
-    enum DataTypes
-    {
-        DATA_TALK_1 = 1,
-        DATA_TALK_2 = 2,
-        DATA_TALK_3 = 3,
-        DATA_GIVE_QUEST_CHECK = 4,
-    };
+    npc_great_eagle(Creature* creature) : ScriptedAI(creature) { }
 
-    void Initialize()
+    uint8 curID;
+    void Reset()
     {
-        m_playerGUID = ObjectGuid::Empty;
     }
 
-    void sQuestReward(Player* player, Quest const* quest, uint32 /*opt*/)  override
+    void SpellHit(Unit* caster, SpellInfo const* spell) override
     {
-        if (quest->GetQuestId() == QUEST_BLINK_OF_AN_EYE)
+        me->GetMotionMaster()->MoveDistract(1000);
+        me->GetMotionMaster()->MovePoint(1, -854.9718f, 4185.322f, 754.1122f);
+    }
+
+    void MovementInform(uint32 type, uint32 id)
+    {
+        if (type != POINT_MOTION_TYPE)
+            return;
+
+        switch (id)
         {
-                m_playerGUID = player->GetGUID();
-                events.ScheduleEvent(DATA_TALK_1, 1s);
+        case 1:
+            me->DespawnOrUnsummon(0);
+            break;
         }
     }
+};
+
+Position const npc_archmage_khadgar_90417_q41804_pos[8] =
+{
+ { -845.3344f, 4665.4f, 767.28f },
+ { -836.413f, 4666.54f, 767.689f },
+ { -832.677f, 4662.761f, 767.738f },//t
+ { -833.2926f, 4660.763f, 767.687f },//check t delay t
+ { -829.08f, 4655.322f, 767.797f },//check t delay t delay t summcreature or go kill
+ { -837.088f, 4666.4f, 767.667f },
+ { -845.3344f, 4665.4f, 767.28f },
+ { -848.462f, 4638.85f, 749.547f },
+};
+
+struct npc_archmage_khadgar_90417 : public ScriptedAI
+{
+    npc_archmage_khadgar_90417(Creature* creature) : ScriptedAI(creature), sceneHelper(creature->GetGUID(), creature->GetMap()) {  }
+
+    void sQuestAccept(Player* player, Quest const* quest) override
+    {
+        if (quest->GetQuestId() == 39986)
+        {
+            if (IsLock)
+                IsLock = false;
+            Talk(1);//Any disturbance should catalyze the sequence. Just, uh, give it a poke or something.
+            if (Creature* npc = me->FindNearestCreature(98266, 50.0f, true))
+                npc->AddNpcFlag(UNIT_NPC_FLAG_SPELLCLICK);
+        }
+        if (quest->GetQuestId() == 39987)
+        {
+            player->SummonGameObject(244874, Position(-851.257f, 4631.811f, 749.6389f, 1.389102f), QuaternionData(0.0f, 0.0f, 0.6400404f, 0.7683412f), 60000, true);
+            Talk(2);
+        }
+        if (quest->GetQuestId() == 41804)
+        {
+            me->Say(13874, player);
+            sceneHelper.Clear();
+            sceneHelper.SetDefaultActorGuid(me->GetGUID());
+          //  sceneHelper.SetDefaultPlayerGuid(player->GetGUID());
+
+            sceneHelper.AddSceneActionMovePos(npc_archmage_khadgar_90417_q41804_pos[0], 100);
+            sceneHelper.AddSceneActionMovePos(npc_archmage_khadgar_90417_q41804_pos[1], 2500);
+            sceneHelper.AddSceneActionMovePos(npc_archmage_khadgar_90417_q41804_pos[2], 2500);
+            //sceneHelper.AddSceneActionSay(130254, 500);//Hold on just a moment.I frea I'm a bit of a packrat.
+            sceneHelper.AddSceneActionMovePos(npc_archmage_khadgar_90417_q41804_pos[3], 2500);
+            //sceneHelper.AddSceneActionSay(86873, 500);//Now let's see...apexis crystals? No,no,those won't do at all. 
+           // sceneHelper.AddSceneActionSay(86873, 500);//Hmm,I must've put it over here.
+            sceneHelper.AddSceneActionMovePos(npc_archmage_khadgar_90417_q41804_pos[4], 2500);
+            //sceneHelper.AddSceneActionSay(86873, 500);//Arcane powder...soul shards...that's definitely not it...
+            //sceneHelper.AddSceneActionSay(86873, 500);//A-ha!Here we are...a crystallized soul. That ought to do the trick!
+            //sceneHelper.AddSceneActionSay(86873, 500);//Would you mind grabbing it?These crystals tend to have an adverse effect on non-demonic beings.
+            //sceneHelper.AddSceneActionKillCreditMonster(90417, 1, 500);
+            //sceneHelper.AddSceneSummonGameObject(248521, Position(-830.549f, 4654.773f, 767.65f, 4.5352f), 500);
+            sceneHelper.AddSceneActionMovePos(npc_archmage_khadgar_90417_q41804_pos[5], 2500);
+            sceneHelper.AddSceneActionMovePos(npc_archmage_khadgar_90417_q41804_pos[6], 2500);
+            sceneHelper.AddSceneActionMovePos(npc_archmage_khadgar_90417_q41804_pos[7], 2500);
+            sceneHelper.Activate();
+        }
+        if (quest->GetQuestId() == 41806)
+            me->Say(100062, player);
+
+    }
+
+    void MoveInLineOfSight(Unit* who) override
+    {
+        if (Player* player = who->ToPlayer())
+        {
+            if (me->IsWithinDist(player, 15.0f, false))
+            {
+                if (!IsLock && (player->HasQuest(39985) || player->HasQuest(44555)))
+                {
+                    IsLock = true;
+                    Talk(0);// Nobody touch it! Not until our guest arrives.
+                    SetUnlock(60000);
+                }
+                if (!IsLock && player->HasQuest(41803))
+                {
+                    IsLock = true;
+                    me->Say(107409, player);
+                    SetUnlock(60000);
+                }
+            }
+        }
+    }
+
     void UpdateAI(uint32 diff) override
     {
-        events.Update(diff);
-        while (uint32 eventId = events.ExecuteEvent())
-        {
-            switch (eventId)
-            {
-                case DATA_TALK_1:
-                {
-                    Talk(SAY_FIRST_LINE);
-                    events.ScheduleEvent(DATA_TALK_2, 3s);
-                    break;
-                }
-                case DATA_TALK_2:
-                {
-                    Talk(SAY_SECOND_LINE);
-                    events.ScheduleEvent(DATA_TALK_3, 3s);
-                    break;
-                }
-                case DATA_TALK_3:
-                {
-                    Talk(SAY_THIRD_LINE);
-                    events.ScheduleEvent(DATA_GIVE_QUEST_CHECK, 3s);
-                    break;
-                }
-                case DATA_GIVE_QUEST_CHECK:
-                {
-                    CheckQuestGive();
-                    break;
-                }
-            }
-        }
-    }
-    void OnTempSummonNPC(uint32 insideNpc, Player* player)
-    {
-        if (Creature* creature = player->FindNearestCreature(insideNpc, 100.0f))
-        {
-            creature->DespawnOrUnsummon(1000);
-            //creature->DestroyForPlayer(player);
-        }
-        Position _positon = me->GetPosition();
-        GetPositionWithDistInFront(me, 15.f, _positon);
-
-        if (TempSummon* personalCreature = player->SummonCreature(insideNpc, _positon, TEMPSUMMON_TIMED_DESPAWN, 60000, 0, true))
-        {
-            personalCreature->GetMotionMaster()->MoveFollow(player, PET_FOLLOW_DIST, personalCreature->GetFollowAngle());
-        }
-    }
-    void CheckQuestGive()
-    {
-
-        if (!m_playerGUID.IsEmpty())
-        {
-            if (Player* player = ObjectAccessor::GetPlayer(*me, m_playerGUID))
-                if (player->GetQuestStatus(QUEST_BLINK_OF_AN_EYE) == QUEST_STATUS_REWARDED && player->getLevel() >= 98 && player->GetZoneId() == 7502 && player->IsInWorld() || player->IsAlive())
-                {
-                    //Druid Quest
-                    if (player->getClass() == CLASS_DRUID && player->GetQuestStatus(QUEST_A_SUMMONS_FROM_MOONGLADE) == QUEST_STATUS_NONE)
-                    {
-                        OnTempSummonNPC(NPC_ARCHDRUID_HAMUUL_RUNETOTEM, player);
-                    }
-                    //Paladin Quest
-                    if (player->getClass() == CLASS_PALADIN && player->GetQuestStatus(QUEST_AN_URGENT_GATHERING) == QUEST_STATUS_NONE)
-                    {
-                        OnTempSummonNPC(NPC_LORD_MAXWELL_TYROSUS, player);
-                    }
-                    //Mage Quest phase 4598
-                    if (player->getClass() == CLASS_MAGE && player->GetQuestStatus(QUEST_FELSTORMS_PLEA) == QUEST_STATUS_NONE)
-                    {
-                        Conversation::CreateConversation(CONVERSATION_MAGE_QUEST_START, player, player->GetPosition(), { player->GetGUID() });
-
-                        if (const Quest* quest = sObjectMgr->GetQuestTemplate(QUEST_FELSTORMS_PLEA))
-                            player->AddQuest(quest, nullptr);
-                    }
-                    //Death Knight Quest ServerToClient: SMSG_SPELL_START (0x2C3A) Length: 101 ConnIdx: 0 Time: 06/06/2018 13:41:43.782 Number: 6386
-                    if (player->getClass() == CLASS_DEATH_KNIGHT && player->GetQuestStatus(QUEST_THE_CALL_TO_WAR) == QUEST_STATUS_NONE)
-                    {
-                        player->CastSpell(player, SEPLL_CONVERSATION_THE_CALL_TO_WAR, true);
-                        if (const Quest* quest = sObjectMgr->GetQuestTemplate(QUEST_THE_CALL_TO_WAR))
-                            player->AddQuest(quest, nullptr);
-
-                    }
-                    //Hunter Quest
-                    if (player->getClass() == CLASS_HUNTER && player->GetQuestStatus(QUEST_NEEDS_OF_THE_HUNTERS) == QUEST_STATUS_NONE)
-                    {
-                        OnTempSummonNPC(NPC_SNOWFEATHER_100786, player);
-                    }
-                    //DEMON_HUNTER Quest
-                    if (player->getClass() == CLASS_DEMON_HUNTER && (player->GetQuestStatus(QUEST_CALL_OF_THE_ILLIDARI_39261) == QUEST_STATUS_NONE || player->GetQuestStatus(QUEST_CALL_OF_THE_ILLIDARI_39047) == QUEST_STATUS_NONE ) )
-                    {
-                        ///DH Quest
-                        OnTempSummonNPC(NPC_KORVAS_BLOODTHORN_99343, player);
-                    }
-                    //WARRIOR Quest
-                    if (player->getClass() == CLASS_WARRIOR)
-                    {
-                        if(player->IsInAlliance()&& player->GetQuestStatus(QUEST_A_AN_IMPORTANT_MISSION) == QUEST_STATUS_NONE)
-                            OnTempSummonNPC(NPC_SERGEANT_DALTON_108961, player);
-                        if (player->IsInHorde() && player->GetQuestStatus(QUEST_H_A_DESPERATE_PLEA) == QUEST_STATUS_NONE)
-                            OnTempSummonNPC(NPC_EITRIGG_93775, player);
-                    }
-                    //ROGUE Quest
-                    if (player->getClass() == CLASS_ROGUE && player->GetQuestStatus(QUEST_CALL_OF_THE_UNCROWNED) == QUEST_STATUS_NONE)
-                    {
-                        OnTempSummonNPC(NPC_RAVENHOLDT_COURIER_102018, player);
-                    }
-                    //Priest Quest
-                    if (player->getClass() == CLASS_PRIEST && player->GetQuestStatus(QUEST_PRIESTLY_MATTERS) == QUEST_STATUS_NONE)
-                    {
-                        uint32 priestNpc = player->IsInAlliance() ? NPC_A_HOODED_PRIESTESS : NPC_H_HOODED_PRIESTESS;
-                        OnTempSummonNPC(priestNpc, player);
-                    }
-                    //SHAMAN Quest
-                    if (player->getClass() == CLASS_SHAMAN && player->GetQuestStatus(QUEST_THE_CALL_TO_WAR) == QUEST_STATUS_NONE)
-                    {
-
-                    }
-                    //WARLOCK Quest
-                    if (player->getClass() == CLASS_WARLOCK && player->GetQuestStatus(QUEST_THE_SIXTH) == QUEST_STATUS_NONE)
-                    {
-                        OnTempSummonNPC(NPC_RITSSYN_FLAMESCOWL_103506, player);
-                    }
-                    //MONK Quest
-                    if (player->getClass() == CLASS_MONK && player->GetQuestStatus(QUEST_DA_NEL) == QUEST_STATUS_NONE)
-                    {
-                         OnTempSummonNPC(NPC_INITIATE_DA_NEL, player);
-                    }
-                }
-
-        }
-
-        //RemovePlayer();
+        sceneHelper.UpdateSceneHelper(diff);
     }
 private:
-    EventMap events;
-    std::set<ObjectGuid> pList;
-    ObjectGuid   m_playerGUID;
+    SceneHelper sceneHelper;
 };
 
-#define GOSSIP_HELLO_ALTURAS1 "There's no time to explain. Let us inside the hold, warden."
-#define GOSSIP_HELLO_ALTURAS2 "Let us inside or I'll show you the difference."
-#define GOSSIP_HELLO_ALTURAS3 "Do you want to find out?"
-#define GOSSIP_HELLO_ALTURAS4 "What do you have to lose either way?"
-class npc_warden_alturas : public CreatureScript
+struct npc_arcane_anomaly_98266 : public ScriptedAI
 {
-public:
-    npc_warden_alturas() : CreatureScript("npc_warden_alturas") { }
+    npc_arcane_anomaly_98266(Creature* creature) : ScriptedAI(creature) { }
 
-    enum {
-        TEXT_ALLOW_ENTER = 3,
-        EVENT_TELEPORT_VIOLETHOLD = 11,
-        EVENT_START_MOVE = 12,
-        EVENT_MOVE_TO_GATES = 13,
-        EVENT_TELEPORT = 14,
-        EVENT_RESET = 15,
-        DATA_START_EVENT = 21,
-    };
-
-    bool _diffsPicked = false;
-    bool _noTimePicked = false;
-
-    bool OnGossipHello(Player* player, Creature* creature) override
+    void Reset() override
     {
-        if (player->GetQuestStatus(41121) == QUEST_STATUS_INCOMPLETE && !_diffsPicked && !_noTimePicked)
-            AddGossipItemFor(player, GOSSIP_ICON_CHAT, GOSSIP_HELLO_ALTURAS1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
-
-        if (player->GetQuestStatus(41121) == QUEST_STATUS_INCOMPLETE && !_diffsPicked)
-            AddGossipItemFor(player, GOSSIP_ICON_CHAT, GOSSIP_HELLO_ALTURAS2, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 2);
-
-        if (player->GetQuestStatus(41121) == QUEST_STATUS_INCOMPLETE && _diffsPicked)
-            AddGossipItemFor(player, GOSSIP_ICON_CHAT, GOSSIP_HELLO_ALTURAS3, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 3);
-
-        if (player->GetQuestStatus(41121) == QUEST_STATUS_INCOMPLETE && _diffsPicked)
-            AddGossipItemFor(player, GOSSIP_ICON_CHAT, GOSSIP_HELLO_ALTURAS4, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 4);
-
-        SendGossipMenuFor(player, player->GetGossipTextId(creature), creature->GetGUID());
-        return true;
-    }
-
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
-    {
-        if (!player)
-            return false;
-
-        player->PlayerTalkClass->ClearMenus();
-
-        if (action == GOSSIP_ACTION_INFO_DEF + 1)
-        {
-            _noTimePicked = true;
-            creature->AI()->Talk(0);
-            creature->SetStandState(UNIT_STAND_STATE_STAND);
-            CloseGossipMenuFor(player);
-        }
-
-        if (action == GOSSIP_ACTION_INFO_DEF + 2)
-        {
-            _diffsPicked = true;
-            creature->SetStandState(UNIT_STAND_STATE_STAND);
-            CloseGossipMenuFor(player);
-        }
-
-        if (action == GOSSIP_ACTION_INFO_DEF + 3)
-        {
-            creature->AI()->Talk(2);
-            player->KilledMonsterCredit(96313);
-            creature->AI()->SetData(DATA_START_EVENT, DATA_START_EVENT);
-            CloseGossipMenuFor(player);
-        }
-
-        if (action == GOSSIP_ACTION_INFO_DEF + 4)
-        {
-            creature->AI()->Talk(1);
-            player->KilledMonsterCredit(96313);
-            creature->AI()->SetData(DATA_START_EVENT, DATA_START_EVENT);
-            CloseGossipMenuFor(player);
-        }
-
-        return true;
-    }
-
-    bool OnQuestAccept(Player* /*player*/, Creature* /*creature*/, Quest const* quest) override
-    {
-        if (quest->GetQuestId() == 41121)
-        {
-            _diffsPicked = false;
-            _noTimePicked = false;
-        }
-
-        return true;
-    }
-
-    struct npc_warden_alturas_AI : public ScriptedAI
-    {
-        npc_warden_alturas_AI(Creature* creature) : ScriptedAI(creature) {
-            Initialize();
-        }
-
-        void Reset() override
-        {
-            _events.Reset();
-        }
-
-        void Initialize() {}
-
-        void UpdateAI(uint32 diff) override
-        {
-            UpdateVictim();
-            _events.Update(diff);
-
-            while (uint32 eventId = _events.ExecuteEvent())
-            {
-                switch (eventId)
-                {
-                case EVENT_TELEPORT_VIOLETHOLD: {
-                    Talk(TEXT_ALLOW_ENTER, me->GetOwner());
-                    _events.ScheduleEvent(EVENT_START_MOVE, 4000);
-                    break;
-                }
-                case EVENT_START_MOVE: {
-                    _events.ScheduleEvent(EVENT_MOVE_TO_GATES, 2000);
-                    me->AddUnitMovementFlag(MOVEMENTFLAG_WALKING);
-                    me->SetOrientation(4.0119f);
-                    break;
-                }
-                case EVENT_MOVE_TO_GATES: {
-                    _events.ScheduleEvent(EVENT_TELEPORT, 3000);
-                    me->GetMotionMaster()->MovePoint(2, -958.91f, 4326.97f, 740.20f);
-                    break;
-                }
-                case EVENT_TELEPORT: {
-                    _events.ScheduleEvent(EVENT_RESET, 1500);
-                    me->CastSpell(me, 52096, true); // cosmetic-teleport-effect
-                    break;
-                }
-                case EVENT_RESET: {
-                    me->AI()->Reset();
-                    _events.CancelEvent(EVENT_TELEPORT_VIOLETHOLD);
-                    _events.CancelEvent(EVENT_START_MOVE);
-                    _events.CancelEvent(EVENT_MOVE_TO_GATES);
-                    _events.CancelEvent(EVENT_TELEPORT);
-                    me->DespawnOrUnsummon(5000, Seconds(3));
-                    break;
-                }
-                default:
-                    break;
-                }
-            }
-            // no melee attacks
-        }
-
-        void SetData(uint32 id, uint32 /*value*/) override
-        {
-            switch (id)
-            {
-                case DATA_START_EVENT:
-                {
-                    _events.ScheduleEvent(EVENT_TELEPORT_VIOLETHOLD, 3000);
-                    break;
-                }
-            }
-        }
-
-    private:
-        EventMap _events;
-    };
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_warden_alturas_AI(creature);
-    }
-};
-
-class go_violethold_entrance_portal : public GameObjectScript
-{
-public:
-    go_violethold_entrance_portal() : GameObjectScript("go_violethold_entrance_portal")
-    {
-        checkTimer = 1000;
-        giveKillCredit = 1000;
-    }
-
-    uint32 checkTimer;
-    uint32 giveKillCredit;
-
-    void OnUpdate(GameObject* p_Object, uint32 diff) override
-    {
-        if (checkTimer < diff)
-        {
-            checkTimer -= diff;
-            return;
-        }
-
-        checkTimer = 1000;
-        giveKillCredit = 1000;
-
-        std::list<Player*> playerList;
-        GetPlayerListInGrid(playerList, p_Object, 2.0f);
-
-        for (Player* player : playerList)
-        {
-            if (player->GetQuestStatus(41121) == QUEST_STATUS_INCOMPLETE)
-            {
-                player->KilledMonsterCredit(95731, ObjectGuid::Empty);
-                player->TeleportTo(1494, 1293.185f, -262.720f, 44.364f, 0.307976f);
-            }
-        }
-    }
-};
-
-// npc 94324 for the DH Artifact Acquisition Scenarios
-Position const brokenShorePath[] =
-{
-    { -845.682f, 4253.238f, 754.557f },
-    { -845.679f, 4253.229f, 756.223f },
-    { -845.679f, 4253.229f, 759.037f },
-    { -845.046f, 4249.666f, 759.037f },
-    { -840.329f, 4223.146f, 759.037f },
-    { -831.249f, 4173.871f, 723.158f }
-};
-size_t const pathSize = std::extent<decltype(brokenShorePath)>::value;
-
-class npc_illidari_felbat_94324 : public CreatureScript
-{
-public:
-    npc_illidari_felbat_94324() : CreatureScript("npc_illidari_felbat_94324") { }
-
-    enum eFelBal {
-        EVENT_START_BROKENSHORE_PATH = 1,
-        EVENT_START_SURAMAR_PATH = 2,
-        EVENT_TELEPORT_BROKENSHORE = 3,
-        EVENT_TELEPORT_SURAMAR = 4,
-        SPELL_RIDE_VEHICLE_HARD_CODED = 46598,
-        QUEST_THE_HUNT_1 = 39247,
-        QUEST_THE_HUNT_2 = 41119,
-        QUEST_VENGEANCE_WILL_BE_OURS_1 = 40249,
-        QUEST_VENGEANCE_WILL_BE_OURS_2 = 41863,
-    };
-
-    struct npc_illidari_felbat_94324_AI : public VehicleAI
-    {
-        npc_illidari_felbat_94324_AI(Creature* creature) : VehicleAI(creature) { }
-
-        void Reset() override
-        {
-            _events.Reset();
-            _playerGUID = ObjectGuid::Empty;
-        }
-
-        void PassengerBoarded(Unit* passenger, int8 /*seatId*/, bool apply) override
-        {
-            if (apply && passenger->GetTypeId() == TYPEID_PLAYER) {
-                _playerGUID = passenger->ToPlayer()->GetGUID();
-
-                if (passenger->ToPlayer()->HasQuest(QUEST_THE_HUNT_1) || passenger->ToPlayer()->HasQuest(QUEST_THE_HUNT_2)) {
-                    _events.ScheduleEvent(EVENT_TELEPORT_SURAMAR, Seconds(1));
-                }
-
-                if (passenger->ToPlayer()->HasQuest(QUEST_VENGEANCE_WILL_BE_OURS_1) || passenger->ToPlayer()->HasQuest(QUEST_VENGEANCE_WILL_BE_OURS_2)) {
-                    _events.ScheduleEvent(EVENT_START_BROKENSHORE_PATH, Seconds(1));
-                }
-            }
-        }
-
-        void MovementInform(uint32 type, uint32 pointId) override
-        {
-            if (type == EFFECT_MOTION_TYPE && pointId == pathSize)
-                _events.ScheduleEvent(EVENT_TELEPORT_BROKENSHORE, 200);
-        }
-
-        void UpdateAI(uint32 diff) override
-        {
-            _events.Update(diff);
-
-            if (me->HasUnitState(UNIT_STATE_CASTING))
-                return;
-
-            while (uint32 eventId = _events.ExecuteEvent())
-            {
-                switch (eventId)
-                {
-                case EVENT_START_BROKENSHORE_PATH:
-                    me->GetMotionMaster()->MoveSmoothPath(uint32(pathSize), brokenShorePath, pathSize, false, true);
-                    break;
-                case EVENT_TELEPORT_BROKENSHORE:
-                    me->RemoveAllAuras();
-                    if (Player* player = ObjectAccessor::GetPlayer(*me, _playerGUID)) {
-                        player->KilledMonsterCredit(99250);
-                        player->TeleportTo(1500, Position(-2379.679f, 174.2f, 3.5625f, 3.733872f));
-                    }
-                    me->GetMotionMaster()->MoveTargetedHome();
-                    break;
-                case EVENT_TELEPORT_SURAMAR:
-                    if (Player* player = ObjectAccessor::GetPlayer(*me, _playerGUID)) {
-                        player->KilledMonsterCredit(94321); // 52391
-                        player->TeleportTo(1498, Position(1263.69f, 5236.659f, 93.531f, 2.73693f));
-                    }
-                    break;
-                default:
-                    break;
-                }
-            }
-        }
-    private:
-        EventMap _events;
-        ObjectGuid _playerGUID;
-    };
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_illidari_felbat_94324_AI(creature);
-    }
-};
-
-struct npc_Gryphon_108973 : public ScriptedAI
-{
-    npc_Gryphon_108973(Creature* creature) : ScriptedAI(creature)
-    {
-        me->SetAIAnimKitId(0);
+        me->RemoveNpcFlag(UNIT_NPC_FLAG_SPELLCLICK);
     }
 
     void OnSpellClick(Unit* clicker, bool& /*result*/)
     {
         if (Player* player = clicker->ToPlayer())
         {
-            if (player->HasQuest(42815))
+            if (player->GetQuestStatus(39986) == QUEST_STATUS_INCOMPLETE)
             {
-                me->SetAIAnimKitId(4061);
-                player->CastSpell(player, 197879, true);
-                player->AddDelayedTeleport(2000, 1500, Position(-2379.679f, 174.2f, 3.5625f, 3.733872f));
+                me->RemoveNpcFlag(UNIT_NPC_FLAG_SPELLCLICK);
+                me->UpdateEntry(98267);
+                me->RemoveAurasDueToSpell(193606);
+                DoCastSelf(164233, true);
+                me->Say(100088);//Ith'el kanesh!
+
+                me->GetScheduler().Schedule(Milliseconds(3000), [this](TaskContext context)
+                {
+                    me->Say(100089);//I am Thalyssra of the shal'dorei... the Nightborne. First Arcanist in the court of Suramar.
+                });
+                me->GetScheduler().Schedule(Milliseconds(10000), [this](TaskContext context)
+                {
+                    me->Say(100091);//My people have made a dire pact. One that spells doom for this world.
+                });
+                me->GetScheduler().Schedule(Milliseconds(16000), [this](TaskContext context)
+                {
+                    me->Say(100094);//Time is short. If you have found this message, you are capable of finding me as well.
+                });
+                me->GetScheduler().Schedule(Milliseconds(21000), [this, player](TaskContext context)
+                {
+                    me->Say(100096);//Make haste for Suramar. You may be our last hope.
+                });
+                me->GetScheduler().Schedule(Milliseconds(26000), [this, player](TaskContext context)
+                {
+                    player->KilledMonsterCredit(98266);
+                    me->Say(100256);//Ith\'nala kanesh!
+                    DoCastSelf(164233, true);
+                    me->UpdateEntry(98266);
+                    me->AddAura(193606);
+                });
             }
         }
     }
 };
 
-// npc 109196 (Jace Darkweaver) for the quest 42869 ('Eternal Vigil') and 42872 ('Securing The Way')
-class npc_jace_darkweaver_109196 : public CreatureScript
+struct npc_timofey_oshenko_92194 : public ScriptedAI
 {
-public:
-    npc_jace_darkweaver_109196() : CreatureScript("npc_jace_darkweaver_109196") { }
+    npc_timofey_oshenko_92194(Creature* creature) : ScriptedAI(creature) { }
 
-    enum eJace {
-        QUEST_ETERNAL_VIGIL = 42869,
-        QUEST_SECURING_THE_WAY = 42872,
-        SPELL_SENTENCE_TO_DEATH = 217376,
-    };
-
-    bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest) override
+    void sQuestAccept(Player* player, Quest const* quest) override
     {
-        if (quest->GetQuestId() == QUEST_SECURING_THE_WAY) {
-            player->CastSpell(player, SPELL_SENTENCE_TO_DEATH, true);
-        }
-
-        return true;
-    }
-
-    struct npc_jace_darkweaver_109196_AI : public ScriptedAI
-    {
-        npc_jace_darkweaver_109196_AI(Creature* creature) : ScriptedAI(creature) {}
-
-        void MoveInLineOfSight(Unit* unit) override
+        if (quest->GetQuestId() == 38506)
         {
-            if (Player* player = unit->ToPlayer())
-                if (player->GetDistance(me) < 25.0f)
-                    if (player->GetQuestStatus(QUEST_ETERNAL_VIGIL) == QUEST_STATUS_INCOMPLETE) {
-                        player->CompleteQuest(QUEST_ETERNAL_VIGIL);
-                    }
-        }
-
-    private:
-        EventMap _events;
-    };
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_jace_darkweaver_109196_AI(creature);
-    }
-};
-
-// Remove Action Button when player abandoned the quest
-class q_securing_the_way : public QuestScript
-{
-public:
-    q_securing_the_way() : QuestScript("q_securing_the_way") { }
-
-    void OnQuestStatusChange(Player* player, Quest const* /*quest*/, QuestStatus /*oldStatus*/, QuestStatus newStatus) override
-    {
-        if (newStatus == QUEST_STATUS_NONE)
-        {
-            player->RemoveAurasDueToSpell(217376);
-        }
-    }
-};
-
-// 217377 Sentence To Death
-class spell_redoubt_sentence_to_death : public SpellScript
-{
-    PrepareSpellScript(spell_redoubt_sentence_to_death);
-
-    void HandleOnCast()
-    {
-        if (Player* player = GetCaster()->ToPlayer())
-        {
-            if (Creature* Asha = player->FindNearestCreature(102798, 50.0f))
-                Asha->AI()->SetData(63, 63);
-            if (Creature* Belath = player->FindNearestCreature(102797, 50.0f))
-                Belath->AI()->SetData(64, 64);
+            me->SetWalk(true);
+            me->RemoveNpcFlag(UNIT_NPC_FLAG_QUESTGIVER);
+            Talk(0);
+            player->AddItem(123978, 1);
+            me->GetMotionMaster()->MovePoint(1, Position(-723.837f, 4560.88f, 729.931f, 1.07241f), true);
         }
     }
 
-    void Register() override
-    {
-        OnCast += SpellCastFn(spell_redoubt_sentence_to_death::HandleOnCast);
-    }
-};
-
-struct npc_redoubt_asha : public ScriptedAI
-{
-    npc_redoubt_asha(Creature* creature) : ScriptedAI(creature) { }
-
-    enum eAsha {
-        DATA_ACTION_START = 63,
-        EVENT_RELEASE_SOULS = 1,
-        SPELL_ANQUISHED_SOUL = 203699,
-        SPELL_EYE_BEAM_01 = 194326,
-    };
-
-    void SetData(uint32 id, uint32 /*value*/) override
+    void MovementInform(uint32 /*type*/, uint32 id) override
     {
         switch (id)
         {
-        case DATA_ACTION_START:
-            me->CastSpell(me, 194326, true);
+        case 1:
+            me->HandleEmoteCommand(606);
+            me->GetScheduler().Schedule(5s, [this](TaskContext /*context*/)
+            {
+                Talk(1);
+                me->GetMotionMaster()->MovePoint(2, Position(-726.594f, 4561.29f, 729.72f, 4.70967f), true);
+            });
+            break;
+        case 2:
+            me->SetOrientation(4.682536f);
+            me->AddNpcFlag(UNIT_NPC_FLAG_QUESTGIVER);
+            me->GetScheduler().Schedule(1s, [this](TaskContext /*context*/)
+            {
+                me->GetMotionMaster()->MoveTargetedHome();
+            });
             break;
         default:
             break;
         }
     }
+};
 
-    void KillCapturedWrathguard() {
-        if (Creature* capturedDemon = me->FindNearestCreature(109247, me->GetVisibilityRange(), true)) {
-            for (uint8 i = 0; i < 3; i++) {
-                capturedDemon->CastSpell(-964.113f, 4066.09f, 648.118f, SPELL_ANQUISHED_SOUL, true);
-            }
-            capturedDemon->DisappearAndDie();
+struct npc_archmage_khadgar_112130 : public ScriptedAI
+{
+    npc_archmage_khadgar_112130(Creature* creature) : ScriptedAI(creature) { }
+
+    void sQuestReward(Player* player, Quest const* quest, uint32 /*opt*/)  override
+    {
+        if (quest->GetQuestId() == 44009 || quest->GetQuestId() == 44257)
+            player->CastSpell(player, 228548, true);
+    }
+
+    void sQuestAccept(Player* player, Quest const* quest) override
+    {
+        if (quest->GetQuestId() == 44004)
+        {
+            //220513 target pos -4242.29, -11480.4, 9.495 1624
+            player->SummonGameObject(253930, Position(-805.065f, 4516.756f, 603.943f, 3.9149f), QuaternionData(), 0, true);
         }
+    }
+};
+
+struct npc_wyrmtongue_hoarder_89407 : public ScriptedAI
+{
+    npc_wyrmtongue_hoarder_89407(Creature* creature) : ScriptedAI(creature) {  }
+
+    void OnSpellCasted(SpellInfo const* spellInfo) override
+    {
+        //178997/escape-portal
+        if (spellInfo->Id == 178997)
+        {
+            //122291 reward item
+            std::list<Player*> _list = me->SelectNearestPlayers(25.f, true);
+            if (!_list.empty())
+                for (Player* player : _list)
+                    player->AddItem(122291, 1);
+
+            //me->DespawnOrUnsummon(6000);
+        }
+    }
+
+    void EnterCombat(Unit* /*attacker*/) override
+    {
+        events.Reset();
+        events.ScheduleEvent(1, 5s);
     }
 
     void UpdateAI(uint32 diff) override
     {
-        _events.Update(diff);
-
-        while (uint32 eventId = _events.ExecuteEvent())
+        if (me->getThreatManager().isThreatListEmpty())
         {
-            switch (eventId)
-            {
-            case EVENT_RELEASE_SOULS:
-                KillCapturedWrathguard();
-                break;
-            default:
-                break;
-            }
+            if (roll_chance_i(25))
+                me->GetMotionMaster()->MoveRandom(10.f);
+            return;
         }
-    }
-private:
-    EventMap _events;
-};
-
-struct npc_redoubt_belath : public ScriptedAI
-{
-    npc_redoubt_belath(Creature* creature) : ScriptedAI(creature) { }
-
-    enum eBelath {
-        DATA_ACTION_START = 64,
-        EVENT_RELEASE_SOULS = 1,
-        SPELL_ANQUISHED_SOUL = 203789,
-        SPELL_EYE_BEAM_01 = 194326,
-    };
-
-    void SetData(uint32 id, uint32 /*value*/) override
-    {
-        switch (id)
+        if (!UpdateVictim())
+            return;
+        if (me->HasUnitState(UNIT_STATE_CASTING))
+            return;
+        events.Update(diff);
+        switch (events.ExecuteEvent())
         {
-        case DATA_ACTION_START:
-            me->CastSpell(me, SPELL_EYE_BEAM_01, true);
-            _events.ScheduleEvent(EVENT_RELEASE_SOULS, 1000);
-            break;
-        default:
+        case 1:
+            if (roll_chance_i(25))
+            {
+                me->GetMotionMaster()->MoveFleeing(me->GetVictim(), 5000);
+            }
+            else
+            {
+                me->StopMoving();
+                DoCast(178997);
+            }
+            events.Repeat(5s);
             break;
         }
-    }
-
-    void KillImprisonedImps() {
-        std::list<Creature*> imprisonedImps;
-        me->GetCreatureListWithEntryInGrid(imprisonedImps, 109252, me->GetVisibilityRange());
-        for (std::list<Creature*>::const_iterator itr = imprisonedImps.begin(); itr != imprisonedImps.end(); ++itr)
-        {
-            (*itr)->ToCreature()->CastSpell(-964.113f, 4066.09f, 648.118f, SPELL_ANQUISHED_SOUL, true);
-            (*itr)->ToCreature()->DisappearAndDie();
-        }
-    }
-
-    void UpdateAI(uint32 diff) override
-    {
-        _events.Update(diff);
-
-        while (uint32 eventId = _events.ExecuteEvent())
-        {
-            switch (eventId)
-            {
-            case EVENT_RELEASE_SOULS:
-                KillImprisonedImps();
-                break;
-            default:
-                break;
-            }
-        }
-    }
-    private:
-        EventMap _events;
-};
-
-// 215782 back to black temple
-class spell_redoubt_teleport_to_dh_ch : public SpellScript
-{
-    PrepareSpellScript(spell_redoubt_teleport_to_dh_ch);
-
-    enum eQuest {
-        QUEST_RETURN_TO_MARDUM_41221 = 41221,
-        QUEST_RETURN_TO_MARDUM_41033 = 41033,
-    };
-
-    void HandleOnCast()
-    {
-        if (Player* player = GetCaster()->ToPlayer()) {
-            if (player->GetQuestStatus(QUEST_RETURN_TO_MARDUM_41221) == QUEST_STATUS_INCOMPLETE)
-                player->CompleteQuest(QUEST_RETURN_TO_MARDUM_41221);
-
-            if (player->GetQuestStatus(QUEST_RETURN_TO_MARDUM_41033) == QUEST_STATUS_INCOMPLETE)
-                player->CompleteQuest(QUEST_RETURN_TO_MARDUM_41033);
-
-            player->GetAchievementMgr()->UpdateCriteria(CRITERIA_TYPE_BE_SPELL_TARGET, 215782, 0, 0, player);
-        }
-    }
-
-    void Register() override
-    {
-        OnCast += SpellCastFn(spell_redoubt_teleport_to_dh_ch::HandleOnCast);
     }
 };
 
@@ -2217,36 +1384,18 @@ void AddSC_dalaran_legion()
     new npc_dalaran_karazhan_khadgar();
     new scene_dalaran_kharazan_teleportion();
     new zone_legion_dalaran_underbelly();
-    new npc_hunter_talua();
-    new npc_great_eagle();
-    new player_artifact_choice();
-    new npc_tele_q38970();
-    new npc_quest_48954();
-    new npc_tele_q42454();
-    new npc_quest_49032();
-    new npc_tele_q47223();
-    new npc_tele_q48507();
-    new npc_archmage_khadgar_86563();
-    new npc_archmage_khadgar_90417();
-    new npc_jace_darkweaver_99262();
-    new npc_khadgar_upgraded_servant();
-    new npc_tele_q38564();
-    RegisterCreatureAI(npc_guard_dalaran_legion);
-    new go_a_mysterious_note();
-    RegisterCreatureAI(npc_credit_portal_taken_110409);
     new zone_legion_dalaran();
     new PhaseOnDaralanArea();
     RegisterCreatureAI(npc_emissary_auldbridge_111109);
-    new npc_warden_alturas();
-    new go_legion_communicator();
-    new npc_allari_souleater_104909();
-    new go_violethold_entrance_portal();
-    new npc_illidari_felbat_94324();
-    new npc_jace_darkweaver_109196();
-    new q_securing_the_way();
-    RegisterSpellScript(spell_redoubt_sentence_to_death);
-    RegisterCreatureAI(npc_redoubt_asha);
-    RegisterCreatureAI(npc_redoubt_belath);
-    RegisterSpellScript(spell_redoubt_teleport_to_dh_ch);
-    RegisterCreatureAI(npc_Gryphon_108973);
+    RegisterCreatureAI(npc_guard_dalaran_legion);
+    new go_a_mysterious_note();
+    RegisterCreatureAI(npc_credit_portal_taken_110409);
+    RegisterCreatureAI(npc_nat_pagle_102639);
+    RegisterCreatureAI(npc_hunter_talua);
+    RegisterCreatureAI(npc_great_eagle);
+    RegisterCreatureAI(npc_archmage_khadgar_90417);
+    RegisterCreatureAI(npc_arcane_anomaly_98266);
+    RegisterCreatureAI(npc_timofey_oshenko_92194);
+    RegisterCreatureAI(npc_archmage_khadgar_112130);
+    RegisterCreatureAI(npc_wyrmtongue_hoarder_89407);
 }

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -199,6 +199,8 @@ class TC_GAME_API CreatureAI : public UnitAI
 
         void Talk(uint8 id, WorldObject const* whisperTarget = nullptr);
 
+        void ZoneTalk(uint8 id, WorldObject const* whisperTarget);
+
         /// == Reactions At =================================
 
         // Called if IsVisible(Unit* who) is true at each who move, reaction at visibility zone enter
@@ -262,6 +264,9 @@ class TC_GAME_API CreatureAI : public UnitAI
 
         // Called when a spell is finished
         virtual void OnSpellFinished(SpellInfo const* /*spellInfo*/) { }
+
+        // Called when an aura is removed
+        virtual void OnAuraRemoved(SpellInfo const* /*spellInfo*/) { }
 
         // Called when the creature is target of hostile action: swing, hostile spell landed, fear/etc)
         virtual void AttackedBy(Unit* /*attacker*/) { }

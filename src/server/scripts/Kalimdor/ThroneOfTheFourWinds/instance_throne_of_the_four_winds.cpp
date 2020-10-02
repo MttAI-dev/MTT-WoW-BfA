@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -14,6 +14,8 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
+//Missing scripts and Bosses
 
 #include "throne_of_the_four_winds.h"
 #include "AchievementMgr.h"
@@ -113,7 +115,7 @@ public:
             }
         }
 
-        bool IsEncounterInProgress() const override
+        bool IsEncounterInProgress() const override 
         {
             for (uint8 i = 0; i < ENCOUNTERS; ++i)
             {
@@ -304,12 +306,17 @@ public:
                         case DONE:
                             DoRespawnGameObject(HeartOfWindGUID, 7*DAY);
 
-                            DoOnPlayers([](Player* player)
+                            Map::PlayerList const &players = instance->GetPlayers();
+                            if (players.isEmpty())
+                                break;
+                            for (Map::PlayerList::const_iterator i = players.begin(); i != players.end(); ++i)
                             {
-                                player->GetAchievementMgr()->UpdateCriteria(CRITERIA_TYPE_KILL_CREATURE, 46753, 1);
-                                player->ModifyCurrency(396, 70 * CURRENCY_PRECISION);
-                            });
-
+                                if (Player* player = i->GetSource())
+                                {
+                                    player->GetAchievementMgr()->UpdateCriteria(CRITERIA_TYPE_KILL_CREATURE, 46753, 1);
+                                    player->ModifyCurrency(396, 70 * CURRENCY_PRECISION);
+                                }
+                            }
                             break;
                     }
                     Encounter[1] = data;
@@ -392,7 +399,7 @@ public:
             return true;
         }
 
-        uint32 GetData(uint32 type) const override
+        uint32 GetData(uint32 type) const override 
         {
             switch (type)
             {

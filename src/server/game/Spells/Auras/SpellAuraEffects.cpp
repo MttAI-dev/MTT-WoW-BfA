@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -289,7 +289,7 @@ NonDefaultConstructible<pAuraEffectHandler> AuraEffectHandler[TOTAL_AURAS]=
     &AuraEffect::HandleNULL,                                      //221 SPELL_AURA_MOD_DETAUNT
     &AuraEffect::HandleUnused,                                    //222 unused (3.2.0) only for spell 44586 that not used in real spell cast
     &AuraEffect::HandleUnused,                                    //223 unused (7.2.0)
-    &AuraEffect::HandleUnused,                                    //224 unused (4.3.4)
+    &AuraEffect::HandleEnableExtraTalent,                         //224 SPELL_AURA_ENABLE_EXTRA_TALENT
     &AuraEffect::HandleNULL,                                      //225 SPELL_AURA_MOD_VISIBILITY_RANGE
     &AuraEffect::HandleNoImmediateEffect,                         //226 SPELL_AURA_PERIODIC_DUMMY implemented in AuraEffect::PeriodicTick
     &AuraEffect::HandleNoImmediateEffect,                         //227 SPELL_AURA_PERIODIC_TRIGGER_SPELL_WITH_VALUE implemented in AuraEffect::PeriodicTick
@@ -350,8 +350,8 @@ NonDefaultConstructible<pAuraEffectHandler> AuraEffectHandler[TOTAL_AURAS]=
     &AuraEffect::HandleAuraIncreaseBaseHealthPercent,             //282 SPELL_AURA_INCREASE_BASE_HEALTH_PERCENT
     &AuraEffect::HandleNoImmediateEffect,                         //283 SPELL_AURA_MOD_HEALING_RECEIVED       implemented in Unit::SpellHealingBonus
     &AuraEffect::HandleAuraLinked,                                //284 SPELL_AURA_LINKED
-    &AuraEffect::HandleAuraLinked,                                //285 SPELL_AURA_LINKED_2
-    &AuraEffect::HandleNoImmediateEffect,                         //286 SPELL_AURA_ABILITY_PERIODIC_CRIT implemented in AuraEffect::PeriodicTick
+    &AuraEffect::HandleAuraModAttackPowerOfArmor,                 //285 SPELL_AURA_MOD_ATTACK_POWER_OF_ARMOR  implemented in Player::UpdateAttackPowerAndDamage
+    &AuraEffect::HandleUnused,                                    //286 old SPELL_AURA_ABILITY_PERIODIC_CRIT
     &AuraEffect::HandleNoImmediateEffect,                         //287 SPELL_AURA_DEFLECT_SPELLS             implemented in Unit::MagicSpellHitResult and Unit::MeleeSpellHitResult
     &AuraEffect::HandleNoImmediateEffect,                         //288 SPELL_AURA_IGNORE_HIT_DIRECTION  implemented in Unit::MagicSpellHitResult and Unit::MeleeSpellHitResult Unit::RollMeleeOutcomeAgainst
     &AuraEffect::HandleNoImmediateEffect,                         //289 SPELL_AURA_PREVENT_DURABILITY_LOSS implemented in Player::DurabilityPointsLoss
@@ -389,11 +389,11 @@ NonDefaultConstructible<pAuraEffectHandler> AuraEffectHandler[TOTAL_AURAS]=
     &AuraEffect::HandleAuraModNoActions,                          //321 SPELL_AURA_MOD_NO_ACTIONS
     &AuraEffect::HandleNoImmediateEffect,                         //322 SPELL_AURA_INTERFERE_TARGETTING implemented in Spell::CheckCast
     &AuraEffect::HandleUnused,                                    //323 unused (4.3.4)
-    &AuraEffect::HandleNULL,                                      //324 SPELL_AURA_324
-    &AuraEffect::HandleUnused,                                    //325 SPELL_AURA_LEARN_PVP_TALENT
+    &AuraEffect::HandleNULL,                                      //324 SPELL_AURA_OVERRIDE_UNLOCKED_AZERITE_ESSENCE_RANK
+    &AuraEffect::HandleUnused,                                    //325 unused (4.3.4)
     &AuraEffect::HandlePhaseGroup,                                //326 SPELL_AURA_PHASE_GROUP
     &AuraEffect::HandleUnused,                                    //327 unused (4.3.4)
-    &AuraEffect::HandleNULL,                                      //328 SPELL_AURA_TRIGGER_SPELL_ON_POWER_PCT
+    &AuraEffect::HandleTriggerSpellOnPowerPercent,                //328 SPELL_AURA_TRIGGER_SPELL_ON_POWER_PCT
     &AuraEffect::HandleNULL,                                      //329 SPELL_AURA_MOD_POWER_GAIN_PCT
     &AuraEffect::HandleNoImmediateEffect,                         //330 SPELL_AURA_CAST_WHILE_WALKING
     &AuraEffect::HandleAuraForceWeather,                          //331 SPELL_AURA_FORCE_WEATHER
@@ -487,7 +487,7 @@ NonDefaultConstructible<pAuraEffectHandler> AuraEffectHandler[TOTAL_AURAS]=
     &AuraEffect::HandleAuraModIncreaseBaseManaPercent,            //419 SPELL_AURA_MOD_BASE_MANA_PCT
     &AuraEffect::HandleNULL,                                      //420 SPELL_AURA_MOD_BATTLE_PET_XP_PCT
     &AuraEffect::HandleNoImmediateEffect,                         //421 SPELL_AURA_MOD_ABSORB_EFFECTS_AMOUNT_PCT
-    &AuraEffect::HandleNoImmediateEffect,                         //422 SPELL_AURA_MOD_ABSORB_EFFECTS_AMOUNT_PCT_2
+    &AuraEffect::HandleNoImmediateEffect,                         //422 SPELL_AURA_MOD_ABSORB_EFFECTS_TAKEN_PCT
     &AuraEffect::HandleNULL,                                      //423
     &AuraEffect::HandleNULL,                                      //424
     &AuraEffect::HandleNULL,                                      //425
@@ -545,7 +545,7 @@ NonDefaultConstructible<pAuraEffectHandler> AuraEffectHandler[TOTAL_AURAS]=
     &AuraEffect::HandleNULL,                                      //477
     &AuraEffect::HandleNULL,                                      //478
     &AuraEffect::HandleNULL,                                      //479
-    &AuraEffect::HandleNULL,                                      //480
+    &AuraEffect::HandleNULL,                                      //480 SPELL_AURA_MOD_ARTIFACT_ITEM_LEVEL
     &AuraEffect::HandleNoImmediateEffect,                         //481 SPELL_AURA_CONVERT_CONSUMED_RUNE implemented in Spell::TakeRunePower
     &AuraEffect::HandleProfilCamera,                              //482 SPELL_AURA_PROFIL_CAMERA
     &AuraEffect::HandleNULL,                                      //483 SPELL_AURA_SUPPRESS_TRANSFORMS
@@ -642,7 +642,7 @@ int32 AuraEffect::CalculateAmount(Unit* caster)
                 for (AuraEffect const* bonus : absorbBonuses)
                     AddPct(amount, bonus->GetAmount());
 
-                Unit::AuraEffectList const& absorbBonuses2 = caster->GetAuraEffectsByType(SPELL_AURA_MOD_ABSORB_EFFECTS_AMOUNT_PCT_2);
+                Unit::AuraEffectList const& absorbBonuses2 = caster->GetAuraEffectsByType(SPELL_AURA_MOD_ABSORB_EFFECTS_TAKEN_PCT);
                 for (AuraEffect const* bonus : absorbBonuses2)
                     AddPct(amount, bonus->GetAmount());
             }
@@ -666,8 +666,24 @@ int32 AuraEffect::CalculateAmount(Unit* caster)
                 amount = caster->GetMap()->GetDifficultyID();
             m_canBeRecalculated = false;
             break;
+        case SPELL_AURA_MELEE_SLOW:
+        {
+            switch (m_spellInfo->Id)
+            {
+            case 195181: // Bone Shield
+            {
+                multiplyByStackAmount = false; // This effect not stack
+                break;
+            }
+            default:
+                break;
+            }
+            break;
+        }
+
         // Those effects do not change with StackAmount
         case SPELL_AURA_OVERRIDE_ACTIONBAR_SPELLS:
+
         case SPELL_AURA_OVERRIDE_ACTIONBAR_SPELLS_TRIGGERED:
             multiplyByStackAmount = false;
             break;
@@ -4243,6 +4259,48 @@ void AuraEffect::HandleModRatingPct(AuraApplication const* aurApp, uint8 mode, b
             target->ToPlayer()->UpdateRating(CombatRating(rating));
 }
 
+void AuraEffect::HandleEnableExtraTalent(AuraApplication const* aurApp, uint8 mode, bool apply) const
+{
+    if (!(mode & AURA_EFFECT_HANDLE_REAL))
+        return;
+
+    if (Unit* target = aurApp->GetTarget())
+    {
+        if (Player* plr = target->ToPlayer())
+        {
+            if (TalentEntry const* talentEntry = sTalentStore.LookupEntry(GetMiscValue()))
+            {
+                for (uint32 t = 0; t < MAX_TALENT_COLUMNS; ++t)
+                    if (plr->HasTalent(talentEntry->ID, plr->GetActiveTalentGroup()))
+                        return;
+
+                bool hasItem = false;
+                uint32 itemId = GetMiscValueB();
+
+                for (uint8 i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; i++)
+                {
+                    if (Item* pItem = plr->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+                    {
+                        if (pItem->GetEntry() == itemId)
+                        {
+                            hasItem = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!hasItem || !apply)
+                {
+                    plr->RemoveSpell(talentEntry->SpellID);
+                    return;
+                }
+
+                plr->LearnSpell(talentEntry->SpellID, false);
+            }
+        }
+    }
+}
+
 /********************************/
 /***        ATTACK POWER      ***/
 /********************************/
@@ -4293,6 +4351,18 @@ void AuraEffect::HandleAuraModRangedAttackPowerPercent(AuraApplication const* au
 
     //UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER = multiplier - 1
     target->HandleStatModifier(UNIT_MOD_ATTACK_POWER_RANGED, TOTAL_PCT, float(GetAmount()), apply);
+}
+
+void AuraEffect::HandleAuraModAttackPowerOfArmor(AuraApplication const* aurApp, uint8 mode, bool /*apply*/) const
+{
+    if (!(mode & (AURA_EFFECT_HANDLE_CHANGE_AMOUNT_MASK | AURA_EFFECT_HANDLE_STAT)))
+        return;
+
+    Unit* target = aurApp->GetTarget();
+
+    // Recalculate bonus
+    if (target->GetTypeId() == TYPEID_PLAYER)
+        target->ToPlayer()->UpdateAttackPowerAndDamage(false);
 }
 
 /********************************/
@@ -4467,7 +4537,7 @@ void AuraEffect::HandleAuraRetainComboPoints(AuraApplication const* aurApp, uint
     // combo points was added in SPELL_EFFECT_ADD_COMBO_POINTS handler
     // remove only if aura expire by time (in case combo points amount change aura removed without combo points lost)
     if (!apply && aurApp->GetRemoveMode() == AURA_REMOVE_BY_EXPIRE)
-        target->ToPlayer()->AddComboPoints(-GetAmount());
+        target->ToPlayer()->ModifyPower(POWER_COMBO_POINTS,(-GetAmount()));
 }
 
 /*********************************************************/
@@ -4483,15 +4553,15 @@ void AuraEffect::HandleAuraDummy(AuraApplication const* aurApp, uint8 mode, bool
 
     Unit* caster = GetCaster();
 
-    // pet auras
-    if (target->GetTypeId() == TYPEID_PLAYER && (mode & AURA_EFFECT_HANDLE_REAL))
+    if (mode & AURA_EFFECT_HANDLE_REAL)
     {
+        // pet auras
         if (PetAura const* petSpell = sSpellMgr->GetPetAura(GetId(), m_effIndex))
         {
             if (apply)
-                target->ToPlayer()->AddPetAura(petSpell);
+                target->AddPetAura(petSpell);
             else
-                target->ToPlayer()->RemovePetAura(petSpell);
+                target->RemovePetAura(petSpell);
         }
     }
 
@@ -4992,6 +5062,26 @@ void AuraEffect::HandleAuraLinked(AuraApplication const* aurApp, uint8 mode, boo
         if (Aura* triggeredAura = target->GetAura(triggeredSpellId, casterGUID))
             triggeredAura->ModStackAmount(GetBase()->GetStackAmount() - triggeredAura->GetStackAmount());
     }
+}
+
+void AuraEffect::HandleTriggerSpellOnPowerPercent(AuraApplication const* aurApp, uint8 mode, bool apply) const
+{
+    if (!(mode & AURA_EFFECT_HANDLE_REAL))
+        return;
+
+    if (!apply)
+        return;
+
+    Unit* target = aurApp->GetTarget();
+
+    uint32 powerAmount = target->GetPower(Powers(GetMiscValue()));
+    uint32 maxPowerAmount = target->GetMaxPower(Powers(GetMiscValue()));
+
+    float powerAmountPct = GetPctOf(powerAmount, std::max(powerAmount, maxPowerAmount));
+
+    if ((GetMiscValueB() == POWER_PROC_UPPER && powerAmountPct >= GetAmount()) ||
+        (GetMiscValueB() == POWER_PROC_LOWER && powerAmountPct <= GetAmount()))
+        target->CastSpell(target, GetSpellEffectInfo()->TriggerSpell, true);
 }
 
 void AuraEffect::HandleTriggerSpellOnPowerAmount(AuraApplication const* aurApp, uint8 mode, bool apply) const
@@ -5544,7 +5634,12 @@ void AuraEffect::HandlePeriodicTriggerSpellAuraTick(Unit* target, Unit* caster) 
         }
     }
     else
-        TC_LOG_DEBUG("spells", "AuraEffect::HandlePeriodicTriggerSpellAuraTick: Spell %u has non-existent spell %u in EffectTriggered[%d] and is therefor not triggered.", GetId(), triggerSpellId, GetEffIndex());
+    {
+        Creature* c = target->ToCreature();
+        if (!c || !caster || !sScriptMgr->OnDummyEffect(caster, GetId(), SpellEffIndex(GetEffIndex()), target->ToCreature()) ||
+            !c->AI()->sOnDummyEffect(caster, GetId(), SpellEffIndex(GetEffIndex())))
+            TC_LOG_DEBUG("spells", "AuraEffect::HandlePeriodicTriggerSpellAuraTick: Spell %u has non-existent spell %u in EffectTriggered[%d] and is therefor not triggered.", GetId(), triggerSpellId, GetEffIndex());
+    }
 }
 
 void AuraEffect::HandlePeriodicTriggerSpellWithValueAuraTick(Unit* target, Unit* caster) const
@@ -5715,14 +5810,7 @@ void AuraEffect::HandlePeriodicDamageAurasTick(Unit* target, Unit* caster) const
 
 bool AuraEffect::IsAreaAuraEffect() const
 {
-    if (_effectInfo->Effect == SPELL_EFFECT_APPLY_AREA_AURA_PARTY ||
-        _effectInfo->Effect == SPELL_EFFECT_APPLY_AREA_AURA_RAID ||
-        _effectInfo->Effect == SPELL_EFFECT_APPLY_AREA_AURA_FRIEND ||
-        _effectInfo->Effect == SPELL_EFFECT_APPLY_AREA_AURA_ENEMY ||
-        _effectInfo->Effect == SPELL_EFFECT_APPLY_AREA_AURA_PET ||
-        _effectInfo->Effect == SPELL_EFFECT_APPLY_AREA_AURA_OWNER)
-        return true;
-    return false;
+    return _effectInfo->IsAreaAuraEffect();
 }
 
 void AuraEffect::HandlePeriodicHealthLeechAuraTick(Unit* target, Unit* caster) const
@@ -6336,7 +6424,7 @@ void AuraEffect::HandleOverrideZonePvpType(AuraApplication const* aurApp, uint8 
     else
     {
         // restore FFA PvP area state
-        player->UpdateArea(player->GetAreaIdFromPosition());
+        player->UpdateArea(player->GetAreaId());
     }
 }
 
@@ -6411,13 +6499,13 @@ void AuraEffect::HandleAuraWarMode(AuraApplication const* auraApp, uint8 mode, b
         {
             target->TogglePvpTalents(true);
             target->AddPlayerFlag(PLAYER_FLAGS_WAR_MODE_ACTIVE);
-            target->AddPlayerLocalFlag(PLAYER_LOCAL_FLAG_WAR_MODE);
+            target->AddPlayerFlag(PLAYER_FLAGS_WAR_MODE_DESIRED);
         }
         else if (!target->HasAuraType(SPELL_AURA_WAR_MODE))
         {
             target->TogglePvpTalents(false);
             target->RemovePlayerFlag(PLAYER_FLAGS_WAR_MODE_ACTIVE);
-            target->RemovePlayerLocalFlag(PLAYER_LOCAL_FLAG_WAR_MODE);
+            target->RemovePlayerFlag(PLAYER_FLAGS_WAR_MODE_DESIRED);
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -636,4 +636,13 @@ void WorldSession::HandleUpdateMissileTrajectory(WorldPackets::Spells::UpdateMis
 void WorldSession::HandleRequestCategoryCooldowns(WorldPackets::Spells::RequestCategoryCooldowns& /*requestCategoryCooldowns*/)
 {
     _player->SendSpellCategoryCooldowns();
+}
+
+void WorldSession::HandleUpdateSpellVisualOpcode(WorldPackets::Spells::UpdateSpellVisual& packet)
+{
+    if (Aura* aura = GetPlayer()->GetAura(packet.SpellID))
+    {
+        aura->SetSpellXSpellVisualId(packet.SpellXSpellVisualId);
+        aura->SetNeedClientUpdateForTargets();
+    }
 }

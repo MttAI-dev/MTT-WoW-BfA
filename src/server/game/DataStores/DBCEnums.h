@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -190,17 +190,6 @@ enum AzeriteTierUnlockSetFlags
 
 #define BATTLE_PET_SPECIES_MAX_ID 2873
 
-enum BattlemasterListFlags
-{
-    BATTLEMASTER_LIST_FLAG_DISABLED             = 0x01,
-    BATTLEMASTER_LIST_FLAG_SKIP_ROLE_CHECK      = 0x02,
-    BATTLEMASTER_LIST_FLAG_UNK04                = 0x04,
-    BATTLEMASTER_LIST_FLAG_CAN_INIT_WAR_GAME    = 0x08,
-    BATTLEMASTER_LIST_FLAG_CAN_SPECIFIC_QUEUE   = 0x10,
-    BATTLEMASTER_LIST_FLAG_BRAWL                = 0x20,
-    BATTLEMASTER_LIST_FLAG_FACTIONAL            = 0x40
-};
-
 enum BattlePetSpeciesFlags
 {
     BATTLE_PET_SPECIES_FLAG_NOT_CAPTURABLE  = 0x400
@@ -215,6 +204,17 @@ enum BattlePetSpeciesSourceType
     BATTLE_PET_SPECIES_SOURCE_WILD_PET      = 4,
     BATTLE_PET_SPECIES_SOURCE_ACHIEVEMENT   = 5,
     BATTLE_PET_SPECIES_SOURCE_WORLD_EVENT   = 6,
+};
+
+enum BattlemasterListFlags
+{
+    BATTLEMASTER_LIST_FLAG_DISABLED             = 0x01,
+    BATTLEMASTER_LIST_FLAG_SKIP_ROLE_CHECK      = 0x02,
+    BATTLEMASTER_LIST_FLAG_UNK04                = 0x04,
+    BATTLEMASTER_LIST_FLAG_CAN_INIT_WAR_GAME    = 0x08,
+    BATTLEMASTER_LIST_FLAG_CAN_SPECIFIC_QUEUE   = 0x10,
+    BATTLEMASTER_LIST_FLAG_BRAWL                = 0x20,
+    BATTLEMASTER_LIST_FLAG_FACTIONAL            = 0x40
 };
 
 enum ChrSpecializationFlag
@@ -560,6 +560,7 @@ enum CriteriaTimedTypes : uint8
     CRITERIA_TIMED_TYPE_UNK             = 10,   // Unknown
     CRITERIA_TIMED_TYPE_UNK_2           = 13,   // Unknown
     CRITERIA_TIMED_TYPE_SCENARIO_STAGE  = 14,   // Timer is started by changing stages in a scenario
+	CRITERIA_TIMED_TYPE_EVENT2          = 15,   // Timer is started by internal event with id in timerStartEvent
 
     CRITERIA_TIMED_TYPE_MAX
 };
@@ -1038,7 +1039,8 @@ enum MapFlags2
 enum AbilytyLearnType
 {
     SKILL_LINE_ABILITY_LEARNED_ON_SKILL_VALUE  = 1, // Spell state will update depending on skill value
-    SKILL_LINE_ABILITY_LEARNED_ON_SKILL_LEARN  = 2  // Spell will be learned/removed together with entire skill
+    SKILL_LINE_ABILITY_LEARNED_ON_SKILL_LEARN  = 2, // Spell will be learned/removed together with entire skill
+    SKILL_LINE_ABILITY_REWARDED_FROM_QUEST     = 4  // Learned as quest reward, also re-learned if missing
 };
 
 enum GlyphSlotType
@@ -1098,7 +1100,8 @@ enum ItemBonusType
     ITEM_BONUS_OVERRIDE_REQUIRED_LEVEL          = 18,
     ITEM_BONUS_AZERITE_TIER_UNLOCK_SET          = 19,
     ITEM_BONUS_OVERRIDE_CAN_DISENCHANT          = 21,
-    ITEM_BONUS_OVERRIDE_CAN_SCRAP               = 22
+    ITEM_BONUS_OVERRIDE_CAN_SCRAP               = 22,
+    ITEM_BONUS_ITEM_EFFECT_ID                   = 23,
 };
 
 enum class ItemContext : uint8
@@ -1161,6 +1164,7 @@ enum class ItemContext : uint8
     World_Quest_13          = 55,
     PVP_Ranked_Jackpot      = 56,
     Tournament_Realm        = 57,
+    Relinquished            = 58,
 };
 
 enum ItemLimitCategoryMode
@@ -1583,6 +1587,8 @@ enum CurrencyTypes
     CURRENCY_TYPE_SECRET_OF_DRAENOR_BLACKSMITHING   = 1020,
     CURRENCY_TYPE_OIL                               = 1101,
     CURRENCY_TYPE_AZERITE                           = 1553,
+    CURRENCY_TYPE_CONQUEST_BFA                      = 1602,
+    CURRENCY_TYPE_BFA_SEASON_RATED                  = 1703
 };
 
 enum WorldMapTransformsFlags

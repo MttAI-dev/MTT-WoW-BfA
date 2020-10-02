@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,6 +37,8 @@ namespace UF
         UnitAll = 0x04,
         Empath = 0x08
     };
+
+    DEFINE_ENUM_FLAG(UpdateFieldFlag);
 
     template<typename T, uint32 BlockBit, uint32 Bit>
     class UpdateField;
@@ -381,7 +383,6 @@ namespace UF
                 uf._values.resize(index + 1);
                 uf._updateMask.resize((uf._values.size() + 31) / 32);
             }
-
             MarkChanged(field);
             (static_cast<Derived*>(this)->*field).MarkChanged(index);
             return { uf._values[index] };
@@ -450,6 +451,8 @@ namespace UF
         template<typename Derived, typename T, uint32 BlockBit, uint32 Bit>
         void ClearChanged(DynamicUpdateField<T, BlockBit, Bit>(Derived::* field), uint32 index)
         {
+            static_assert(std::is_base_of<Base, Derived>::value, "Given field argument must belong to the same structure as this HasChangesMask");
+
             _changesMask.Reset(Bit);
             (static_cast<Derived*>(this)->*field).ClearChanged(index);
         }
@@ -457,11 +460,9 @@ namespace UF
         template<typename Derived, typename T, uint32 BlockBit, uint32 Bit>
         void ClearChanged(OptionalUpdateField<T, BlockBit, Bit>(Derived::*))
         {
-            static_assert(std::is_base_of<Base, Derived>::value, "Given field argument must belong to the same structure as this HasChangesMask");
 
             _changesMask.Reset(Bit);
         }
-
         Mask const& GetChangesMask() const { return _changesMask; }
 
     protected:

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -77,10 +77,13 @@ void AreaTrigger::RemoveFromWorld()
         if (Unit* caster = GetCaster())
             caster->_UnregisterAreaTrigger(this);
 
+        _ai->OnRemove();
+
         // Handle removal of all units, calling OnUnitExit & deleting auras if needed
         HandleUnitEnterExit({});
 
-        _ai->OnRemove();
+        if (_ai)
+            _ai->OnRemove();
 
         WorldObject::RemoveFromWorld();
         GetMap()->GetObjectsStore().Remove<AreaTrigger>(GetGUID());
@@ -186,10 +189,6 @@ bool AreaTrigger::Create(uint32 spellMiscId, Unit* caster, Unit* target, SpellIn
     else if (GetMiscTemplate()->HasSplines())
     {
         InitSplineOffsets(GetMiscTemplate()->SplinePoints, timeToTarget);
-    }
-    else if (GetTemplate()->HasFlag(AREATRIGGER_FLAG_HAS_CIRCULAR_MOVEMENT))
-    {
-        SetUpdateFieldValue(areaTriggerData.ModifyValue(&UF::AreaTriggerData::TimeToTarget), timeToTarget);
     }
 
     // movement on transport of areatriggers on unit is handled by themself
@@ -371,6 +370,17 @@ void AreaTrigger::SetDuration(int32 newDuration)
     SetUpdateFieldValue(m_values.ModifyValue(&AreaTrigger::m_areaTriggerData).ModifyValue(&UF::AreaTriggerData::Duration), std::max(newDuration, 0));
 }
 
+GuidUnorderedSet const AreaTrigger::GetInsidePlayers() const
+{
+    GuidUnorderedSet insidePlayers;
+    std::copy_if(_insideUnits.begin(), _insideUnits.end(), std::inserter(insidePlayers, insidePlayers.begin()), [](ObjectGuid guid)
+    {
+        return guid.IsPlayer();
+    });
+
+    return insidePlayers;
+}
+
 void AreaTrigger::_UpdateDuration(int32 newDuration)
 {
     _duration = newDuration;
@@ -415,11 +425,25 @@ void AreaTrigger::SearchUnitInSphere(std::list<Unit*>& targetList)
     float radius = GetTemplate()->SphereDatas.Radius;
     if (GetTemplate()->HasFlag(AREATRIGGER_FLAG_HAS_DYNAMIC_SHAPE))
     {
-        if (GetMiscTemplate() && GetMiscTemplate()->MorphCurveId)
+        if (AreaTriggerMiscTemplate const* miscTemplate = GetMiscTemplate())
         {
-            radius = G3D::lerp(GetTemplate()->SphereDatas.Radius,
-                GetTemplate()->SphereDatas.RadiusTarget,
-                sDB2Manager.GetCurveValueAt(GetMiscTemplate()->MorphCurveId, GetProgress()));
+            if (miscTemplate->MorphCurveId)
+            {
+                radius = G3D::lerp(GetTemplate()->SphereDatas.Radius,
+                    GetTemplate()->SphereDatas.RadiusTarget,
+                    sDB2Manager.GetCurveValueAt(miscTemplate->MorphCurveId, GetProgress()));
+            }
+            else if (miscTemplate->ScaleCurveId)
+            {
+                float initialRadius = .0f;
+
+                if (GetTemplate()->SphereDatas.Radius != GetTemplate()->SphereDatas.RadiusTarget)
+                    initialRadius = GetTemplate()->SphereDatas.Radius;
+
+                radius = G3D::lerp(initialRadius,
+                    GetTemplate()->SphereDatas.RadiusTarget,
+                    sDB2Manager.GetCurveValueAt(miscTemplate->ScaleCurveId, GetProgress()));
+            }
         }
     }
 
@@ -537,7 +561,8 @@ void AreaTrigger::HandleUnitEnterExit(std::list<Unit*> const& newTargetList)
 
             UndoActions(leavingUnit);
 
-            _ai->OnUnitExit(leavingUnit);
+            if (_ai)
+                _ai->OnUnitExit(leavingUnit);
         }
     }
 }
@@ -773,7 +798,7 @@ void AreaTrigger::InitSplines(std::vector<G3D::Vector3> splinePoints, uint32 tim
 
     _movementTime = 0;
 
-    _spline = Trinity::make_unique<::Movement::Spline<int32>>();
+    _spline = std::make_unique<::Movement::Spline<int32>>();
     _spline->init_spline(&splinePoints[0], splinePoints.size(), ::Movement::SplineBase::ModeCatmullrom);
     _spline->initLengths();
 

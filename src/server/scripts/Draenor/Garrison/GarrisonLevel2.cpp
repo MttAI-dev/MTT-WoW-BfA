@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,6 +22,8 @@
 
 enum Quests
 {
+    QUEST_BIGGER_IS_BETTER_H    = 36567,
+    QUEST_BIGGER_IS_BETTER_A    = 36592,
     QUEST_MY_VERY_OWN_FORTRESS  = 36614,
     QUEST_MY_VERY_OWN_CASTLE    = 36615,
 };
@@ -37,6 +39,14 @@ struct garrison_level_2 : public GarrisonAI
     {
         return garrison->GetOwner()->HasQuest(QUEST_MY_VERY_OWN_FORTRESS) ||
                garrison->GetOwner()->HasQuest(QUEST_MY_VERY_OWN_CASTLE);
+    }
+
+    void OnUpgrade(Player* player) override
+    {
+        if (garrison->GetOwner()->HasQuest(QUEST_BIGGER_IS_BETTER_H))
+            garrison->GetOwner()->ForceCompleteQuest(QUEST_BIGGER_IS_BETTER_H);
+        if (garrison->GetOwner()->HasQuest(QUEST_BIGGER_IS_BETTER_A))
+            garrison->GetOwner()->ForceCompleteQuest(QUEST_BIGGER_IS_BETTER_A);
     }
 };
 

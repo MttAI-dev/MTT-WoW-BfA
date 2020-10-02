@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,6 +20,12 @@
 #include "Player.h"
 #include "ScriptMgr.h"
 
+enum Quests
+{
+    QUEST_MY_VERY_OWN_FORTRESS = 36614,
+    QUEST_MY_VERY_OWN_CASTLE = 36615,
+};
+
 /*
  * Common scripts for garrison level 3 Alliance & Horde
  */
@@ -30,6 +36,14 @@ struct garrison_level_3 : public GarrisonAI
     bool OnCheckUpgradeable() override
     {
         return false;
+    }
+
+    void OnUpgrade(Player* player) override
+    {
+        if (garrison->GetOwner()->HasQuest(QUEST_MY_VERY_OWN_FORTRESS))
+            garrison->GetOwner()->ForceCompleteQuest(QUEST_MY_VERY_OWN_FORTRESS);
+        if (garrison->GetOwner()->HasQuest(QUEST_MY_VERY_OWN_CASTLE))
+            garrison->GetOwner()->ForceCompleteQuest(QUEST_MY_VERY_OWN_CASTLE);
     }
 };
 

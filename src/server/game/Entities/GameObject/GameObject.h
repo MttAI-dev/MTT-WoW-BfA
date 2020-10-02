@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -84,15 +84,14 @@ class TC_GAME_API GameObject : public WorldObject, public GridObject<GameObject>
     public:
         explicit GameObject();
         ~GameObject();
+protected:
 
-    protected:
         void BuildValuesCreate(ByteBuffer* data, Player const* target) const override;
         void BuildValuesUpdate(ByteBuffer* data, Player const* target) const override;
         void ClearUpdateMask(bool remove) override;
-
-    public:
-        void BuildValuesUpdateForPlayerWithMask(UpdateData* data, UF::ObjectData::Mask const& requestedObjectMask,
-            UF::GameObjectData::Mask const& requestedGameObjectMask, Player const* target) const;
+public:
+    void BuildValuesUpdateForPlayerWithMask(UpdateData* data, UF::ObjectData::Mask const& requestedObjectMask,
+        UF::GameObjectData::Mask const& requestedGameObjectMask, Player const* target) const;
 
         void AddToWorld() override;
         void RemoveFromWorld() override;
@@ -218,6 +217,7 @@ class TC_GAME_API GameObject : public WorldObject, public GridObject<GameObject>
         void ResetLootMode() { m_LootMode = LOOT_MODE_DEFAULT; }
         void SetLootGenerationTime() { m_lootGenerationTime = time(nullptr); }
         uint32 GetLootGenerationTime() const { return m_lootGenerationTime; }
+        void SetInstanceLootMode();
 
         void AddToSkillupList(ObjectGuid const& PlayerGuidLow) { m_SkillupList.insert(PlayerGuidLow); }
         bool IsInSkillupList(ObjectGuid const& playerGuid) const

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -209,12 +209,12 @@ public:
         // AddDrakeLootMode() should only ever be called from FetchDragons(), which is called from Aggro()
         void AddDrakeLootMode()
         {
-            if (me->HasLootMode(LOOT_MODE_HARD_MODE_2))      // Has two Drake loot modes
-                me->AddLootMode(LOOT_MODE_HARD_MODE_3);      // Add 3rd Drake loot mode
-            else if (me->HasLootMode(LOOT_MODE_HARD_MODE_1)) // Has one Drake loot mode
-                me->AddLootMode(LOOT_MODE_HARD_MODE_2);      // Add 2nd Drake loot mode
+            if (me->HasLootMode(LOOT_MODE_25_N))      // Has two Drake loot modes
+                me->AddLootMode(LOOT_MODE_MYTHIC_KEYSTONE);      // Add 3rd Drake loot mode
+            else if (me->HasLootMode(LOOT_MODE_HEROIC)) // Has one Drake loot mode
+                me->AddLootMode(LOOT_MODE_25_N);      // Add 2nd Drake loot mode
             else                                             // Has no Drake loot modes
-                me->AddLootMode(LOOT_MODE_HARD_MODE_1);      // Add 1st Drake loot mode
+                me->AddLootMode(LOOT_MODE_HEROIC);      // Add 1st Drake loot mode
         }
 
         void DrakeRespawn() // Drakes respawning system

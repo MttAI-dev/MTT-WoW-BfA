@@ -1,0 +1,20 @@
+-- Alliance Portals Room 252247
+delete from `gameobject` where `guid` IN (280200645,280200661,280200663,280200664,280200666,280200667,280200677,280200679);
+insert into `gameobject` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnDifficulties`, `phaseUseFlags`, `PhaseId`, `PhaseGroup`, `terrainSwapMap`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`, `isActive`, `ScriptName`, `VerifiedBuild`) values('280200645','252247','0','0','0','0','0','0','0','-1','-9001.42','866.494','66.003','5.34799','-0','-0','-0.450745','0.892653','300','255','1','0','','0');
+insert into `gameobject` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnDifficulties`, `phaseUseFlags`, `PhaseId`, `PhaseGroup`, `terrainSwapMap`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`, `isActive`, `ScriptName`, `VerifiedBuild`) values('280200661','191013','0','0','0','0','0','0','0','-1','-9006.11','965.246','68.2213','2.26373','-0','-0','-0.905206','-0.424973','300','255','1','0','','0');
+insert into `gameobject` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnDifficulties`, `phaseUseFlags`, `PhaseId`, `PhaseGroup`, `terrainSwapMap`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`, `isActive`, `ScriptName`, `VerifiedBuild`) values('280200663','191007','0','0','0','0','0','0','0','-1','-9023.32','952.205','68.3365','2.28493','-0','-0','-0.909661','-0.415353','300','255','1','0','','0');
+insert into `gameobject` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnDifficulties`, `phaseUseFlags`, `PhaseId`, `PhaseGroup`, `terrainSwapMap`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`, `isActive`, `ScriptName`, `VerifiedBuild`) values('280200664','233610','0','0','0','0','0','0','0','-1','-9061.05','887.079','68.3453','5.35898','-0','-0','-0.445833','0.895116','300','255','1','0','','0');
+insert into `gameobject` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnDifficulties`, `phaseUseFlags`, `PhaseId`, `PhaseGroup`, `terrainSwapMap`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`, `isActive`, `ScriptName`, `VerifiedBuild`) values('280200666','244510','0','0','0','0','0','0','0','-1','-8988.8','942.587','68.1316','5.33777','-0','-0','-0.4553','0.890338','300','255','1','0','','0');
+insert into `gameobject` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnDifficulties`, `phaseUseFlags`, `PhaseId`, `PhaseGroup`, `terrainSwapMap`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`, `isActive`, `ScriptName`, `VerifiedBuild`) values('280200667','315457','0','0','0','0','0','0','0','-1','-9005.32','928.766','68.0816','5.37861','-0','-0','-0.437026','0.899449','300','255','1','0','','0');
+insert into `gameobject` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnDifficulties`, `phaseUseFlags`, `PhaseId`, `PhaseGroup`, `terrainSwapMap`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`, `isActive`, `ScriptName`, `VerifiedBuild`) values('280200679','302854','0','0','0','0','0','0','0','-1','-9077.82','908.862','68.3322','2.20952','-0','-0','-0.893357','-0.449348','300','255','1','0','','0');
+
+
+DELETE FROM `areatrigger_teleport` WHERE `id` IN (-71,-72);
+INSERT INTO `areatrigger_teleport` (`Id`,`PortLocID`,`Name`) VALUES
+(-71,7338,'Alliance Portal Room'),
+(-72,7264,'Alliance Portal Room Interior');
+
+DELETE FROM `areatrigger` WHERE `guid` IN (71,72);
+INSERT INTO `areatrigger` VALUES
+(71,100007,0,1,-9020.66,882.828,153.134,''),
+(72,100007,0,1,-8999.78,864.280,65.8912,'');

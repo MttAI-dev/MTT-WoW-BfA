@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -87,11 +87,11 @@ class boss_shattered_executioner : public CreatureScript
                 // _Reset() resets the loot mode, so we add them again, if any
                 uint32 prisonersExecuted = instance->GetData(DATA_PRISONERS_EXECUTED);
                 if (prisonersExecuted == 0)
-                    me->AddLootMode(LOOT_MODE_HARD_MODE_3);
+                    me->AddLootMode(LOOT_MODE_MYTHIC_KEYSTONE);
                 if (prisonersExecuted <= 1)
-                    me->AddLootMode(LOOT_MODE_HARD_MODE_2);
+                    me->AddLootMode(LOOT_MODE_25_N);
                 if (prisonersExecuted <= 2)
-                    me->AddLootMode(LOOT_MODE_HARD_MODE_1);
+                    me->AddLootMode(LOOT_MODE_HEROIC);
 
                 if (instance->GetBossState(DATA_KARGATH) == DONE)
                     me->RemoveUnitFlag(UNIT_FLAG_IMMUNE_TO_PC);
@@ -142,11 +142,11 @@ class boss_shattered_executioner : public CreatureScript
                     switch (data)
                     {
                         case 3:
-                            me->RemoveLootMode(LOOT_MODE_HARD_MODE_1);
+                            me->RemoveLootMode(LOOT_MODE_HEROIC);
                         case 2:
-                            me->RemoveLootMode(LOOT_MODE_HARD_MODE_2);
+                            me->RemoveLootMode(LOOT_MODE_25_N);
                         case 1:
-                            me->RemoveLootMode(LOOT_MODE_HARD_MODE_3);
+                            me->RemoveLootMode(LOOT_MODE_MYTHIC_KEYSTONE);
                     }
                 }
             }

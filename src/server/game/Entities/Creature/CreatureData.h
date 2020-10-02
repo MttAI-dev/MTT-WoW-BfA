@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -276,8 +276,7 @@ enum CreatureFlagsExtra
     CREATURE_FLAG_EXTRA_NO_PLAYER_DAMAGE_REQ = 0x00200000,       // creature does not need to take player damage for kill credit
     CREATURE_FLAG_EXTRA_DUNGEON_BOSS         = 0x10000000,       // creature is a dungeon boss (SET DYNAMICALLY, DO NOT ADD IN DB)
     CREATURE_FLAG_EXTRA_IGNORE_PATHFINDING   = 0x20000000,       // creature ignore pathfinding
-    CREATURE_FLAG_EXTRA_IMMUNITY_KNOCKBACK   = 0x40000000,        // creature is immune to knockback effects
-    CREATURE_FLAG_EXTRA_UNUSED_31 = 0x80000000
+    CREATURE_FLAG_EXTRA_IMMUNITY_KNOCKBACK   = 0x40000000        // creature is immune to knockback effects
 };
 
 #define CREATURE_FLAG_EXTRA_DB_ALLOWED (CREATURE_FLAG_EXTRA_INSTANCE_BIND | CREATURE_FLAG_EXTRA_CIVILIAN | \
@@ -337,7 +336,7 @@ struct TC_GAME_API CreatureTemplate
     uint32  GossipMenuId;
     int16   minlevel;
     int16   maxlevel;
-    std::unordered_map<Difficulty, CreatureLevelScaling> scalingStore;
+    std::unordered_map<uint8, CreatureLevelScaling> scalingStore;
     int32   HealthScalingExpansion;
     uint32  RequiredExpansion;
     uint32  VignetteID;                                     /// @todo Read Vignette.db2
@@ -399,7 +398,7 @@ struct TC_GAME_API CreatureTemplate
     CreatureModel const* GetFirstVisibleModel() const;
     std::pair<int16, int16> GetMinMaxLevel() const;
     int32 GetHealthScalingExpansion() const;
-    CreatureLevelScaling const* GetLevelScaling(Difficulty difficulty) const;
+    CreatureLevelScaling const* GetLevelScaling(uint8 difficulty) const;
 
     // helpers
     SkillType GetRequiredLootSkill() const
@@ -469,11 +468,19 @@ struct TC_GAME_API CreatureTemplate
 // Defines base stats for creatures (used to calculate HP/mana/armor/attackpower/rangedattackpower/all damage).
 struct TC_GAME_API CreatureBaseStats
 {
+    uint32 BaseHealth[MAX_EXPANSIONS];
     uint32 BaseMana;
+    uint32 BaseArmor;
     uint32 AttackPower;
     uint32 RangedAttackPower;
+    float BaseDamage[MAX_EXPANSIONS];
 
     // Helpers
+
+    uint32 GenerateHealth(CreatureTemplate const* info) const
+    {
+        return uint32(ceil(BaseHealth[info->HealthScalingExpansion] * info->ModHealth * info->ModHealthExtra));
+    }
 
     uint32 GenerateMana(CreatureTemplate const* info) const
     {
@@ -482,6 +489,16 @@ struct TC_GAME_API CreatureBaseStats
             return 0;
 
         return uint32(ceil(BaseMana * info->ModMana * info->ModManaExtra));
+    }
+
+    uint32 GenerateArmor(CreatureTemplate const* info) const
+    {
+        return uint32(ceil(BaseArmor * info->ModArmor));
+    }
+
+    float GenerateBaseDamage(CreatureTemplate const* info) const
+    {
+        return BaseDamage[info->HealthScalingExpansion];
     }
 
     static CreatureBaseStats const* GetBaseStats(uint8 level, uint8 unitClass);
@@ -510,14 +527,13 @@ struct EquipmentInfo
 // from `creature` table
 struct CreatureData
 {
-    CreatureData() : id(0), mapid(0), areaId(0), displayid(0), equipmentId(0),
-                     posX(0.0f), posY(0.0f), posZ(0.0f), orientation(0.0f), spawntimesecs(0), corpsetimesecs(-1),
+    CreatureData() : id(0), mapid(0), displayid(0), equipmentId(0),
+                     posX(0.0f), posY(0.0f), posZ(0.0f), orientation(0.0f), spawntimesecs(0),
                      spawndist(0.0f), currentwaypoint(0), curhealth(0), curmana(0), movementType(0),
                      spawnDifficulties(), npcflag(0), unit_flags(0), unit_flags2(0), unit_flags3(0), dynamicflags(0),
                      phaseUseFlags(0), phaseId(0), phaseGroup(0), terrainSwapMap(-1), ScriptId(0), dbData(true) { }
     uint32 id;                                              // entry in creature_template
     uint16 mapid;
-    uint32 areaId;
     uint32 displayid;
     int8 equipmentId;
     float posX;
@@ -525,7 +541,6 @@ struct CreatureData
     float posZ;
     float orientation;
     uint32 spawntimesecs;
-    int32 corpsetimesecs;
     float spawndist;
     uint32 currentwaypoint;
     uint32 curhealth;

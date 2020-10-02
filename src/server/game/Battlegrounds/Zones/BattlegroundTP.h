@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,19 +21,19 @@
 #include "Battleground.h"
 #include "BattlegroundScore.h"
 
-enum BG_TP_TimerOrScore
-{
-    BG_TP_MAX_TEAM_SCORE    = 3,
-    BG_TP_FLAG_RESPAWN_TIME = 23000,
-    BG_TP_FLAG_DROP_TIME    = 10000,
-    BG_TP_SPELL_FORCE_TIME  = 600000,
-    BG_TP_SPELL_BRUTAL_TIME = 900000
-};
-
 enum BG_TP_Objectives
 {
     BG_TP_FLAG_CAPTURES = 290,
     BG_TP_FLAG_RETURNS  = 291
+};
+
+enum BG_TP_TimerOrScore
+{
+    BG_TP_MAX_TEAM_SCORE        = 3,
+    BG_TP_FLAG_RESPAWN_TIME     = 23000,
+    BG_TP_FLAG_DROP_TIME        = 10000,
+    BG_TP_SPELL_FORCE_TIME      = 600000,
+    BG_TP_SPELL_BRUTAL_TIME     = 900000
 };
 
 enum BG_TP_BroadcastTexts
@@ -168,46 +168,47 @@ enum BG_TP_CarrierDebuffs
     TP_SPELL_BRUTAL_ASSAULT    = 46393
 };
 
-
 #define TP_EVENT_START_BATTLE   8563
 
-class BattlegroundTPScore final : public BattlegroundScore
+
+struct BattlegroundTPScore final : public BattlegroundScore
 {
     friend class BattlegroundTP;
 
-protected:
-    BattlegroundTPScore(ObjectGuid playerGuid, uint32 team) : BattlegroundScore(playerGuid, team), FlagCaptures(0), FlagReturns(0) { }
+    protected:
+        BattlegroundTPScore(ObjectGuid playerGuid, uint32 team) : BattlegroundScore(playerGuid, team), FlagCaptures(0), FlagReturns(0) { }
 
-    void UpdateScore(uint32 type, uint32 value) override
-    {
-        switch (type)
+        void UpdateScore(uint32 type, uint32 value) override
         {
-        case SCORE_FLAG_CAPTURES:
-            FlagCaptures += value;
-            break;
-        case SCORE_FLAG_RETURNS:
-            FlagReturns += value;
-            break;
-        default:
-            BattlegroundScore::UpdateScore(type, value);
-            break;
+            switch (type)
+            {
+                case SCORE_FLAG_CAPTURES:   // Flags captured
+                    FlagCaptures += value;
+                    break;
+                case SCORE_FLAG_RETURNS:    // Flags returned
+                    FlagReturns += value;
+                    break;
+                default:
+                    BattlegroundScore::UpdateScore(type, value);
+                    break;
+            }
         }
-    }
 
-    void BuildPvPLogPlayerDataPacket(WorldPackets::Battleground::PVPLogData::PVPMatchPlayerStatistics& playerData) const override
-    {
-        BattlegroundScore::BuildPvPLogPlayerDataPacket(playerData);
+        void BuildPvPLogPlayerDataPacket(WorldPackets::Battleground::PVPLogData::PVPMatchPlayerStatistics& playerData) const override
+        {
+            BattlegroundScore::BuildPvPLogPlayerDataPacket(playerData);
 
-        playerData.Stats.emplace_back(BG_TP_FLAG_CAPTURES, FlagCaptures);
-        playerData.Stats.emplace_back(BG_TP_FLAG_RETURNS, FlagReturns);
-    }
+            playerData.Stats.emplace_back(BG_TP_FLAG_CAPTURES, FlagCaptures);
+            playerData.Stats.emplace_back(BG_TP_FLAG_RETURNS, FlagReturns);
+        }
 
-    uint32 GetAttr1() const final override { return FlagCaptures; }
-    uint32 GetAttr2() const final override { return FlagReturns; }
+        uint32 GetAttr1() const final override { return FlagCaptures; }
+        uint32 GetAttr2() const final override { return FlagReturns; }
 
-    uint32 FlagCaptures;
-    uint32 FlagReturns;
+        uint32 FlagCaptures;
+        uint32 FlagReturns;
 };
+
 
 class BattlegroundTP : public Battleground
 {

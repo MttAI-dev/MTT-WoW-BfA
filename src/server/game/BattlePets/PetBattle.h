@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -35,6 +35,16 @@ enum PetBattleTrapStatus
     PET_BATTLE_TRAP_STATUS_CAN_LAUNCH       = 1,
     PET_BATTLE_TRAP_STATUS_HEALTH_TOO_HIGH  = 4,
     PET_BATTLE_TRAP_STATUS_ALREADY_LAUNCHED = 8,
+};
+
+enum eBattlePetFlags
+{
+    BATTLEPET_FLAG_FAVORITE         = 0x01,
+    PETBATTLE_FLAG_CAPTURED         = 0x01,
+    BATTLEPET_FLAG_ABILITY_1_SECOND = 0x10,
+    BATTLEPET_FLAG_ABILITY_2_SECOND = 0x20,
+    BATTLEPET_FLAG_ABILITY_3_SECOND = 0x40,
+    BATTLEPET_FLAG_GIFT             = 0x80
 };
 
 class PetBattle

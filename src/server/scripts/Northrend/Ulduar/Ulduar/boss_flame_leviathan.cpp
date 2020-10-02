@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -480,17 +480,17 @@ class boss_flame_leviathan : public CreatureScript
             {
                 if (action && action <= 4) // Tower destruction, debuff leviathan loot and reduce active tower count
                 {
-                    if (me->HasLootMode(LOOT_MODE_DEFAULT | LOOT_MODE_HARD_MODE_1 | LOOT_MODE_HARD_MODE_2 | LOOT_MODE_HARD_MODE_3 | LOOT_MODE_HARD_MODE_4) && ActiveTowersCount == 4)
-                        me->RemoveLootMode(LOOT_MODE_HARD_MODE_4);
+                    if (me->HasLootMode(LOOT_MODE_DEFAULT | LOOT_MODE_HEROIC | LOOT_MODE_25_N | LOOT_MODE_MYTHIC_KEYSTONE | LOOT_MODE_MYTHIC_RAID) && ActiveTowersCount == 4)
+                        me->RemoveLootMode(LOOT_MODE_MYTHIC_RAID);
 
-                    if (me->HasLootMode(LOOT_MODE_DEFAULT | LOOT_MODE_HARD_MODE_1 | LOOT_MODE_HARD_MODE_2 | LOOT_MODE_HARD_MODE_3) && ActiveTowersCount == 3)
-                        me->RemoveLootMode(LOOT_MODE_HARD_MODE_3);
+                    if (me->HasLootMode(LOOT_MODE_DEFAULT | LOOT_MODE_HEROIC | LOOT_MODE_25_N | LOOT_MODE_MYTHIC_KEYSTONE) && ActiveTowersCount == 3)
+                        me->RemoveLootMode(LOOT_MODE_MYTHIC_KEYSTONE);
 
-                    if (me->HasLootMode(LOOT_MODE_DEFAULT | LOOT_MODE_HARD_MODE_1 | LOOT_MODE_HARD_MODE_2) && ActiveTowersCount == 2)
-                        me->RemoveLootMode(LOOT_MODE_HARD_MODE_2);
+                    if (me->HasLootMode(LOOT_MODE_DEFAULT | LOOT_MODE_HEROIC | LOOT_MODE_25_N) && ActiveTowersCount == 2)
+                        me->RemoveLootMode(LOOT_MODE_25_N);
 
-                    if (me->HasLootMode(LOOT_MODE_DEFAULT | LOOT_MODE_HARD_MODE_1) && ActiveTowersCount == 1)
-                        me->RemoveLootMode(LOOT_MODE_HARD_MODE_1);
+                    if (me->HasLootMode(LOOT_MODE_DEFAULT | LOOT_MODE_HEROIC) && ActiveTowersCount == 1)
+                        me->RemoveLootMode(LOOT_MODE_HEROIC);
                 }
 
                 switch (action)
@@ -529,7 +529,7 @@ class boss_flame_leviathan : public CreatureScript
                         towerOfLife = true;
                         towerOfFlames = true;
                         towerOfFrost = true;
-                        me->SetLootMode(LOOT_MODE_DEFAULT | LOOT_MODE_HARD_MODE_1 | LOOT_MODE_HARD_MODE_2 | LOOT_MODE_HARD_MODE_3 | LOOT_MODE_HARD_MODE_4);
+                        me->SetLootMode(LOOT_MODE_DEFAULT | LOOT_MODE_HEROIC | LOOT_MODE_25_N | LOOT_MODE_MYTHIC_KEYSTONE | LOOT_MODE_MYTHIC_RAID);
                         break;
                     case ACTION_MOVE_TO_CENTER_POSITION: // Triggered by 2 Collossus near door
                         if (!me->isDead())
@@ -974,11 +974,6 @@ class npc_mimirons_inferno : public CreatureScript
 public:
     npc_mimirons_inferno() : CreatureScript("npc_mimirons_inferno") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return GetUlduarAI<npc_mimirons_infernoAI>(creature);
-    }
-
     struct npc_mimirons_infernoAI : public npc_escortAI
     {
         npc_mimirons_infernoAI(Creature* creature) : npc_escortAI(creature)
@@ -1031,7 +1026,11 @@ public:
         }
     };
 
-};
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return GetUlduarAI<npc_mimirons_infernoAI>(creature);
+    }
+};;
 
 class npc_hodirs_fury : public CreatureScript
 {
@@ -1247,7 +1246,7 @@ class npc_lorekeeper : public CreatureScript
                     CloseGossipMenuFor(player);
                     me->GetMap()->LoadGrid(364, -16); // make sure leviathan is loaded
 
-                    if (Creature* leviathan = ObjectAccessor::GetCreature(*me, _instance->GetGuidData(BOSS_LEVIATHAN)))
+                    if (Creature* leviathan = _instance->GetCreature(BOSS_LEVIATHAN))
                     {
                         leviathan->AI()->DoAction(ACTION_START_HARD_MODE);
                         me->SetVisible(false);

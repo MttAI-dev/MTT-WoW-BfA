@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -240,18 +240,68 @@ class zone_western_plaguelands : public ZoneScript
 public:
     zone_western_plaguelands() : ZoneScript("zone_western_plaguelands") { }
 
-    void OnPlayerAreaUpdate(Player* player, Area* newArea, Area* /*oldArea*/) override
+        void OnPlayerAreaUpdate(Player* player, uint32 newAreaId, uint32 /*oldAreaId*/) override
     {
         // Check paladin class area
-        if (newArea->GetId() == 7638 && !player->IsGameMaster() && (player->getClass() != CLASS_PALADIN || player->getLevel() < 100))
+        if (newAreaId == 7638 && !player->IsGameMaster() && (player->getClass() != CLASS_PALADIN || player->getLevel() < 100))
             player->NearTeleportTo(2283.882080f, -5322.789551f, 89.235878f, 2.362668f);
     }
 };
+
+/*######
+## npc_myranda_the_hag
+######*/
+
+enum eMyranda
+{
+    QUEST_SUBTERFUGE = 5862,
+    QUEST_IN_DREAMS = 5944,
+    SPELL_SCARLET_ILLUSION = 17961
+};
+
+#define GOSSIP_ITEM_ILLUSION    "I am ready for the illusion, Myranda."
+
+class npc_myranda_the_hag : public CreatureScript
+{
+public:
+    npc_myranda_the_hag() : CreatureScript("npc_myranda_the_hag") { }
+
+    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 action)
+    {
+        player->PlayerTalkClass->ClearMenus();
+        if (action == GOSSIP_ACTION_INFO_DEF + 1)
+        {
+            CloseGossipMenuFor(player);
+            player->CastSpell(player, SPELL_SCARLET_ILLUSION, false);
+        }
+        return true;
+    }
+
+    bool OnGossipHello(Player* player, Creature* creature)
+    {
+        if (creature->IsQuestGiver())
+            player->PrepareQuestMenu(creature->GetGUID());
+
+        if (player->GetQuestStatus(QUEST_SUBTERFUGE) == QUEST_STATUS_COMPLETE &&
+            !player->GetQuestRewardStatus(QUEST_IN_DREAMS) && !player->HasAura(SPELL_SCARLET_ILLUSION))
+        {
+            AddGossipItemFor(player, GOSSIP_ICON_CHAT, GOSSIP_ITEM_ILLUSION, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
+            SendGossipMenuFor(player, player->GetGossipTextId(creature), creature->GetGUID());
+            return true;
+        }
+        else
+            SendGossipMenuFor(player, player->GetGossipTextId(creature), creature->GetGUID());
+
+        return true;
+    }
+};
+
 
 void AddSC_western_plaguelands()
 {
     new npcs_dithers_and_arbington();
     new npc_the_scourge_cauldron();
     new npc_andorhal_tower();
+    new npc_myranda_the_hag();
     new zone_western_plaguelands();
 }

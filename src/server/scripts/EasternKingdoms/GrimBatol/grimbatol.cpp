@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  * Copyright (C) 2010-2011 Project Trinity <http://www.projecttrinity.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -38,6 +38,13 @@ uint64 sDrakeSays;
 enum Spells
 {
     SPELL_NET     = 79377,
+
+    //crimsonborne warlord
+    SPELL_DISARMING_BLAZE           = 76679,
+    SPELL_EMPOWERING_TWILIGHT       = 76685,
+    SPELL_EMPOWERING_TWILIGHT_AURA  = 76692,
+    SPELL_EMPOWERING_TWILIGHT_DMG   = 76693,
+    SPELL_EMPOWERING_TWILIGHT_DMG_H = 90707,
 };
 
 enum Creatures
@@ -256,8 +263,40 @@ class npc_net_red_dragon: public CreatureScript
         return new npc_net_red_dragonAI (creature);
     }
 };
+
+class npc_crimsonborne_warlord_empowering_flames : public CreatureScript
+{
+public:
+
+    npc_crimsonborne_warlord_empowering_flames() : CreatureScript("npc_crimsonborne_warlord_empowering_flames") {}
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new npc_crimsonborne_warlord_empowering_flamesAI(pCreature);
+    }
+
+    struct npc_crimsonborne_warlord_empowering_flamesAI : public Scripted_NoMovementAI
+    {
+        npc_crimsonborne_warlord_empowering_flamesAI(Creature *c) : Scripted_NoMovementAI(c)
+        {
+            SetCombatMovement(false);
+            me->SetReactState(REACT_PASSIVE);
+        }
+
+        void Reset()
+        {
+            DoCast(me, SPELL_EMPOWERING_TWILIGHT_AURA);
+        }
+
+        void UpdateAI(uint32 uiDiff)
+        {
+        }
+    };
+};
+
 void AddSC_grimbatol()
 {
     new npc_battered_red_drake();
     new npc_net_red_dragon();
+    new npc_crimsonborne_warlord_empowering_flames();
 }

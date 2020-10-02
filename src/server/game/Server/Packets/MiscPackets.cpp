@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -178,6 +178,7 @@ WorldPacket const* WorldPackets::Misc::WorldServerInfo::Write()
     _worldPacket << uint32(DifficultyID);
     _worldPacket << uint8(IsTournamentRealm);
     _worldPacket.WriteBit(XRealmPvpAlert);
+    _worldPacket.WriteBit(BlockExitingLoadingScreen);
     _worldPacket.WriteBit(RestrictedAccountMaxLevel.is_initialized());
     _worldPacket.WriteBit(RestrictedAccountMaxMoney.is_initialized());
     _worldPacket.WriteBit(InstanceGroupSize.is_initialized());
@@ -508,7 +509,7 @@ void WorldPackets::Misc::SaveCUFProfiles::Read()
     CUFProfiles.resize(_worldPacket.read<uint32>());
     for (std::unique_ptr<CUFProfile>& cufProfile : CUFProfiles)
     {
-        cufProfile = Trinity::make_unique<CUFProfile>();
+        cufProfile = std::make_unique<CUFProfile>();
 
         uint8 strLen = _worldPacket.ReadBits(7);
 
@@ -622,11 +623,11 @@ WorldPacket const* WorldPackets::Misc::AccountHeirloomUpdate::Write()
     _worldPacket << int32(Unk);
 
     // both lists have to have the same size
-    _worldPacket << int32(Heirlooms->size());
-    _worldPacket << int32(Heirlooms->size());
+    _worldPacket << uint32(Heirlooms->size());
+    _worldPacket << uint32(Heirlooms->size());
 
     for (auto const& item : *Heirlooms)
-        _worldPacket << uint32(item.first);
+        _worldPacket << int32(item.first);
 
     for (auto const& flags : *Heirlooms)
         _worldPacket << uint32(flags.second.flags);
@@ -642,6 +643,16 @@ ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::Misc::ReqResearchHistory 
 
     return data;
 }
+
+WorldPacket const* WorldPackets::Misc::StopElapsedTimer::Write()
+{
+    _worldPacket << TimerID;
+    _worldPacket.WriteBit(KeepTimer);
+    _worldPacket.FlushBits();
+
+    return &_worldPacket;
+}
+
 
 void WorldPackets::Misc::ResearchHistory::Read()
 {

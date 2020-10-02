@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+* Copyright (C) 2020 LatinCoreTeam
 * Copyright (C) 2010-2011 Project Trinity <http://www.projecttrinity.org/>
 *
 * This program is free software; you can redistribute it and/or modify it
@@ -23,32 +23,33 @@
 
 enum eSpell
 {
-    SPELL_ENERGIZE = 89132,
-    SPELL_ENERGIZED = 91733, // -> 89200,
-    SPELL_ON_FIRE = 91737,
-    SPELL_COSMETIC_STAND = 88906,
+    SPELL_ENERGIZE                  = 89132,
+    SPELL_ENERGIZED                 = 91733, // -> 89200,
+    SPELL_ON_FIRE                   = 91737,
+    SPELL_COSMETIC_STAND            = 88906,
 
     // BOSS spells
-    SPELL_OVERDRIVE = 88481, // 88484
-    SPELL_HARVEST = 88495,
-    SPELL_HARVEST_AURA = 88497,
+    SPELL_OVERDRIVE                 = 88481, // 88484
+    SPELL_HARVEST                   = 88495,
+    SPELL_HARVEST_AURA              = 88497,
 
-    SPELL_HARVEST_SWEEP = 88521,
-    SPELL_HARVEST_SWEEP_H = 91718,
+    SPELL_HARVEST_SWEEP             = 88521,
+    SPELL_HARVEST_SWEEP_H           = 91718,
 
-    SPELL_REAPER_STRIKE = 88490,
-    SPELL_REAPER_STRIKE_H = 91717,
+    SPELL_REAPER_STRIKE             = 88490,
+    SPELL_REAPER_STRIKE_H           = 91717,
 
-    SPELL_SAFETY_REST_OFFLINE = 88522,
-    SPELL_SAFETY_REST_OFFLINE_H = 91720,
+    SPELL_SAFETY_REST_OFFLINE       = 88522,
+    SPELL_SAFETY_REST_OFFLINE_H     = 91720,
 
-    SPELL_SUMMON_MOLTEN_SLAG = 91839,
+    SPELL_SUMMON_MOLTEN_SLAG        = 91839,
+    SPELL_OFF_LINE                  = 88348,
 };
 
 enum eAchievementMisc
 {
-    ACHIEVEMENT_PROTOTYPE_PRODIGY = 5368,
-    DATA_ACHIV_PROTOTYPE_PRODIGY = 1,
+    ACHIEVEMENT_PROTOTYPE_PRODIGY   = 5368,
+    DATA_ACHIV_PROTOTYPE_PRODIGY    = 1,
 };
 
 const Position OverdrivePoint =
@@ -112,10 +113,15 @@ public:
 
     struct boss_foe_reaper_5000AI : public BossAI
     {
-        boss_foe_reaper_5000AI(Creature* creature) : BossAI(creature, DATA_FOEREAPER)
-        {
-            me->AddUnitFlag(UnitFlags(UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_IMMUNE_TO_PC | UNIT_FLAG_STUNNED));
-        }
+        boss_foe_reaper_5000AI(Creature* creature) : BossAI(creature, DATA_FOEREAPER) { }
+
+            void InitializeAI() override
+            {
+                BossAI::InitializeAI();
+                me->RemoveAura(SPELL_OFF_LINE);
+                me->RemoveUnitFlag(UnitFlags(UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_IMMUNE_TO_PC | UNIT_FLAG_STUNNED));
+            }
+
 
         uint32 eventId;
         uint32 Step;
@@ -133,7 +139,6 @@ public:
             me->SetPower(POWER_ENERGY, 100);
             me->SetMaxPower(POWER_ENERGY, 100);
             me->SetPowerType(POWER_ENERGY);
-            me->AddUnitFlag(UnitFlags(UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_IMMUNE_TO_PC));
             Step = 0;
             Below = false;
 
@@ -191,7 +196,7 @@ public:
                     Reaper->DespawnOrUnsummon();
         }
 
-        uint32 GetData(uint32 type) const override
+        uint32 GetData(uint32 type) const override 
         {
             if (type == DATA_ACHIV_PROTOTYPE_PRODIGY)
             {

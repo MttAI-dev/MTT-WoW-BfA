@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -73,7 +73,7 @@ namespace WorldPackets
             TargetItemLevel = 0;
             ScalingHealthItemLevelCurveID = target->m_unitData->ScalingHealthItemLevelCurveID;
             TargetLevel = target->getLevel();
-            Expansion = creatureTemplate->HealthScalingExpansion;
+            Expansion = creatureTemplate->RequiredExpansion;
             TargetMinScalingLevel = uint8(creatureScaling->MinLevel);
             TargetMaxScalingLevel = uint8(creatureScaling->MaxLevel);
             TargetScalingLevelDelta = int8(attacker->m_unitData->ScalingLevelDelta);
@@ -92,7 +92,7 @@ namespace WorldPackets
             TargetItemLevel = 0;
             ScalingHealthItemLevelCurveID = target->m_unitData->ScalingHealthItemLevelCurveID;
             TargetLevel = target->getLevel();
-            Expansion = creatureTemplate->HealthScalingExpansion;
+            Expansion = creatureTemplate->RequiredExpansion;
             TargetMinScalingLevel = uint8(creatureScaling->MinLevel);
             TargetMaxScalingLevel = uint8(creatureScaling->MaxLevel);
             TargetScalingLevelDelta = int8(target->m_unitData->ScalingLevelDelta);
@@ -110,7 +110,7 @@ namespace WorldPackets
             PlayerLevelDelta = 0;
             PlayerItemLevel = 0;
             TargetLevel = target->getLevel();
-            Expansion = creatureTemplate->HealthScalingExpansion;
+            Expansion = creatureTemplate->RequiredExpansion;
             TargetMinScalingLevel = uint8(creatureScaling->MinLevel);
             TargetMaxScalingLevel = uint8(creatureScaling->MaxLevel);
             TargetScalingLevelDelta = int8(accessor->m_unitData->ScalingLevelDelta);

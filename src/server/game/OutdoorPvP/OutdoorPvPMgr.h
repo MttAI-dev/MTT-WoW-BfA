@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -52,13 +52,13 @@ class TC_GAME_API OutdoorPvPMgr
         void Die();
 
         // called when a player enters an outdoor pvp area
-        void HandlePlayerEnterZone(Player* player, Area* zone);
+        void HandlePlayerEnterZone(Player* player, uint32 areaflag);
 
         // called when player leaves an outdoor pvp area
-        void HandlePlayerLeaveZone(Player* player, Area* zone);
+        void HandlePlayerLeaveZone(Player* player, uint32 areaflag);
 
         // called when player resurrects
-        void HandlePlayerResurrects(Player* player, Area* zone);
+        void HandlePlayerResurrects(Player* player, uint32 areaflag);
 
         // return assigned outdoor pvp
         OutdoorPvP* GetOutdoorPvPToZoneId(uint32 zoneid);

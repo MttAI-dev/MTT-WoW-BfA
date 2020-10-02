@@ -1,8 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2005 - 2011 MaNGOS <http://www.getmangos.org/>
- * Copyright (C) 2008 - 2011 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011 - 2012 ArkCORE <http://www.arkania.net/>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -58,7 +55,7 @@ public:
                 Encounter[i] = NOT_STARTED;
         }
 
-        bool IsEncounterInProgress() const override
+        bool IsEncounterInProgress() const override 
         {
             for (uint8 i = 0; i < ENCOUNTERS; ++i)
             {
@@ -125,7 +122,7 @@ public:
                SaveToDB();
         }
 
-        uint32 GetData(uint32 type) const override
+        uint32 GetData(uint32 type) const override 
         {
             switch (type)
             {

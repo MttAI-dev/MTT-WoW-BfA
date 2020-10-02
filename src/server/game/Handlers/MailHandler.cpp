@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -33,8 +33,12 @@
 #include "ObjectMgr.h"
 #include "Opcodes.h"
 #include "Player.h"
+#include "ScriptMgr.h"
 #include "World.h"
 #include "WorldPacket.h"
+#include "GridNotifiers.h"
+#include "CellImpl.h" 
+#include "GridNotifiersImpl.h"
 
 bool WorldSession::CanOpenMailBox(ObjectGuid guid)
 {
@@ -445,7 +449,7 @@ void WorldSession::HandleMailTakeItem(WorldPackets::Mail::MailTakeItem& packet)
     }
 
     // verify that the mail has the item to avoid cheaters taking COD items without paying
-    if (std::find_if(m->items.begin(), m->items.end(), [AttachID](MailItemInfo info){ return info.item_guid == AttachID; }) == m->items.end())
+    if (std::find_if(m->items.begin(), m->items.end(), [AttachID](MailItemInfo info) { return info.item_guid == AttachID; }) == m->items.end())
     {
         player->SendMailResult(packet.MailID, MAIL_ITEM_TAKEN, MAIL_ERR_INTERNAL_ERROR);
         return;

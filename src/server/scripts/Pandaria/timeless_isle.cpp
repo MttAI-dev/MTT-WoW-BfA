@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2016 Firestorm Servers <https://firestorm-servers.com>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -214,8 +213,313 @@ class npc_kairoz : public CreatureScript
         }
 };
 
+class spell_jadefire_bolt : public SpellScriptLoader
+{
+public:
+    spell_jadefire_bolt() : SpellScriptLoader("spell_jadefire_bolt") { }
+
+    class spell_jadefire_bolt_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_jadefire_bolt_SpellScript);
+
+        void FilterTargets(std::list<WorldObject*>& targets)
+        {
+            Trinity::Containers::RandomResize(targets, 4);
+        }
+
+        void Register()
+        {
+            OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_jadefire_bolt_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
+           // OnHit += SpellHitFn(spell_jadefire_bolt_SpellScript::HandleOnHit);
+        }
+    };
+
+    SpellScript* GetSpellScript() const
+    {
+        return new spell_jadefire_bolt_SpellScript();
+    }
+};
+
+class spell_crackling_lightning : public SpellScriptLoader
+{
+public:
+    spell_crackling_lightning() : SpellScriptLoader("spell_crackling_lightning") { }
+
+    class spell_crackling_lightning_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_crackling_lightning_SpellScript);
+
+        void FilterTargets(std::list<WorldObject*>& targets)
+        {
+            Trinity::Containers::RandomResize(targets, 1);
+        }
+
+        void Register()
+        {
+            OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_crackling_lightning_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
+          //  OnHit += SpellHitFn(spell_crackling_lightning_SpellScript::HandleOnHit);
+        }
+    };
+
+    SpellScript* GetSpellScript() const
+    {
+        return new spell_crackling_lightning_SpellScript();
+    }
+};
+
+class spell_chi_barrage : public SpellScriptLoader
+{
+public:
+    spell_chi_barrage() : SpellScriptLoader("spell_chi_barrage") { }
+
+    class spell_chi_barrage_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_chi_barrage_SpellScript);
+
+        void FilterTargets(std::list<WorldObject*>& targets)
+        {
+            Trinity::Containers::RandomResize(targets, 6);
+        }
+
+        void Register()
+        {
+            OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_chi_barrage_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
+           // OnHit += SpellHitFn(spell_chi_barrage_SpellScript::HandleOnHit);
+        }
+    };
+
+    SpellScript* GetSpellScript() const
+    {
+        return new spell_chi_barrage_SpellScript();
+    }
+};
+
+enum eZarimEvents
+{
+    QUEST_BONE_APART_INTRO = 33348,
+    NPC_ZARIM = 71876,
+    SPELL_BONE_APART_INTRO = 149122,
+};
+// AT - 9211
+class at_tom_bone_apart : public AreaTriggerScript
+{
+public:
+    at_tom_bone_apart() : AreaTriggerScript("at_tom_bone_apart") {}
+
+    bool OnTrigger(Player* player, AreaTriggerEntry const* /*trigger*/, bool /*enter*/)
+    {
+        if (Creature* Zarim = GetClosestCreatureWithEntry(player, NPC_ZARIM, 30.0f))
+        {
+            if (player->GetQuestStatus(QUEST_BONE_APART_INTRO) != QUEST_STATUS_REWARDED)
+            {
+                player->CastSpell(player, SPELL_BONE_APART_INTRO, true);
+                Zarim->AI()->Talk(0);
+            }
+        }
+        return false;
+    }
+};
+
+class at_ordos_entrance : public AreaTriggerScript
+{
+public:
+    at_ordos_entrance() : AreaTriggerScript("at_ordos_entrance") { }
+
+    bool OnTrigger(Player* pPlayer, const AreaTriggerEntry* /*pAt*/, bool /*enter*/)
+    {
+        if (pPlayer->IsGameMaster())
+            return false;
+
+        // A Pandaren Legend
+        if (pPlayer->GetQuestStatus(33104) != QUEST_STATUS_REWARDED && !pPlayer->HasAchieved(8325))
+            pPlayer->CastSpell(pPlayer, SPELL_BANISHMENT, true);
+
+        return false;
+    }
+};
+
+class npc_timeless_spirit : public CreatureScript
+{
+public:
+    npc_timeless_spirit() : CreatureScript("npc_timeless_spirit") {}
+
+    struct npc_timeless_spiritAI : public ScriptedAI
+    {
+        npc_timeless_spiritAI(Creature* creature) : ScriptedAI(creature) {}
+
+        uint32 SpiritStrangle_timer;
+
+        void Reset()
+        {
+            SpiritStrangle_timer = 0;
+            //me->GetMotionMaster()->MoveRandom(10.0f);
+            DoCast(SPELL_GHOSTLY_VOID);
+            DoCast(SPELL_DESATURATE);
+        }
+
+        void UpdateAI(uint32 diff)
+        {
+            if (!UpdateVictim())
+                return;
+
+            if (Unit* pTarget = me->GetVictim())
+            {
+                if (me->GetDistance(pTarget) >= 15.0f)
+                    EnterEvadeMode();
+
+                if (SpiritStrangle_timer <= diff)
+                {
+                    DoCast(pTarget, SPELL_SPIRIT_STRANGLE);
+
+                    SpiritStrangle_timer = 7000;
+                }
+                else SpiritStrangle_timer -= diff;
+            }
+
+            DoMeleeAttackIfReady();
+        }
+    };
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_timeless_spiritAI(creature);
+    }
+};
+
+class npc_emperor_shaohao : public CreatureScript
+{
+public:
+    npc_emperor_shaohao() : CreatureScript("npc_emperor_shaohao") {}
+
+    struct npc_emperor_shaohaoAI : public ScriptedAI
+    {
+        npc_emperor_shaohaoAI(Creature* creature) : ScriptedAI(creature), summons(me) {}
+
+        EventMap events;
+        SummonList summons;
+
+        void Reset()
+        {
+            me->SummonCreature(NPC_CHIJI, summonPos[0]);
+            me->SummonCreature(NPC_XUEN, summonPos[1]);
+            me->SummonCreature(NPC_YULON, summonPos[2]);
+            me->SummonCreature(NPC_NIUZAO, summonPos[3]);
+
+            events.RescheduleEvent(urand(EVENT_CHIJI_START, EVENT_NIUZAO_START), 60000);
+        }
+
+        void DoAction(const int32 action)
+        {
+            switch (action)
+            {
+            case ACTION_CHIJI_END:
+                events.RescheduleEvent(EVENT_CHIJI_END, 10000);
+                break;
+            case ACTION_CHIJI_FAIL:
+                events.RescheduleEvent(EVENT_CHIJI_START, 30000);
+                break;
+            case ACTION_XUEN_END:
+                events.RescheduleEvent(EVENT_XUEN_END, 10000);
+                break;
+            case ACTION_XUEN_FAIL:
+                events.RescheduleEvent(EVENT_XUEN_START, 30000);
+                break;
+            case ACTION_YULON_END:
+                events.RescheduleEvent(EVENT_YULON_END, 10000);
+                break;
+            case ACTION_YULON_FAIL:
+                events.RescheduleEvent(EVENT_YULON_START, 30000);
+                break;
+            case ACTION_NIUZAO_END:
+                events.RescheduleEvent(EVENT_NIUZAO_END, 10000);
+                break;
+            case ACTION_NIUZAO_FAIL:
+                events.RescheduleEvent(EVENT_NIUZAO_START, 30000);
+                break;
+            }
+        }
+
+        void JustSummoned(Creature* summon)
+        {
+            summons.Summon(summon);
+        }
+
+        void UpdateAI(uint32 diff)
+        {
+            events.Update(diff);
+
+            if (uint32 eventId = events.ExecuteEvent())
+            {
+                switch (eventId)
+                {
+                case EVENT_CHIJI_START:
+                {
+                    Talk(SAY_CHIJI_START);
+                    EntryCheckPredicate pred1(NPC_CHIJI);
+                    summons.DoAction(ACTION_MOVE_CENTR_POSS, pred1);
+                    break;
+                }
+                case EVENT_CHIJI_END:
+                    Talk(SAY_CHIJI_FINISH);
+                    events.RescheduleEvent(EVENT_XUEN_START, 60000);
+                    break;
+                case EVENT_XUEN_START:
+                {
+                    Talk(SAY_XUEN_START);
+                    EntryCheckPredicate pred1(NPC_XUEN);
+                    summons.DoAction(ACTION_MOVE_CENTR_POSS, pred1);
+                    break;
+                }
+                case EVENT_XUEN_END:
+                    Talk(SAY_XUEN_FINISH);
+                    events.RescheduleEvent(EVENT_YULON_START, 60000);
+                    break;
+                case EVENT_YULON_START:
+                {
+                    Talk(SAY_YULON_START);
+                    EntryCheckPredicate pred1(NPC_YULON);
+                    summons.DoAction(ACTION_MOVE_CENTR_POSS, pred1);
+                    break;
+                }
+                case EVENT_YULON_END:
+                {
+                    Talk(SAY_YULON_FINISH);
+                    events.RescheduleEvent(EVENT_NIUZAO_START, 60000);
+                    break;
+                }
+                case EVENT_NIUZAO_START:
+                {
+                    Talk(SAY_NIUZAO_START);
+                    EntryCheckPredicate pred1(NPC_NIUZAO);
+                    summons.DoAction(ACTION_MOVE_CENTR_POSS, pred1);
+                    break;
+                }
+                case EVENT_NIUZAO_END:
+                {
+                    Talk(SAY_NIUZAO_FINISH);
+                    events.RescheduleEvent(EVENT_CHIJI_START, 60000);
+                    break;
+                }
+                }
+            }
+            DoMeleeAttackIfReady();
+        }
+    };
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_emperor_shaohaoAI(creature);
+    }
+};
+
 void AddSC_timeless_isle()
 {
     new npc_prince_anduin();
     new npc_kairoz();
+    new npc_timeless_spirit();
+    new npc_emperor_shaohao();
+
+    //areatrigger
+    new at_tom_bone_apart();
+    new at_ordos_entrance();
 }

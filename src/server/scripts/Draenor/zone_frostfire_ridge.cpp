@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,6 +16,7 @@
  */
 
 #include "AreaTrigger.h"
+#include "CreatureTextMgr.h"
 #include "GameObject.h"
 #include "GameObjectAI.h"
 #include "Garrison.h"
@@ -45,6 +46,8 @@ enum
 {
     EventEarthrendingSlam = 1,
     EventRampage          = 2,
+    TEXT_GENERIC_2        = 3,
+    TEXT_GENERIC_1        
 };
 
 enum
@@ -366,6 +369,150 @@ class spell_groog_rampage : public SpellScriptLoader
         }
 };
 
+// 230527
+class go_wod_q34375 : public GameObjectScript
+{
+public:
+    go_wod_q34375() : GameObjectScript("go_wod_q34375") { }
+
+    struct go_wod_q34375AI : public GameObjectAI
+    {
+        go_wod_q34375AI(GameObject* go) : GameObjectAI(go)
+        {
+
+        }
+
+        enum data
+        {
+            SPELL_SUMMON = 160657,
+            NPC_TREE = 79525,
+            __QUEST = 34375,
+        };
+
+        EventMap events;
+        ObjectGuid treeGUID;
+
+        void InitializeAI()
+        {
+            Reset();
+            events.RescheduleEvent(TEXT_GENERIC_2, 1000);
+
+            go->m_invisibility.AddFlag(INVISIBILITY_UNK7);
+            go->m_invisibility.AddValue(INVISIBILITY_UNK7, 1000);
+        }
+
+        bool GossipUse(Player* player) 
+        {
+            if (player->GetQuestStatus(__QUEST) != QUEST_STATUS_INCOMPLETE)
+                return true;
+
+            Creature * tree = go->GetMap()->GetCreature(treeGUID);
+
+            if (!tree
+                || !tree->IsAlive())
+                return true;
+            player->KillCreditGO(go->GetEntry(), go->GetGUID());
+
+            events.RescheduleEvent(TEXT_GENERIC_1, 15000);
+
+            go->UseDoorOrButton(30, false, player);           
+            return true;
+        }
+
+        void UpdateAI(uint32 diff)
+        {
+            events.Update(diff);
+            if (uint32 eventId = events.ExecuteEvent())
+            {
+                if (eventId == TEXT_GENERIC_1)
+                {
+                    if (Creature * tree = go->GetMap()->GetCreature(treeGUID))
+                    {
+                        tree->SetCorpseDelay(0);
+                        tree->SetRespawnDelay(30);
+                        tree->ForcedDespawn();
+                    }
+                }
+                else
+                {
+                    if (Creature *tree = go->FindNearestCreature(NPC_TREE, 5.0f))
+                    {
+                        treeGUID = tree->GetGUID();
+                        if (!tree->IsAlive())
+                            tree->Respawn();
+                    }
+                    else
+                    {
+                        Position pos;
+                        go->GetRandomNearPosition(5.0f);
+                        if (TempSummon* summon = go->SummonCreature(NPC_TREE, pos))
+                            treeGUID = summon->GetGUID();
+                    }
+                }
+            }
+        }
+    };
+
+    GameObjectAI* GetAI(GameObject* go) const
+    {
+        return new go_wod_q34375AI(go);
+    }
+};
+
+// 79526
+class mob_wod_q34375 : public CreatureScript
+{
+public:
+    mob_wod_q34375() : CreatureScript("mob_wod_q34375") { }
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new mob_wod_q34375AI(creature);
+    }
+
+    struct mob_wod_q34375AI : public ScriptedAI
+    {
+
+        mob_wod_q34375AI(Creature* creature) : ScriptedAI(creature)
+        {
+        }
+
+        enum data
+        {
+            SOUNDID = 7514,
+            NPC_TREE = 79525
+        };
+
+        ObjectGuid treeGUID;
+        void MovementInform(uint32 type, uint32 /*id*/)
+        {
+            if (type != POINT_MOTION_TYPE)
+                return;
+            if (Creature * tree = me->GetMap()->GetCreature(treeGUID))
+                me->SetFacingToObject(tree);
+                me->HandleEmoteCommand(EMOTE_STATE_WORK_CHOPWOOD_2);
+        }
+
+        void IsSummonedBy(Unit* summoner)
+        {
+            Player *player = summoner->ToPlayer();
+            if (!player)
+            {
+              //  me->MonsterSay("SCRIPT::mob_wod_q34375 summoner is not player", LANG_UNIVERSAL, ObjectGuid::Empty);
+                return;
+            }
+            me->PlayDirectSound(SOUNDID, player);
+            if (Creature *tree = player->FindNearestCreature(NPC_TREE, 10.0f))
+            {
+                Position pos;
+                tree->GetRandomNearPosition(5.0f);
+                me->GetMotionMaster()->MovePoint(1, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ());
+                treeGUID = tree->GetGUID();
+            }
+        }
+    };
+};
+
 void AddSC_frostfire_ridge()
 {
     /* BEGIN */
@@ -374,8 +521,10 @@ void AddSC_frostfire_ridge()
 
     new npc_drekthar_frostridge_begin();
     new npc_durotan_frostridge_begin();
+    new mob_wod_q34375();
 
     new go_frostridge_master_surveyor();
+    new go_wod_q34375();
 
     new spell_frostridge_claiming();
 

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -768,6 +768,7 @@ public:
                                     Talk(EMOTE_DIES);
                                     me->setDeathState(JUST_DIED);
                                     me->SetHealth(0);
+                                    player->KilledMonsterCredit(me->GetEntry());
                                     return;
                             }
                             break;
@@ -798,6 +799,7 @@ public:
                                     Talk(EMOTE_DIES);
                                     me->setDeathState(JUST_DIED);
                                     me->SetHealth(0);
+                                    player->KilledMonsterCredit(me->GetEntry());
                                     return;
                             }
                             break;
@@ -828,6 +830,7 @@ public:
                                     Talk(EMOTE_DIES);
                                     me->setDeathState(JUST_DIED);
                                     me->SetHealth(0);
+                                    player->KilledMonsterCredit(me->GetEntry());
                                     return;
                             }
                             break;
@@ -858,6 +861,7 @@ public:
                                     Talk(EMOTE_DIES);
                                     me->setDeathState(JUST_DIED);
                                     me->SetHealth(0);
+                                    player->KilledMonsterCredit(me->GetEntry());
                                     return;
                             }
                             break;
@@ -888,6 +892,7 @@ public:
                                     Talk(EMOTE_DIES);
                                     me->setDeathState(JUST_DIED);
                                     me->SetHealth(0);
+                                    player->KilledMonsterCredit(me->GetEntry());
                                     return;
                             }
                             break;
@@ -918,6 +923,7 @@ public:
                                     Talk(EMOTE_DIES);
                                     me->setDeathState(JUST_DIED);
                                     me->SetHealth(0);
+                                    player->KilledMonsterCredit(me->GetEntry());
                                     return;
                             }
                             break;
@@ -948,6 +954,7 @@ public:
                                     Talk(EMOTE_DIES);
                                     me->setDeathState(JUST_DIED);
                                     me->SetHealth(0);
+                                    player->KilledMonsterCredit(me->GetEntry());
                                     return;
                             }
                             break;
@@ -978,6 +985,7 @@ public:
                                     Talk(EMOTE_DIES);
                                     me->setDeathState(JUST_DIED);
                                     me->SetHealth(0);
+                                    player->KilledMonsterCredit(me->GetEntry());
                                     return;
                             }
                             break;
@@ -1008,6 +1016,7 @@ public:
                                     Talk(EMOTE_DIES);
                                     me->setDeathState(JUST_DIED);
                                     me->SetHealth(0);
+                                    player->KilledMonsterCredit(me->GetEntry());
                                     return;
                             }
                             break;
@@ -1038,6 +1047,7 @@ public:
                                     Talk(EMOTE_DIES);
                                     me->setDeathState(JUST_DIED);
                                     me->SetHealth(0);
+                                    player->KilledMonsterCredit(me->GetEntry());
                                     return;
                             }
                             break;
@@ -1068,6 +1078,7 @@ public:
                                     Talk(EMOTE_DIES, me);
                                     me->setDeathState(JUST_DIED);
                                     me->SetHealth(0);
+                                    player->KilledMonsterCredit(me->GetEntry());
                                     return;
                             }
                             break;
@@ -1098,6 +1109,7 @@ public:
                                     Talk(EMOTE_DIES, me);
                                     me->setDeathState(JUST_DIED);
                                     me->SetHealth(0);
+                                    player->KilledMonsterCredit(me->GetEntry());
                                     return;
                             }
                             break;

@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -165,7 +165,7 @@ bool OutdoorPvPTF::Update(uint32 diff)
     return changed;
 }
 
-void OutdoorPvPTF::HandlePlayerEnterZone(Player* player, Area* zone)
+void OutdoorPvPTF::HandlePlayerEnterZone(Player* player, uint32 zone)
 {
     if (player->GetTeam() == ALLIANCE)
     {
@@ -180,7 +180,7 @@ void OutdoorPvPTF::HandlePlayerEnterZone(Player* player, Area* zone)
     OutdoorPvP::HandlePlayerEnterZone(player, zone);
 }
 
-void OutdoorPvPTF::HandlePlayerLeaveZone(Player* player, Area* zone)
+void OutdoorPvPTF::HandlePlayerLeaveZone(Player* player, uint32 zone)
 {
     // remove buffs
     player->RemoveAurasDueToSpell(TF_CAPTURE_BUFF);

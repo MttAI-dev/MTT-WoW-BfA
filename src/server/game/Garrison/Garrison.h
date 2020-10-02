@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2019 TrinityCore <https://www.trinitycore.org/>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -45,6 +45,13 @@ public:
         void EarnXP(Player* owner, uint32 xp);
         uint32 _EarnXP(uint32 xp);
         uint32 GetRequiredLevelUpXP() const;
+        GarrFollowerEntry const* GetEntry() const;
+        bool IsShipyard() const;
+        bool IsGarrison() const;
+        /// Sends follower update
+        void SendFollowerUpdate(WorldSession* session) const;
+        /// Sends follower update
+        void SendFollowerUpdate(Player* player) const;
 
         WorldPackets::Garrison::GarrisonFollower PacketInfo;
     };
@@ -79,7 +86,7 @@ public:
     void AI_Destroy();
     GarrisonAI* AI() { return _ai.get(); }
 
-    virtual bool IsAllowedArea(AreaTableEntry const* /*area*/) const { return false; }
+    virtual bool IsAllowedArea(uint32 areaID) const { return false; }
 
     GarrisonFactionIndex GetFaction() const;
     GarrisonType GetType() const { return _garrisonType; }
@@ -93,6 +100,14 @@ public:
     uint32 GetActiveFollowersCount() const;
     uint32 GetAverageFollowerILevel() const;
     uint32 GetMaxFollowerLevel() const;
+    /// Change follower activation state
+    void ChangeFollowerActivationState(uint64 followerDBID, bool active);
+    /// Get num follower activation remaining
+    uint32 GetNumFollowerActivationsRemaining() const;
+
+    uint32 GetFollowerActivationLimit() const { return _followerActivationsRemainingToday; }
+    void ResetFollowerActivationLimit() { _followerActivationsRemainingToday = 1; }
+
     template<typename Predicate>
     uint32 CountFollowers(Predicate&& predicate) const
     {
@@ -103,9 +118,6 @@ public:
 
         return count;
     }
-
-    uint32 GetFollowerActivationLimit() const { return _followerActivationsRemainingToday; }
-    void ResetFollowerActivationLimit() { _followerActivationsRemainingToday = 1; }
 
     // Missions
     void AddMission(uint32 garrMissionId);
@@ -120,6 +132,7 @@ public:
     void CompleteMission(uint32 garrMissionId);
     void CalculateMissonBonusRoll(uint32 garrMissionId);
     void RewardMission(Mission* mission, bool withOvermaxReward);
+    uint32 GetRandomRewardId() const;
 
     std::pair<std::vector<GarrMissionEntry const*>, std::vector<double>> GetAvailableMissions() const;
     void GenerateMissions();
@@ -149,8 +162,11 @@ protected:
     std::unordered_map<uint64 /*dbId*/, Garrison::Follower> _followers;
     std::unordered_set<uint32> _followerIds;
     uint32 _followerActivationsRemainingToday;
+    uint32 m_NumFollowerActivation;
+    uint32 m_NumFollowerActivationRegenTimestamp;
 
     std::unordered_map<uint64 /*dbId*/, Garrison::Mission> _missions;
+    std::vector<Garrison::Mission> m_Missions;
     std::unordered_set<uint32> _missionIds;
 };
 

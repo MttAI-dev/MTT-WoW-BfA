@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  * Copyright (C) 2010-2011 Trinity <http://www.projecttrinity.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -121,24 +121,27 @@ class instance_the_vortex_pinnacle : public InstanceMapScript
             {
                 if (underMapTimer <= diff)
                 {
-                    DoOnPlayers([this](Player* player)
+                    Map::PlayerList const& players = instance->GetPlayers();
+                    for (Map::PlayerList::const_iterator i = players.begin(); i != players.end(); ++i)
                     {
-                        Position pos = player->GetPosition();
-                        if (player->GetPositionZ() <= 568.0f)
+                        if (Player* player = i->GetSource())
                         {
-                            if (Creature * sp = instance->SummonCreature(NPC_SLIPSTREAM, pos))
+                            Position pos = player->GetPosition();
+                            if (player->GetPositionZ() <= 568.0f)
                             {
-                                sp->AI()->SetGUID(player->GetGUID());
-                                sp->GetMotionMaster()->MoveJump(savePlayersPos[player->GetGUID()], 20, 50, 42);
+                                if (Creature *sp = instance->SummonCreature(NPC_SLIPSTREAM, pos))
+                                {
+                                    sp->AI()->SetGUID(player->GetGUID());
+                                    sp->GetMotionMaster()->MoveJump(savePlayersPos[player->GetGUID()], 20, 50, 42);
+                                }
+                            }
+                            else if (!player->IsFalling() && !player->GetVehicle() && player->GetPositionZ() > 568.0f)
+                            {
+                                pos.m_positionZ += 1.0f;
+                                savePlayersPos[player->GetGUID()] = pos;
                             }
                         }
-                        else if (!player->IsFalling() && !player->GetVehicle() && player->GetPositionZ() > 568.0f)
-                        {
-                            pos.m_positionZ += 1.0f;
-                            savePlayersPos[player->GetGUID()] = pos;
-                        }
-                    });
-
+                    }
                     underMapTimer = 1000;
                 }
                 else

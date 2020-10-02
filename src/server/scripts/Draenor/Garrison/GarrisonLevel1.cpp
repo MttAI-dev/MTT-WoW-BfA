@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,6 +37,11 @@ struct garrison_level_1 : public GarrisonAI
     {
         return garrison->GetOwner()->HasQuest(QUEST_BIGGER_IS_BETTER_H) ||
                garrison->GetOwner()->HasQuest(QUEST_BIGGER_IS_BETTER_A);
+    }
+
+    void OnUpgrade(Player* player) override
+    {
+
     }
 };
 

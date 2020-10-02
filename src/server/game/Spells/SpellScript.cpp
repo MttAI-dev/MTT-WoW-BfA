@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1012,6 +1012,17 @@ void AuraScript::EffectAbsorbHandler::Call(AuraScript* auraScript, AuraEffect* a
 
 AuraScript::EffectManaShieldHandler::EffectManaShieldHandler(AuraEffectAbsorbFnType _pEffectHandlerScript, uint8 _effIndex)
     : AuraScript::EffectBase(_effIndex, SPELL_AURA_MANA_SHIELD)
+{
+    pEffectHandlerScript = _pEffectHandlerScript;
+}
+
+void AuraScript::EffectHealAbsorbHandler::Call(AuraScript* auraScript, AuraEffect* aurEff, HealInfo& healInfo, uint32& absorbAmount)
+{
+    (auraScript->*pEffectHandlerScript)(aurEff, healInfo, absorbAmount);
+}
+
+AuraScript::EffectHealAbsorbHandler::EffectHealAbsorbHandler(AuraEffectHealAbsorbFnType _pEffectHandlerScript, uint8 _effIndex)
+    : AuraScript::EffectBase(_effIndex, SPELL_AURA_SCHOOL_HEAL_ABSORB)
 {
     pEffectHandlerScript = _pEffectHandlerScript;
 }

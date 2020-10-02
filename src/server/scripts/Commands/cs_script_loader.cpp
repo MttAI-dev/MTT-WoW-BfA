@@ -1,6 +1,6 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
- *
+ * Copyright (C) 2020 LatinCoreTeam
+ * Thordekk
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
@@ -15,10 +15,14 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "World.h"
+#include "AnticheatMgr.h"
+
 // This is where scripts' loading functions should be declared:
 void AddSC_account_commandscript();
 void AddSC_achievement_commandscript();
 void AddSC_ahbot_commandscript();
+void AddSC_anticheat_commandscript();
 void AddSC_arena_commandscript();
 void AddSC_ban_commandscript();
 void AddSC_battlenet_account_commandscript();
@@ -30,7 +34,6 @@ void AddSC_cheat_commandscript();
 void AddSC_debug_commandscript();
 void AddSC_deserter_commandscript();
 void AddSC_disable_commandscript();
-void AddSC_export_commandscript();
 void AddSC_event_commandscript();
 void AddSC_garrison_commandscript();
 void AddSC_gm_commandscript();
@@ -62,6 +65,7 @@ void AddSC_ticket_commandscript();
 void AddSC_titles_commandscript();
 void AddSC_wp_commandscript();
 
+
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
 void AddCommandsScripts()
@@ -69,6 +73,7 @@ void AddCommandsScripts()
     AddSC_account_commandscript();
     AddSC_achievement_commandscript();
     AddSC_ahbot_commandscript();
+    AddSC_anticheat_commandscript();
     AddSC_arena_commandscript();
     AddSC_ban_commandscript();
     AddSC_battlenet_account_commandscript();
@@ -80,7 +85,6 @@ void AddCommandsScripts()
     AddSC_debug_commandscript();
     AddSC_deserter_commandscript();
     AddSC_disable_commandscript();
-    AddSC_export_commandscript();	
     AddSC_event_commandscript();
     AddSC_garrison_commandscript();
     AddSC_gm_commandscript();
@@ -111,4 +115,5 @@ void AddCommandsScripts()
     AddSC_ticket_commandscript();
     AddSC_titles_commandscript();
     AddSC_wp_commandscript();
+    sAnticheatMgr->StartScripts();
 }

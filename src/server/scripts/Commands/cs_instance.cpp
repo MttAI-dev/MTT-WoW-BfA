@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -52,6 +52,9 @@ public:
             { "setbossstate",       rbac::RBAC_PERM_COMMAND_INSTANCE_SET_BOSS_STATE, true, &HandleInstanceSetBossStateCommand, "" },
             { "getbossstate",       rbac::RBAC_PERM_COMMAND_INSTANCE_GET_BOSS_STATE, true, &HandleInstanceGetBossStateCommand, "" },
             { "complete_challenge", rbac::RBAC_PERM_COMMAND_INSTANCE_SET_BOSS_STATE,false, &HandleInstanceCompleteChallengeModeCommand, "" },
+            { "complete_scenario",  rbac::RBAC_PERM_COMMAND_DEBUG,false, &HandleInstanceCompleteScenarioCommand, "" },
+            { "complete_scenario_step", rbac::RBAC_PERM_COMMAND_DEBUG,false, &HandleInstanceCompleteScenarioCurrStepCommand, "" },
+            { "getscenario", rbac::RBAC_PERM_COMMAND_DEBUG,false, &HandleInstanceGetScenarioCommand, "" },
         };
 
         static std::vector<ChatCommand> commandTable =
@@ -366,6 +369,103 @@ public:
         map->GetInstanceScript()->CompleteChallengeMode();
         return true;
     }
+
+    static bool HandleInstanceGetScenarioCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        char* param1 = strtok((char*)args, " ");
+        uint32 scenarioId = 0;
+        Player* player = handler->getSelectedPlayerOrSelf();
+        scenarioId = atoi(param1);
+
+        if (!player)
+        {
+            handler->PSendSysMessage(LANG_PLAYER_NOT_FOUND);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        InstanceMap* map = player->GetMap()->ToInstanceMap();
+        if (!map)
+        {
+            handler->PSendSysMessage(LANG_NOT_DUNGEON);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (!player->GetInstanceScript())
+        {
+            handler->PSendSysMessage(LANG_NO_INSTANCE_DATA);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        map->GetInstanceScript()->GetScenarioByID(player, scenarioId);
+        return true;
+    }
+
+    static bool HandleInstanceCompleteScenarioCommand(ChatHandler* handler, char const* /*args*/)
+    {
+        Player* player = handler->getSelectedPlayerOrSelf();
+
+        if (!player)
+        {
+            handler->PSendSysMessage(LANG_PLAYER_NOT_FOUND);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        InstanceMap* map = player->GetMap()->ToInstanceMap();
+        if (!map)
+        {
+            handler->PSendSysMessage(LANG_NOT_DUNGEON);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (!player->GetInstanceScript())
+        {
+            handler->PSendSysMessage(LANG_NO_INSTANCE_DATA);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        map->GetInstanceScript()->CompleteScenario();
+        return true;
+    }
+
+    static bool HandleInstanceCompleteScenarioCurrStepCommand(ChatHandler* handler, char const* /*args*/)
+    {
+        Player* player = handler->getSelectedPlayerOrSelf();
+
+        if (!player)
+        {
+            handler->PSendSysMessage(LANG_PLAYER_NOT_FOUND);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        InstanceMap* map = player->GetMap()->ToInstanceMap();
+        if (!map)
+        {
+            handler->PSendSysMessage(LANG_NOT_DUNGEON);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (!player->GetInstanceScript())
+        {
+            handler->PSendSysMessage(LANG_NO_INSTANCE_DATA);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        map->GetInstanceScript()->CompleteCurrStep();
+        return true;
+    }
+
 };
 
 void AddSC_instance_commandscript()

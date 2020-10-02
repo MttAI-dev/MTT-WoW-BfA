@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2016 Firestorm Servers <https://firestorm-servers.com>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -225,7 +224,7 @@ class boss_zorlok : public CreatureScript
             bool isAttEcho;
             bool isFaVEcho;
             bool hasSummonedLastEcho;
-
+            
             void Reset() override
             {
                 events.Reset();
@@ -906,7 +905,7 @@ class boss_zorlok : public CreatureScript
 
                 if (!isFlying && (!target || me->GetDistance(target) > 5.0f) && !me->HasUnitState(UNIT_STATE_CASTING))
                     me->CastSpell(me, SPELL_SONG_OF_THE_EMPRESS, true);
-
+                
                 switch (events.ExecuteEvent())
                 {
                     // All-time events

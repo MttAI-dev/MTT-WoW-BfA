@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -331,6 +331,11 @@ public:
     */
     void CancelEventGroup(uint16 group);
 
+    void PauseEvent(uint32 eventId);
+
+  // Continues event with specified id that has been paused before.
+    void ContinueEvent(uint32 eventId);
+
     /**
     * @name GetNextEventTime
     * @brief Returns closest occurence of specified event.
@@ -403,6 +408,7 @@ private:
     * @name _lastEvent
     * @brief Stores information on the most recently executed event
     */
+    std::map<uint32 /*eventId*/, uint32 /*timeLeft*/> _pausedEvents;
     uint64 _lastEvent;
 };
 

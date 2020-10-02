@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -615,5 +615,6 @@ void Quest::AddQuestLevelToTitle(std::string& title, int32 level)
 {
     // Adds the quest level to the front of the quest title
     // example: [13] Westfall Stew
+
     title = Trinity::StringFormat("[%d] %s", level, title);
 }

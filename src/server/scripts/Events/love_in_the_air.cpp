@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2008-2011 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -95,7 +93,7 @@ class spell_love_is_in_the_air_romantic_picnic : public SpellScriptLoader
                             {
                                 caster->CastSpell(target, SPELL_ROMANTIC_PICNIC_ACHIEV, true);
 
-                                if (target->ToPlayer() && target->GetZoneId() == ZONE_DALARAN_WOTLK)
+                                if (target->ToPlayer() && target->GetZoneId() == ZONE_DALARAN_WOTLK) 
                                     target->ToPlayer()->GetAchievementMgr()->CompletedAchievement(sAchievementStore.LookupEntry(1291), nullptr); // Lonely?
                             }
                         }

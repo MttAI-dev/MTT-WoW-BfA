@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,15 +16,10 @@
  */
 
 // This is where scripts' loading functions should be declared:
-void AddSC_custom_player_script();
 void AddSC_custom_npcs();
-void AddSC_FireWorksOnLevelUp();
-void AddSC_XpWeekend();
-void AddSC_skip_pandaren();
-void AddSC_skip_worgen();
-void AddSC_skip_goblin();
-void AddSC_LFG_SoloMode();
-void AddSC_solocraft();
+void AddSC_custom_player_script();
+void AddSC_zombie_event();
+void AddSC_cs_world_chat();
 
 // ADM declaration begin
 // ADM declaration end
@@ -33,16 +28,11 @@ void AddSC_solocraft();
 // void Add${NameOfDirectory}Scripts()
 void AddCustomScripts()
 {
-   AddSC_custom_player_script();
-   AddSC_custom_npcs();
-   AddSC_FireWorksOnLevelUp();
-   AddSC_XpWeekend();
-   AddSC_skip_pandaren();
-   AddSC_skip_worgen();
-   AddSC_skip_goblin();
-   AddSC_LFG_SoloMode();
-   AddSC_solocraft();
-   
-   // ADM call begin
-   // ADM call end
+    AddSC_custom_npcs();
+    AddSC_custom_player_script();
+    AddSC_zombie_event();
+    AddSC_cs_world_chat();
+
+    // ADM call begin
+    // ADM call end
 }

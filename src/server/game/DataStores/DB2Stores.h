@@ -1,5 +1,5 @@
 /*
- * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -161,6 +161,7 @@ TC_GAME_API extern DB2Storage<LFGDungeonsEntry>                     sLFGDungeons
 TC_GAME_API extern DB2Storage<LiquidTypeEntry>                      sLiquidTypeStore;
 TC_GAME_API extern DB2Storage<LockEntry>                            sLockStore;
 TC_GAME_API extern DB2Storage<MailTemplateEntry>                    sMailTemplateStore;
+TC_GAME_API extern DB2Storage<MapChallengeModeEntry>                sMapChallengeModeStore;
 TC_GAME_API extern DB2Storage<MapEntry>                             sMapStore;
 TC_GAME_API extern DB2Storage<MapChallengeModeEntry>                sMapChallengeModeStore;
 TC_GAME_API extern DB2Storage<ModifierTreeEntry>                    sModifierTreeStore;
@@ -203,6 +204,7 @@ TC_GAME_API extern DB2Storage<SpellCategoryEntry>                   sSpellCatego
 TC_GAME_API extern DB2Storage<SpellClassOptionsEntry>               sSpellClassOptionsStore;
 TC_GAME_API extern DB2Storage<SpellCooldownsEntry>                  sSpellCooldownsStore;
 TC_GAME_API extern DB2Storage<SpellDurationEntry>                   sSpellDurationStore;
+TC_GAME_API extern DB2Storage<SpellEntry>                           sSpellStore;
 TC_GAME_API extern DB2Storage<SpellEffectEntry>                     sSpellEffectStore;
 TC_GAME_API extern DB2Storage<SpellEquippedItemsEntry>              sSpellEquippedItemsStore;
 TC_GAME_API extern DB2Storage<SpellFocusObjectEntry>                sSpellFocusObjectStore;
@@ -281,7 +283,6 @@ public:
         uint32 TableHash = 0;
         int32 RecordID = 0;
         int32 HotfixID = 0;
-
         friend bool operator<(HotfixRecord const& left, HotfixRecord const& right)
         {
             return std::tie(left.HotfixID, left.TableHash, left.RecordID) < std::tie(right.HotfixID, right.TableHash, right.RecordID);
@@ -297,7 +298,7 @@ public:
 
     static DB2Manager& Instance();
 
-    void LoadStores(std::string const& dataPath, uint32 defaultLocale);
+    void LoadStores(std::string const& dataPath, LocaleConstant defaultLocale);
     DB2StorageBase const* GetStorage(uint32 type) const;
 
     void LoadHotfixData();
@@ -340,16 +341,16 @@ public:
     std::vector<uint32> const* GetGlyphRequiredSpecs(uint32 glyphPropertiesId) const;
     ItemBonusList const* GetItemBonusList(uint32 bonusListId) const;
     uint32 GetItemBonusListForItemLevelDelta(int16 delta) const;
+    std::set<uint32> GetDefaultItemBonusTree(uint32 itemId, ItemContext itemContext) const;
     bool HasItemContext(uint32 itemId) const;
     bool HasItemContext(uint32 itemId, ItemContext itemContext) const;
     std::vector<int32> GetItemBonusTreeVector(uint32 itemId, ItemContext itemContext) const;
-    std::set<uint32> GetItemBonusTree(uint32 itemId, ItemContext itemContext, uint32& itemLevel) const;
-    std::set<uint32> GetItemBonusTree(uint32 itemId, ItemContext itemContext) const;
     ItemChildEquipmentEntry const* GetItemChildEquipment(uint32 itemId) const;
     ItemClassEntry const* GetItemClassByOldEnum(uint32 itemClass) const;
     bool HasItemCurrencyCost(uint32 itemId) const;
     std::vector<ItemLimitCategoryConditionEntry const*> const* GetItemLimitCategoryConditions(uint32 categoryId) const;
     uint32 GetItemDisplayId(uint32 itemId, uint32 appearanceModId) const;
+    uint32 GetItemDIconFileDataId(uint32 itemId, uint32 appearanceModId = 0) const;
     ItemModifiedAppearanceEntry const* GetItemModifiedAppearance(uint32 itemId, uint32 appearanceModId) const;
     ItemModifiedAppearanceEntry const* GetDefaultItemModifiedAppearance(uint32 itemId) const;
     std::vector<ItemSetSpellEntry const*> const* GetItemSetSpells(uint32 itemSetId) const;
@@ -401,10 +402,13 @@ public:
         int32* uiMapId = nullptr, DBCPosition2D* newPos = nullptr);
     void Zone2MapCoordinates(uint32 areaId, float& x, float& y) const;
     void Map2ZoneCoordinates(uint32 areaId, float& x, float& y) const;
+    MapChallengeModeEntry const* GetChallengeModeByMapID(uint32 mapID);
     bool IsUiMapPhase(uint32 phaseId) const;
-    WMOAreaTableEntry const* GetWMOAreaTable(int32 rootId, int32 adtId, int32 groupId) const;
+    double GetChallngeWeight(uint32 mapID);
+    std::vector<uint32> GetChallngeMaps();
+    std::vector<double> GetChallngesWeight();
 
-    bool IsAzeriteEmpoweredItem(uint32 itemID) const;
+    WMOAreaTableEntry const* GetWMOAreaTable(int32 rootId, int32 adtId, int32 groupId) const;
 
 private:
     friend class DB2HotfixGeneratorBase;

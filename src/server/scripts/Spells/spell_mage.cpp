@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -174,6 +174,17 @@ enum MageSpells
     SPELL_MAGE_RULE_OF_THREES_BUFF               = 264774,
     SPELL_MAGE_SPLITTING_ICE                     = 56377,
     SPELL_ARCANE_CHARGE                          = 36032,
+    SPELL_MAGE_SQUIRREL_FORM = 32813,
+    SPELL_MAGE_GIRAFFE_FORM = 32816,
+    SPELL_MAGE_SERPENT_FORM = 32817,
+    SPELL_MAGE_DRAGONHAWK_FORM = 32818,
+    SPELL_MAGE_WORGEN_FORM = 32819,
+    SPELL_MAGE_SHEEP_FORM = 32820,
+
+    SplittingIce = 56377,
+    IciclesStack = 205473,
+    IciclesDamage = 148022,
+    MasteryIcicles = 76613
 };
 
 enum TemporalDisplacementSpells
@@ -584,21 +595,77 @@ class spell_mage_enhanced_pyrotechnics : public AuraScript
     }
 };
 
-// Polymorph - 118
-class spell_mage_polymorph : public SpellScript
+struct auraData
 {
-    PrepareSpellScript(spell_mage_polymorph);
-
-    void HandleTarget(SpellEffIndex /*effIndex*/)
-    {
-        // Keep this for later use: Blind, Poly, Blinding Light, etc should remove DoTs TODO
-    }
-
-    void Register() override
-    {
-        OnEffectHitTarget += SpellEffectFn(spell_mage_polymorph::HandleTarget, EFFECT_1, TARGET_UNIT_TARGET_ENEMY);
-    }
+    auraData(uint32 id, int32 duration) : m_id(id), m_duration(duration) {}
+    uint32 m_id;
+    int32 m_duration;
 };
+
+const uint32 icicles[5][3]
+{
+    {148012, 148017, 148013},
+    {148013, 148018, 148014},
+    {148014, 148019, 148015},
+    {148015, 148020, 148016},
+    {148016, 148021, 148012}
+};
+
+enum SilvermoonPolymorph
+{
+    NPC_AUROSALIA   = 18744,
+};
+// TODO: move out of here and rename - not a mage spell
+class spell_mage_polymorph_cast_visual : public SpellScriptLoader
+{
+    public:
+        spell_mage_polymorph_cast_visual() : SpellScriptLoader("spell_mage_polymorph_visual") { }
+
+        class spell_mage_polymorph_cast_visual_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_mage_polymorph_cast_visual_SpellScript);
+
+            static const uint32 PolymorhForms[6];
+
+            bool Validate(SpellInfo const* /*SpellInfo*/) override
+            {
+                // check if spell ids exist in dbc
+                for (uint32 i = 0; i < 6; i++)
+                    if (!sSpellMgr->GetSpellInfo(PolymorhForms[i]))
+                        return false;
+                return true;
+            }
+
+            void HandleDummy(SpellEffIndex /*effIndex*/)
+            {
+                if (Unit* target = GetCaster()->FindNearestCreature(NPC_AUROSALIA, 30.0f))
+                    if (target->GetTypeId() == TYPEID_UNIT)
+                        target->CastSpell(target, PolymorhForms[urand(0, 5)], true);
+            }
+
+            void Register() override
+            {
+                // add dummy effect spell handler to Polymorph visual
+                OnEffectHitTarget += SpellEffectFn(spell_mage_polymorph_cast_visual_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_mage_polymorph_cast_visual_SpellScript();
+        }
+};
+
+const uint32 spell_mage_polymorph_cast_visual::spell_mage_polymorph_cast_visual_SpellScript::PolymorhForms[6] =
+{
+    SPELL_MAGE_SQUIRREL_FORM,
+    SPELL_MAGE_GIRAFFE_FORM,
+    SPELL_MAGE_SERPENT_FORM,
+    SPELL_MAGE_DRAGONHAWK_FORM,
+    SPELL_MAGE_WORGEN_FORM,
+    SPELL_MAGE_SHEEP_FORM
+};
+
 
 // Comet Storm - 153595
 class spell_mage_comet_storm : public SpellScript
@@ -922,7 +989,7 @@ class spell_mage_kindling : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        return eventInfo.GetSpellInfo()->Id == SPELL_MAGE_FIREBALL || eventInfo.GetSpellInfo()->Id == SPELL_MAGE_FIRE_BLAST || eventInfo.GetSpellInfo()->Id == SPELL_MAGE_PYROBLAST;
+        return eventInfo.GetSpellInfo()->Id == SPELL_MAGE_FIREBALL || eventInfo.GetSpellInfo()->Id == SPELL_MAGE_FIRE_BLAST || eventInfo.GetSpellInfo()->Id == SPELL_MAGE_PHOENIX_FLAMES;
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
@@ -931,7 +998,7 @@ class spell_mage_kindling : public AuraScript
         if (!caster)
             return;
 
-        caster->GetSpellHistory()->ModifyCooldown(SPELL_MAGE_COMBUSTION, -aurEff->GetAmount() * IN_MILLISECONDS);
+        caster->GetSpellHistory()->ModifyCooldown(SPELL_MAGE_COMBUSTION, -aurEff->GetAmount() - IN_MILLISECONDS);
     }
 
     void Register() override
@@ -2347,7 +2414,7 @@ struct at_mage_rune_of_power : AreaTriggerAI
 };
 
 // Frozen Orb - 84714
-// AreaTriggerID - 8661
+// AreaTriggerID - 12740
 struct at_mage_frozen_orb : AreaTriggerAI
 {
     at_mage_frozen_orb(AreaTrigger* areatrigger) : AreaTriggerAI(areatrigger)
@@ -2739,13 +2806,39 @@ class spell_mage_ebonbolt_damage : public SpellScript
     }
 };
 
+// Firestarter - 203283
+class spell_mage_firestarter_pvp : public AuraScript
+{
+    PrepareAuraScript(spell_mage_firestarter_pvp);
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        return eventInfo.GetSpellInfo()->Id == SPELL_MAGE_FIREBALL;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+    {
+        Unit* caster = GetCaster();
+        if (!caster)
+        return;
+
+        caster->GetSpellHistory()->ModifyCooldown(SPELL_MAGE_COMBUSTION, -aurEff->GetAmount() - 5000);
+    }
+
+    void Register() override
+    {
+        DoCheckProc += AuraCheckProcFn(spell_mage_firestarter_pvp::CheckProc);
+        OnEffectProc += AuraEffectProcFn(spell_mage_firestarter_pvp::HandleProc, EFFECT_1, SPELL_AURA_DUMMY);
+    }
+};
+
 void AddSC_mage_spell_scripts()
 {
     new playerscript_mage_arcane();
 
     new spell_mage_combustion();
     new spell_mage_incanters_flow();
-    new spell_mage_polymorph();
+    new spell_mage_polymorph_cast_visual();
     new spell_mage_time_warp();
     new spell_mage_fire_mage_passive();
     new spell_mage_fire_on();
@@ -2798,6 +2891,7 @@ void AddSC_mage_spell_scripts()
     RegisterAuraScript(spell_mage_ray_of_frost);
     RegisterAuraScript(spell_mage_ray_of_frost_buff);
     //7.3.2.25549 END
+    RegisterAuraScript(spell_mage_firestarter_pvp);
 
     RegisterSpellScript(spell_mage_flamestrike);
     RegisterAuraScript(spell_mage_ring_of_frost);

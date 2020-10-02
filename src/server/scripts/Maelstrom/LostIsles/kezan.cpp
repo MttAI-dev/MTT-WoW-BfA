@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2020 LatinCoreTeam
  * Copyright (C) 2010 - 2012 Project SkyFire <http://www.projectskyfire.org/>
  * Copyright (C) 2011 - 2012 ArkCORE <http://www.arkania.net/>
  *
@@ -33,6 +33,8 @@
 #include "SpellMgr.h"
 #include "Vehicle.h"
 #include "WorldSession.h"
+
+#define ACTION_D 4
 
 enum NPC_DeffiantTroll
 {
@@ -1192,6 +1194,589 @@ class spell_life_saving_complete : public SpellScript
     }
 };
 
+class spell_bank_67498 : public SpellScriptLoader
+{
+public:
+    spell_bank_67498() : SpellScriptLoader("spell_bank_67498") { }
+
+    class  spell_bank_67498SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_bank_67498SpellScript);
+
+        bool Validate(SpellInfo const* /*spellEntry*/) override
+        {
+            st = false;
+            return true;
+        }
+
+        bool Load() override
+        {
+            return true;
+        }
+
+        void HandleOnHit()
+        {
+            if (st)
+                return;
+            if (Creature *t = GetCaster()->FindNearestCreature(850000, 5))
+                t->GetAI()->DoAction(ACTION_D);
+            st = true;
+        }
+
+    private:
+        bool st;
+
+        void Register() override
+        {
+            OnHit += SpellHitFn(spell_bank_67498SpellScript::HandleOnHit);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_bank_67498SpellScript();
+    }
+};
+
+class npc_meteor_gob : public CreatureScript
+{
+public:
+    npc_meteor_gob() : CreatureScript("npc_meteor_gob") { }
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_meteor_gobAI(creature);
+    }
+
+    struct npc_meteor_gobAI : public ScriptedAI
+    {
+        npc_meteor_gobAI(Creature* creature) : ScriptedAI(creature) {}
+
+
+        void Reset() override
+        {
+            _a = urand(66000, 200200);
+            _b = 600000;
+            _c = 600000;
+        }
+
+        void JustReachedHome() override { }
+
+        void UpdateAI(uint32 diff) override
+        {
+            if (_a <= diff)
+            {
+                me->CastSpell(me, 93668, true);
+                _a = urand(66000, 200200);
+                _b = 800;
+            }
+            else _a -= diff;
+            if (_b <= diff)
+            {
+                me->CastSpell(me, 87701, true);
+                _b = 600000;
+                _c = 500;
+            }
+            else _b -= diff;
+            if (_c <= diff)
+            {
+                me->CastSpell(me, 69235, true);
+                _c = 600000;
+            }
+            else _c -= diff;
+        }
+
+    private:
+        uint32 _a, _b, _c;
+    };
+};
+
+#define ACTION_A 1
+#define ACTION_B 2
+#define ACTION_C 3
+#define ACTION_D 4
+#define ACTION_E 5
+#define ACTION_START 6
+#define ACTION_FAIL 7
+#define ACTION_SUCCESS 8
+
+
+class npc_gls_gob : public CreatureScript
+{
+public:
+    npc_gls_gob() : CreatureScript("npc_gls_gob") { }
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_gls_gobAI(creature);
+    }
+
+    struct npc_gls_gobAI : public ScriptedAI
+    {
+        npc_gls_gobAI(Creature* creature) : ScriptedAI(creature) {}
+
+        void Reset() override
+        {
+            _start_event = true;
+            _diag = 0;
+            mui_diag = 5000;
+            _count = 0;
+            _will_aura = ACTION_START;
+            _scriptetre = true;
+            if (me->ToTempSummon())
+            {
+                if (Unit *p = me->ToTempSummon()->GetSummoner())
+                {
+                    if (p->GetTypeId() != TYPEID_PLAYER)
+                        _scriptetre = false;
+                }
+                else
+                    _scriptetre = false;
+            }
+            else
+                _scriptetre = false;
+            if (!_scriptetre)
+                return;
+            m_ty = 600000;
+            PhasingHandler::AddPhase(me, 180);
+        }
+
+        void DoAction(const int32 param) override
+        {
+            if (!_scriptetre || _start_event)
+                return;
+            m_ty = 2000;
+            _prev_aura = param;
+            Player* player = NULL;
+            if (Unit* p = me->ToTempSummon()->GetSummoner())
+            {
+                player = p->ToPlayer();
+                if (player)
+                    if (param != ACTION_FAIL)
+                        player->PlayDirectSound(11595, player);
+            }
+            if (_prev_aura != _will_aura)
+            {
+                if (player)
+                    Talk(11, player);
+                _count -= 1;
+            }
+            else
+            {
+                int res = (_count * 100) / 30 + 4;
+                if (res < 0)
+                {
+                    _count = 0;
+                    res = 0;
+                }
+                if (player)
+                    if (player->GetVehicle())
+                        if (player->GetVehicle()->GetBase())
+                            player->GetVehicle()->GetBase()->SetPower(POWER_ENERGY, res); //DON'T WORK !
+                std::ostringstream oss;
+                oss << res;
+                std::string result = oss.str();
+                std::string _mess = "Bravo !\n Progress : ";
+                _mess += result;
+                _mess += "/100";
+                if (player)
+                {
+                    Talk(10, player);
+                    me->Whisper(_mess.c_str(), LANG_UNIVERSAL, player, true);
+                }
+                _count++;
+            }
+            if (param == ACTION_B)
+                me->CastSpell(me, 90709, true);
+            if (_count == 30)
+            {
+                if (player)
+                {
+                    Talk(12, player);
+                    player->AddItem(46858, 1);
+                }
+                me->DespawnOrUnsummon();
+                return;
+            }
+            _will_aura = urand(1, 5);
+            int sc_text = _will_aura;
+            if (player)
+                Talk(sc_text, player);
+        }
+
+        void SpellHit(Unit* /*caster*/, const SpellInfo* /*spell*/) override
+        {
+        }
+
+        void JustReachedHome() override
+        {
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            if (!_scriptetre)
+                return;
+            if (_start_event)
+            {
+                if (mui_diag <= diff)
+                {
+                    Player *player = NULL;
+                    if (Unit *p = me->ToTempSummon()->GetSummoner())
+                        player = p->ToPlayer();
+                    if (!player || player->GetVehicle() == NULL)
+                        me->DespawnOrUnsummon();
+                    switch (_diag)
+                    {
+                    case 0:
+                        if (player)
+                            Talk(6, player);
+                        ++_diag;
+                        break;
+                    case 1:
+                        if (player)
+                            Talk(7, player);
+                        ++_diag;
+                        break;
+                    case 2:
+                        if (player)
+                            Talk(8, player);
+                        ++_diag;
+                        break;
+                    case 3:
+                        if (player)
+                            Talk(9, player);
+                        ++_diag;
+                        break;
+                    default:
+                        _start_event = false;
+                        DoAction(ACTION_START);
+                        break;
+                    }
+                    mui_diag = 10000;
+                }
+                else  mui_diag -= diff;
+            }
+            else
+            {
+                if (m_ty <= diff)
+                {
+                    m_ty = 600000;
+                    DoAction(ACTION_FAIL);
+                    if (_count < -4)
+                        me->DespawnOrUnsummon();
+                }
+                else m_ty -= diff;
+            }
+        }
+
+    private:
+        uint32 m_ty;
+        uint64 _prev_aura;
+        uint64 _will_aura;
+        int _count;
+        bool _scriptetre;
+        bool _start_event;
+        uint32 mui_diag;
+        int _diag;
+    };
+};
+
+class npc_lianne_gobelin : public CreatureScript
+{
+public:
+    npc_lianne_gobelin() : CreatureScript("npc_lianne_gobelin") { }
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_lianne_gobelinAI(creature);
+    }
+
+    struct npc_lianne_gobelinAI : public ScriptedAI
+    {
+        npc_lianne_gobelinAI(Creature* creature) : ScriptedAI(creature)
+        {
+        }
+
+        void Reset() override
+        {
+            if (me->GetVehicleKit())
+                if (Creature *c = me->FindNearestCreature(36042, 10))
+                    c->CastCustomSpell(VEHICLE_SPELL_RIDE_HARDCODED, SPELLVALUE_BASE_POINT0, 1, me, false);
+        }
+
+        void JustDied(Unit* /*killer*/) override
+        {
+            if (Creature *c = me->FindNearestCreature(36042, 100))
+                c->ToCreature()->AI()->Talk(irand(0, 7));
+        }
+
+        void UpdateAI(uint32 /*diff*/) override
+        {
+        }
+    };
+};
+
+class gob_bank_gobelin : public GameObjectScript
+{
+public:
+    gob_bank_gobelin() : GameObjectScript("gob_bank_gobelin") { }
+
+    bool OnGossipHello(Player* player, GameObject* go) override
+    {
+        if (player->GetQuestStatus(14122) == QUEST_STATUS_INCOMPLETE)
+        {
+            if (Creature *t = player->SummonCreature(35486, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), player->GetOrientation(), TEMPSUMMON_CORPSE_TIMED_DESPAWN, 300 * IN_MILLISECONDS))
+                PhasingHandler::AddPhase(t, 180);
+            if (Creature *t = player->SummonCreature(850000, go->GetPositionX(), go->GetPositionY(), go->GetPositionZ(), player->GetOrientation(), TEMPSUMMON_CORPSE_TIMED_DESPAWN, 300 * IN_MILLISECONDS))
+                PhasingHandler::AddPhase(t, 180);
+            return true;
+        }
+        return true;
+    }
+
+    bool OnGossipSelect(Player* player, GameObject* /*go*/, uint32 /*sender*/, uint32 /*action*/) override
+    {
+        player->PlayerTalkClass->ClearMenus();
+        CloseGossipMenuFor(player);
+        return true;
+    }
+};
+
+class spell_bank_67495 : public SpellScriptLoader
+{
+public:
+    spell_bank_67495() : SpellScriptLoader("spell_bank_67495") { }
+
+
+    class  spell_bank_67495SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_bank_67495SpellScript);
+
+        bool Validate(SpellInfo const* /*spellEntry*/) override
+        {
+            st = false;
+            return true;
+        }
+
+        bool Load() override
+        {
+            return true;
+        }
+
+        void HandleOnHit()
+        {
+            if (st)
+                return;
+            if (Creature *t = GetCaster()->FindNearestCreature(850000, 5))
+                t->GetAI()->DoAction(ACTION_A);
+            st = true;
+        }
+
+    private:
+        bool st;
+
+        void Register() override
+        {
+            OnHit += SpellHitFn(spell_bank_67495SpellScript::HandleOnHit);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_bank_67495SpellScript();
+    }
+};
+
+class npc_chipie_quest_giver_end_event : public CreatureScript
+{
+public:
+    npc_chipie_quest_giver_end_event() : CreatureScript("npc_chipie_quest_giver_end_event") { }
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    {
+        player->PlayerTalkClass->ClearMenus();
+        if (action == GOSSIP_ACTION_INFO_DEF + 1)
+        {
+            if (Creature *t = player->SummonCreature(900000, creature->GetPositionX(), creature->GetPositionY(), creature->GetPositionZ(),
+                creature->GetOrientation(), TEMPSUMMON_CORPSE_TIMED_DESPAWN, 300 * IN_MILLISECONDS))
+            {
+                if (Creature *c = player->SummonCreature(creature->GetEntry(), creature->GetPositionX(), creature->GetPositionY(), creature->GetPositionZ(),
+                    creature->GetOrientation(), TEMPSUMMON_CORPSE_TIMED_DESPAWN, 300 * IN_MILLISECONDS))
+                {
+                    c->Say("Gimme keys chief, I drive!", LANG_UNIVERSAL, 0);
+                    player->CastCustomSpell(VEHICLE_SPELL_RIDE_HARDCODED, SPELLVALUE_BASE_POINT0, 2, t, false);
+                    c->CastCustomSpell(VEHICLE_SPELL_RIDE_HARDCODED, SPELLVALUE_BASE_POINT0, 1, t, false);
+                    CAST_AI(npc_escortAI, (t->AI()))->Start(false, true, player->GetGUID());
+                }
+            }
+        }
+        return true;
+    }
+
+    bool OnGossipHello(Player* player, Creature* creature) override
+    {
+        if (player->GetQuestStatus(14126) != QUEST_STATUS_NONE)
+            AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Yes, I want to go there!", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
+        else if (creature->IsQuestGiver())
+            player->PrepareQuestMenu(creature->GetGUID());
+        SendGossipMenuFor(player, player->GetGossipTextId(creature), creature->GetGUID());
+        return true;
+    }
+
+};
+
+class spell_bank_67499 : public SpellScriptLoader
+{
+public:
+    spell_bank_67499() : SpellScriptLoader("spell_bank_67499") { }
+
+
+    class  spell_bank_67499SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_bank_67499SpellScript);
+
+        bool Validate(SpellInfo const* /*spellEntry*/) override
+        {
+            st = false;
+            return true;
+        }
+
+        bool Load() override
+        {
+            return true;
+        }
+
+        void HandleOnHit()
+        {
+            if (st)
+                return;
+            if (Creature *t = GetCaster()->FindNearestCreature(850000, 5))
+                t->GetAI()->DoAction(ACTION_E);
+            st = true;
+        }
+
+    private:
+        bool st;
+
+        void Register() override
+        {
+            OnHit += SpellHitFn(spell_bank_67499SpellScript::HandleOnHit);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_bank_67499SpellScript();
+    }
+};
+
+class npc_galaw : public CreatureScript
+{
+public:
+    npc_galaw() : CreatureScript("npc_galaw") {}
+
+    bool OnQuestAccept(Player* player, Creature* /*creature*/, const Quest *_Quest) override
+    {
+        if (_Quest->GetQuestId() == 14120)
+        {
+            player->RemoveAurasDueToSpell(59074);
+            player->SetAuraStack(67789, player, 1);
+        }
+        return true;
+    }
+};
+
+class spell_bank_67496 : public SpellScriptLoader
+{
+public:
+    spell_bank_67496() : SpellScriptLoader("spell_bank_67496") { }
+
+
+    class  spell_bank_67496SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_bank_67496SpellScript);
+
+        bool Validate(SpellInfo const* /*spellEntry*/) override
+        {
+            st = false;
+            return true;
+        }
+
+        bool Load() override
+        {
+            return true;
+        }
+
+        void HandleOnHit()
+        {
+            if (st)
+                return;
+            if (Creature *t = GetCaster()->FindNearestCreature(850000, 5))
+                t->GetAI()->DoAction(ACTION_B);
+
+            st = true;
+        }
+
+    private:
+        bool st;
+
+        void Register() override
+        {
+            OnHit += SpellHitFn(spell_bank_67496SpellScript::HandleOnHit);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_bank_67496SpellScript();
+    }
+};
+
+class spell_bank_67497 : public SpellScriptLoader
+{
+public:
+    spell_bank_67497() : SpellScriptLoader("spell_bank_67497") { }
+
+
+    class  spell_bank_67497SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_bank_67497SpellScript);
+
+        bool Validate(SpellInfo const* /*spellEntry*/) override
+        {
+            st = false;
+            return true;
+        }
+
+        bool Load() override
+        {
+            return true;
+        }
+
+        void HandleOnHit()
+        {
+            if (st)
+                return;
+            if (Creature *t = GetCaster()->FindNearestCreature(850000, 5))
+                t->GetAI()->DoAction(ACTION_C);
+            st = true;
+        }
+
+    private:
+        bool st;
+
+        void Register() override
+        {
+            OnHit += SpellHitFn(spell_bank_67497SpellScript::HandleOnHit);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_bank_67497SpellScript();
+    }
+};
+
 void AddSC_kezan()
 {
     RegisterCreatureAI(npc_defiant_troll);
@@ -1207,6 +1792,11 @@ void AddSC_kezan()
     RegisterSpellScript(spell_kabummbomb);
     new quest_fourth_and_goal();
     new npc_coach_crosscheck();
+    new npc_meteor_gob();
+    new npc_gls_gob();
+    new npc_lianne_gobelin();
+    new npc_chipie_quest_giver_end_event();
+    new npc_galaw();
     RegisterCreatureAI(npc_shark_gob);
     RegisterCreatureAI(npc_boucanier_gob);
     RegisterSpellScript(npc_fourth_and_goal_kick_footbomb);
@@ -1220,5 +1810,12 @@ void AddSC_kezan()
     RegisterCreatureAI(npc_kezan_gasbot);
     RegisterCreatureAI(npc_end_hot_rod);
     new gob_canon_gobelin();
+    new gob_bank_gobelin();
     RegisterSpellScript(spell_life_saving_complete);
+    RegisterSpellScript(spell_kezan_despawn_sharks);
+    new spell_bank_67498();
+    new spell_bank_67495();
+    new spell_bank_67496();
+    new spell_bank_67497();
+    new spell_bank_67499();
 }
